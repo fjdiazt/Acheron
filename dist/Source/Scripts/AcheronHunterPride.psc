@@ -1,7 +1,5 @@
 Scriptname AcheronHunterPride extends Quest Hidden 
 
-Function OpenHunterPrideMenu(Actor akTarget) native
-
 AcheronMCM Property MCM Auto
 
 PlayerVampireQuestScript Property PlayerVampireQuest Auto
@@ -13,13 +11,11 @@ Faction Property ExecuteFaction  Auto
 Message Property IsEssentialMsg Auto
 Message Property NoPotionMsg Auto
 
-Function OpenMenu(Actor akTarget)
-  Acheron.RegisterForHunterPrideSelect(self)
-  OpenHunterPrideMenu(akTarget)
-EndFunction
-
-Event OnHunterPrideSelect(int aiOptionID, Actor akTarget)
-  Debug.Trace("[Acheron] OnHunterPrideSelect: " + aiOptionID + " / " + akTarget)
+Function PerformAction(int aiOptionID, Actor akTarget)
+  If(!akTarget || !Acheron.IsDefeated(akTarget))
+    return
+  EndIf
+  Debug.Trace("[Acheron] PerformAction: " + aiOptionID + " / " + akTarget)
   If(aiOptionID == 0)
     Potion p = Acheron.GetMostEfficientPotion(akTarget, PlayerRef)
     If(!p)
@@ -28,7 +24,7 @@ Event OnHunterPrideSelect(int aiOptionID, Actor akTarget)
     EndIf
     PlayerRef.RemoveItem(p, 1, true, akTarget)
     akTarget.EquipItem(p, false, true)
-    If(Acheron.IsDefeated(akTarget))
+    If(Acheron.IsDefeated(akTarget) && !Acheron.SupportsPeacefulRescue(akTarget))
       ; Some actors are immune to potion effect
       akTarget.PlaceAtMe(HealTargetFX)
       akTarget.RestoreActorValue("Health", 25.0)
@@ -77,7 +73,7 @@ Event OnHunterPrideSelect(int aiOptionID, Actor akTarget)
     PlayerVampireQuest.VampireFeed()
     akTarget.Kill(PlayerRef)
   EndIf
-EndEvent
+EndFunction
 
 bool Function CheckEssential(Actor akTarget)
   ActorBase base = akTarget.GetLeveledActorBase()

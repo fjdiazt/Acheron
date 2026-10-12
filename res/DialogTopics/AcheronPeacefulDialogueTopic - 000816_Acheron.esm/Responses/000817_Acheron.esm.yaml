@@ -1,0 +1,10 @@
+FormKey: 000817:Acheron.esm
+PreviousDialog: Null
+FavorLevel: None
+ResponseData: 019B8C:Dawnguard.esm
+Conditions:
+- MutagenObjectType: ConditionFloat
+  Data:
+    MutagenObjectType: HasLinkedRefConditionData
+    Keyword: 000811:Acheron.esm
+  ComparisonValue: 1

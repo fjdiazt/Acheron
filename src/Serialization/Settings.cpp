@@ -20,6 +20,7 @@ void Settings::Initialize()
 #define MCM_SETTING(STR, DEFAULT) ReadMCM(#STR, STR);
 #include "mcm.def"
 #undef MCM_SETTING
+        iPeacefulWanderDuration = std::clamp(iPeacefulWanderDuration, 1, 600);
 
         logger::info("Finished loading user settings");
     } catch (const std::exception& e) {

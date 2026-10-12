@@ -107,9 +107,7 @@ namespace Acheron
         if (a_victim->IsDead() || a_victim->IsInKillMove())
             return false;
         if (a_victim->IsPlayerRef()) {
-            if (!Settings::bPlayerDefeat) {
-                return false;
-            }
+            return false;
         } else if (a_victim->IsPlayerTeammate()) {
             if (!Settings::bFollowerDefeat) {
                 return false;

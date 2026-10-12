@@ -1,0 +1,7 @@
+FormKey: 00081D:Acheron.esm
+EditorID: AcheronPeacefulKneelDialogue
+Quest: 000818:Acheron.esm
+Category: Player
+Flags:
+- TopLevel
+StartingTopic: 00081B:Acheron.esm

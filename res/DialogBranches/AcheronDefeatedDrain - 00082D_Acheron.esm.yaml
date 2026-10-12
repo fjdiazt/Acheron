@@ -1,0 +1,7 @@
+FormKey: 00082D:Acheron.esm
+EditorID: AcheronDefeatedDrain
+Quest: 000818:Acheron.esm
+Category: Player
+Flags:
+- TopLevel
+StartingTopic: 00082E:Acheron.esm

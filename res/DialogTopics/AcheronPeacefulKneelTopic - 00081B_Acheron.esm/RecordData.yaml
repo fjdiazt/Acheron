@@ -1,0 +1,8 @@
+FormKey: 00081B:Acheron.esm
+EditorID: AcheronPeacefulKneelTopic
+Name:
+  TargetLanguage: English
+  Value: On your knees.
+Branch: 00081D:Acheron.esm
+Quest: 000818:Acheron.esm
+SubtypeName: CUST

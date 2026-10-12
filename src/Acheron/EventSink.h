@@ -14,6 +14,7 @@ namespace Acheron
       public RE::BSTEventSink<RE::TESCombatEvent>,
       public RE::BSTEventSink<RE::TESDeathEvent>,
       public RE::BSTEventSink<RE::TESResetEvent>,
+      public RE::BSTEventSink<RE::TESTopicInfoEvent>,
       public RE::BSTEventSink<RE::InputEvent*>
     {
       public:
@@ -27,6 +28,7 @@ namespace Acheron
             script->AddEventSink<RE::TESCombatEvent>(this);
             script->AddEventSink<RE::TESDeathEvent>(this);
             script->AddEventSink<RE::TESResetEvent>(this);
+            script->AddEventSink<RE::TESTopicInfoEvent>(this);
 
             const auto input = RE::BSInputDeviceManager::GetSingleton();
             input->AddEventSink<RE::InputEvent*>(this);
@@ -39,6 +41,7 @@ namespace Acheron
         EventResult ProcessEvent(const RE::TESCombatEvent* a_event, RE::BSTEventSource<RE::TESCombatEvent>*) override;
         EventResult ProcessEvent(const RE::TESDeathEvent* a_event, RE::BSTEventSource<RE::TESDeathEvent>*) override;
         EventResult ProcessEvent(const RE::TESResetEvent* a_event, RE::BSTEventSource<RE::TESResetEvent>*) override;
+        EventResult ProcessEvent(const RE::TESTopicInfoEvent* a_event, RE::BSTEventSource<RE::TESTopicInfoEvent>*) override;
 
         EventResult ProcessEvent(RE::InputEvent* const* a_event, RE::BSTEventSource<RE::InputEvent*>*) override;
 

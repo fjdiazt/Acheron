@@ -420,6 +420,9 @@ namespace Acheron
 
     bool Resolution::SelectQuest(Type type, RE::Actor* a_victim, const std::vector<RE::Actor*>& a_victoires, bool a_incombat, bool a_doteleport)
     {
+        if (a_victim->IsPlayerRef())
+            return false;
+
         logger::info("Looking up quest of type {} for {:X} and {} aggressors. Combat? {} / Teleport? {}",
             std::to_underlying(type), a_victim->formID, a_victoires.size(), a_incombat, a_doteleport);
         const bool tp = Validation::AllowTeleport();

@@ -1,0 +1,8 @@
+FormKey: 00082B:Acheron.esm
+EditorID: AcheronDefeatedExecuteTopic
+Name:
+  TargetLanguage: English
+  Value: Execute
+Branch: 00082A:Acheron.esm
+Quest: 000818:Acheron.esm
+SubtypeName: CUST

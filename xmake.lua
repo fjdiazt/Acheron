@@ -61,6 +61,10 @@ option("build_dll")
     set_category("build")
     set_description("Enable '" .. PROJECT_NAME .. "' target")
     set_default(true)
+option("yield_test_diagnostics")
+    set_description("Record damage-hook evidence for desktop yield tests")
+    set_default(false)
+option_end()
 option("build_papyrus")
     set_category("build")
     set_description("Enable 'papyrus' target")
@@ -116,6 +120,9 @@ elseif is_mode("release") then
     set_symbols("debug")
 end
 add_defines("NOMINMAX")
+if has_config("yield_test_diagnostics") then
+    add_defines("ACHERON_YIELD_TESTS")
+end
 
 set_config("skse_xbyak", true)
 
@@ -152,6 +159,13 @@ rule_end()
 add_rules("common")
 
 -- Target
+target("pacification-state-tests")
+    set_kind("binary")
+    set_default(false)
+    add_files("tests/Pacification-State.cpp")
+    add_includedirs("src")
+target_end()
+
 target(PROJECT_NAME)
     -- Dependencies
     add_packages("yaml-cpp", "magic_enum", "nlohmann_json", "simpleini")
@@ -211,6 +225,7 @@ target(PROJECT_NAME)
 
     -- Post Build
     after_build(function (target)
+        os.mkdir("dist/SKSE/Plugins")
         os.vcp(target:targetfile(), "dist/SKSE/Plugins")
         os.vcp(target:symbolfile(), "dist/SKSE/Plugins")
     end)

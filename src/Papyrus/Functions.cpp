@@ -2,13 +2,82 @@
 
 #include "Acheron/Animation/Animation.h"
 #include "Acheron/Defeat.h"
+#include "Acheron/Pacification.h"
+#include "Acheron/GodMode.h"
+#include "Acheron/PacificationState.h"
 #include "Acheron/Interface/CustomMenu.h"
-#include "Acheron/Interface/HunterPride.h"
 #include "Acheron/Resolution.h"
 #include "shared/KrisV/Util/String.h"
 
 namespace Papyrus
 {
+    void Utility::ApplyGodPreset(RE::StaticFunctionTag*) { Acheron::GodMode::Apply(); }
+    bool Defeat::KneelActor(RE::StaticFunctionTag*, RE::Actor* actor)
+    {
+        if (REL::Module::IsVR() || !Acheron::Pacification::IsEligible(actor) ||
+            (!Acheron::Defeat::IsDefeated(actor) && !Acheron::Pacification::IsActive(actor))) return false;
+        Acheron::Pacification::RequestKneel(actor);
+        return true;
+    }
+    bool Defeat::BindActor(RE::StaticFunctionTag*, RE::Actor* actor)
+    {
+        if (REL::Module::IsVR() || !Acheron::Pacification::IsEligible(actor) || !Acheron::Pacification::IsActive(actor)) return false;
+        Acheron::Pacification::RequestKneel(actor, true);
+        return true;
+    }
+    bool Defeat::ResumePeacefulState(RE::StaticFunctionTag*, RE::Actor* actor)
+    {
+        if (REL::Module::IsVR() || !Acheron::Pacification::IsEligible(actor) || !Acheron::Pacification::IsActive(actor)) return false;
+        Acheron::Pacification::RequestResume(actor);
+        return true;
+    }
+    bool Defeat::BeginPeacefulState(RE::StaticFunctionTag*, RE::Actor* actor, int seconds)
+    {
+        if (REL::Module::IsVR() || !Acheron::Pacification::IsEligible(actor) || !Acheron::Peaceful::ValidDuration(static_cast<float>(seconds))) return false;
+        Acheron::Pacification::RequestBegin(actor, seconds);
+        return true;
+    }
+    bool Defeat::IsPeacefulState(RE::StaticFunctionTag*, RE::Actor* actor) { return Acheron::Pacification::IsActive(actor); }
+    bool Defeat::SupportsPeacefulRescue(RE::StaticFunctionTag*, RE::Actor* actor) { return !REL::Module::IsVR() && Acheron::Pacification::IsEligible(actor); }
+#ifdef ACHERON_YIELD_TESTS
+    void Defeat::ProbePeacefulState(RE::StaticFunctionTag*, RE::Actor* actor) { Acheron::Pacification::Trace(actor); }
+    void Defeat::ProbePeacefulLinks(RE::StaticFunctionTag*, RE::Actor* actor, RE::TESObjectREFR* anchor, RE::TESObjectREFR* threat)
+    {
+        if (!actor || !anchor || !threat || actor->IsPlayerRef()) { return; }
+        const auto subjectHandle = actor->GetHandle();
+        const auto anchorHandle = anchor->GetHandle();
+        const auto threatHandle = threat->GetHandle();
+        SKSE::GetTaskInterface()->AddTask([=]() {
+            const auto subject = subjectHandle.get();
+            const auto point = anchorHandle.get();
+            const auto opponent = threatHandle.get();
+            const auto forms = RE::TESDataHandler::GetSingleton();
+            const auto anchorKey = forms->LookupForm<RE::BGSKeyword>(0x811, "Acheron.esm");
+            const auto threatKey = forms->LookupForm<RE::BGSKeyword>(0x812, "Acheron.esm");
+            if (!subject || !point || !opponent || !anchorKey || !threatKey) { return; }
+            subject->extraList.SetLinkedRef(point.get(), anchorKey);
+            subject->extraList.SetLinkedRef(opponent.get(), threatKey);
+            logger::info("[PeacefulProbe] actor={:08X} anchor={:08X} threat={:08X}", subject->GetFormID(), point->GetFormID(), opponent->GetFormID());
+            const auto player = RE::PlayerCharacter::GetSingleton();
+            const auto info = forms->LookupForm<RE::TESTopicInfo>(0x817, "Acheron.esm");
+            const auto topic = forms->LookupForm<RE::TESTopic>(0x816, "Acheron.esm");
+            const auto manager = RE::MenuTopicManager::GetSingleton();
+            const auto branch = forms->LookupForm<RE::BGSDialogueBranch>(0x815, "Acheron.esm");
+            const auto originalTopic = forms->LookupForm<RE::TESTopic>(0x80E, "Acheron.esm");
+            logger::info("[PeacefulTalkForms] info={} topic={} branch={} originalTopic={} originalInfos={} topicQuest={:08X} topicBranch={:08X}",
+                info != nullptr, topic != nullptr, branch != nullptr, originalTopic != nullptr,
+                originalTopic ? originalTopic->numTopicInfos : 0,
+                topic && topic->ownerQuest ? topic->ownerQuest->GetFormID() : 0,
+                topic && topic->ownerBranch ? topic->ownerBranch->GetFormID() : 0);
+            logger::info("[PeacefulTalkProbe] actor={:08X} canTalk={} infoValid={} infos={} sharedInfo={:08X} menu={} goodbye={} branches={} playerCombat={}",
+                subject->GetFormID(), subject->CanTalkToPlayer(), info && info->objConditions.IsTrue(subject.get(), player),
+                topic ? topic->numTopicInfos : 0, info && info->dataInfo ? info->dataInfo->GetFormID() : 0,
+                manager && manager->menuOpen, manager && manager->forceGoodbye, manager ? manager->topLevelBranches.size() : 0,
+                player && player->IsInCombat());
+        });
+    }
+#endif
+
     void Defeat::DefeatActor(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*, RE::Actor* a_actor)
     {
         if (!a_actor) {
@@ -48,7 +117,7 @@ namespace Papyrus
             a_vm->TraceStack("Cannot reset Pacification. Actor is none.", a_stackID);
             return;
         }
-        Acheron::Defeat::UndoPacify(a_actor);
+        Acheron::Pacification::RequestRelease(a_actor);
     }
 
     bool Defeat::IsDefeated(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*, RE::Actor* a_actor)
@@ -77,53 +146,6 @@ namespace Papyrus
     std::vector<RE::Actor*> Defeat::GetPacified(RE::StaticFunctionTag*, bool a_loadedonly)
     {
         return Acheron::Defeat::GetAllPacified(a_loadedonly);
-    }
-
-    void Interface::OpenHunterPrideMenu(VM* a_vm, StackID a_stackID, RE::TESQuest*, RE::Actor* a_target)
-    {
-        if (!a_target) {
-            a_vm->TraceStack("Cannot open hunter pride menu with a null reference as target", a_stackID);
-            return;
-        }
-        Acheron::Interface::HunterPride::SetTarget(a_target);
-        Acheron::Interface::HunterPride::Show();
-    }
-
-    int Interface::AddOption(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*, RE::BSFixedString a_id, std::string a_name, std::string a_url, std::string a_condition)
-    {
-        if (a_id.empty()) {
-            a_vm->TraceStack("id may not be empty", a_stackID);
-            return false;
-        }
-        Util::ToLower(a_condition);
-        return Acheron::Interface::HunterPride::AddOption(a_id, a_condition, a_name, a_url);
-    }
-
-    bool Interface::RemoveOption(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*, RE::BSFixedString a_id)
-    {
-        if (a_id.empty()) {
-            a_vm->TraceStack("id may not be empty", a_stackID);
-            return false;
-        }
-        return Acheron::Interface::HunterPride::RemoveOption(a_id);
-    }
-
-    bool Interface::HasOption(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*, RE::BSFixedString a_id)
-    {
-        if (a_id.empty()) {
-            a_vm->TraceStack("id may not be empty", a_stackID);
-            return false;
-        }
-        return Acheron::Interface::HunterPride::HasOption(a_id);
-    }
-
-    int Interface::GetOptionID(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*, RE::BSFixedString a_id)
-    {
-        if (a_id.empty()) {
-            a_vm->TraceStack("id may not be empty", a_stackID);
-            return false;
-        }
-        return Acheron::Interface::HunterPride::GetOptionID(a_id);
     }
 
     void ObjectRef::SetLinkedRef(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*, RE::TESObjectREFR* object, RE::TESObjectREFR* target, RE::BGSKeyword* keyword)

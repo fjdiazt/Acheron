@@ -41,13 +41,6 @@ namespace Papyrus
     inline void RegisterForPlayerDeathEvent_MgEff(VM* a_vm, RE::VMStackID a_stackID, RE::StaticFunctionTag*, RE::ActiveEffect* obj) { REGISTER(_playerdeathevent); }
     inline void UnregisterForPlayerDeathEvent_MgEff(VM* a_vm, RE::VMStackID a_stackID, RE::StaticFunctionTag*, RE::ActiveEffect* obj) { UNREGISTER(_playerdeathevent); }
 
-    inline void RegisterForHunterPrideSelect(VM* a_vm, RE::VMStackID a_stackID, RE::StaticFunctionTag*, RE::TESForm* obj) { REGISTER(_hunterprideselect); }
-    inline void UnregisterForHunterPrideSelect(VM* a_vm, RE::VMStackID a_stackID, RE::StaticFunctionTag*, RE::TESForm* obj) { UNREGISTER(_hunterprideselect); }
-    inline void RegisterForHunterPrideSelect_Alias(VM* a_vm, RE::VMStackID a_stackID, RE::StaticFunctionTag*, RE::BGSRefAlias* obj) { REGISTER(_hunterprideselect); }
-    inline void UnregisterForHunterPrideSelect_Alias(VM* a_vm, RE::VMStackID a_stackID, RE::StaticFunctionTag*, RE::BGSRefAlias* obj) { UNREGISTER(_hunterprideselect); }
-    inline void RegisterForHunterPrideSelect_MgEff(VM* a_vm, RE::VMStackID a_stackID, RE::StaticFunctionTag*, RE::ActiveEffect* obj) { REGISTER(_hunterprideselect); }
-    inline void UnregisterForHunterPrideSelect_MgEff(VM* a_vm, RE::VMStackID a_stackID, RE::StaticFunctionTag*, RE::ActiveEffect* obj) { UNREGISTER(_hunterprideselect); }
-
     inline bool RegisterEvents(VM* vm)
     {
         vm->RegisterFunction("RegisterForActorDefeated", "Acheron", RegisterForActorDefeated, true);
@@ -64,12 +57,6 @@ namespace Papyrus
         vm->RegisterFunction("RegisterForActorRescued_MgEff", "Acheron", RegisterForActorRescued_MgEff, true);
         vm->RegisterFunction("UnregisterForActorRescued_MgEff", "Acheron", UnregisterForActorRescued_MgEff, true);
 
-        vm->RegisterFunction("RegisterForHunterPrideSelect", "Acheron", RegisterForHunterPrideSelect, true);
-        vm->RegisterFunction("UnregisterForHunterPrideSelect", "Acheron", UnregisterForHunterPrideSelect, true);
-        vm->RegisterFunction("RegisterForHunterPrideSelect_Alias", "Acheron", RegisterForHunterPrideSelect_Alias, true);
-        vm->RegisterFunction("UnregisterForHunterPrideSelect_Alias", "Acheron", UnregisterForHunterPrideSelect_Alias, true);
-        vm->RegisterFunction("RegisterForHunterPrideSelect_MgEff", "Acheron", RegisterForHunterPrideSelect_MgEff, true);
-        vm->RegisterFunction("UnregisterForHunterPrideSelect_MgEff", "Acheron", UnregisterForHunterPrideSelect_MgEff, true);
 
         return true;
     }

@@ -43,12 +43,17 @@ namespace Acheron
         static void UpdateCharacter(RE::Character* a_this, float a_delta);
         static void MagicHit(uint64_t* unk1, RE::ActiveEffect& effect, uint64_t* unk3, uint64_t* unk4, uint64_t* unk5);
         static bool DoesMagicHitApply(RE::MagicTarget* a_target, RE::MagicTarget::AddTargetData* a_data);
+        template <unsigned Index>
+        static void HealingStart(RE::ActiveEffect* effect);
+        template <unsigned Index>
+        static void HealingUpdate(RE::ActiveEffect* effect, float delta);
         template <bool MoveFinish>
         static float FallAndPhysicsDamage(RE::Actor* a_this, float a_fallDistance, float a_defaultMult);
         static uint8_t* DoDetect(RE::Actor* viewer, RE::Actor* target, int32_t& detectval, uint8_t& unk04, uint8_t& unk05, uint32_t& unk06, RE::NiPoint3& pos, float& unk08, float& unk09, float& unk10);
 
         // Hit Processing
         static HitResult ProcessHitData(RE::Actor* a_target, RE::HitData& a_hitData);
+        static bool CanPlayerFinish(RE::Actor* a_target, const RE::Actor* a_source);
         static ProcessType GetProcessType(RE::Actor* a_aggressor, bool a_lethal);
         static bool HandleLethal(RE::Actor* a_victim, RE::Actor* a_aggressor);
         static bool HandleExposed(RE::Actor* a_victim);
@@ -65,6 +70,8 @@ namespace Acheron
         static inline REL::Relocation<decltype(UpdateCharacter)> _UpdateCharacter;
         static inline REL::Relocation<decltype(MagicHit)> _MagicHit;
         static inline REL::Relocation<decltype(DoesMagicHitApply)> _DoesMagicHitApply;
+        static inline std::array<REL::Relocation<decltype(HealingStart<0>)>, 5> _HealingStart;
+        static inline std::array<REL::Relocation<decltype(HealingUpdate<0>)>, 5> _HealingUpdate;
         static inline REL::Relocation<decltype(DoDetect)> _DoDetect;
         static inline REL::Relocation<decltype(FallAndPhysicsDamage<true>)> _FallAndPhysicsDamage;
     };

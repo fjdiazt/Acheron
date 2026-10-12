@@ -4,6 +4,7 @@
 #include "Acheron/EventSink.h"
 #include "Acheron/Hooks/Processing.h"
 #include "Acheron/Misc.h"
+#include "Acheron/Pacification.h"
 #include "Acheron/Validation.h"
 #include "shared/KrisV/Random.h"
 
@@ -80,6 +81,18 @@ namespace Acheron
         _Load3D = char_vt.write_vfunc(0x6A, Load3D);
         _UpdateCombat = char_vt.write_vfunc(REL::Relocate(0xE4, 0xE4, 0xE6), UpdateCombat);
         _UpdateCharacter = char_vt.write_vfunc(REL::Relocate(0xAD, 0xAD, 0xAF), UpdateCharacter);
+        if (!REL::Module::IsVR()) {
+            const auto hookHealing = [&]<unsigned Index>(REL::VariantID id) {
+                REL::Relocation<std::uintptr_t> table{ id };
+                _HealingStart[Index] = table.write_vfunc(0x14, HealingStart<Index>);
+                _HealingUpdate[Index] = table.write_vfunc(0x04, HealingUpdate<Index>);
+            };
+            hookHealing.operator()<0>(RE::ValueModifierEffect::VTABLE[0]);
+            hookHealing.operator()<1>(RE::DualValueModifierEffect::VTABLE[0]);
+            hookHealing.operator()<2>(RE::ValueAndConditionsEffect::VTABLE[0]);
+            hookHealing.operator()<3>(RE::TargetValueModifierEffect::VTABLE[0]);
+            hookHealing.operator()<4>(RE::AccumulatingValueModifierEffect::VTABLE[0]);
+        }
 
 #undef VAR_OFFSET
         logger::info("Hooks installed");
@@ -105,8 +118,6 @@ namespace Acheron
 
         const auto data = Defeat::GetVictimData(a_player->GetFormID());
         if (!data) {
-            if (Validation::CanProcessDamage())
-                CalcDamageOverTime(a_player);
             return;
         } else if (!data->allow_recovery) {
             return;
@@ -162,6 +173,38 @@ namespace Acheron
     void Hooks::UpdateCharacter(RE::Character* a_this, float a_delta)
     {
         _UpdateCharacter(a_this, a_delta);
+        Pacification::Update(a_this, RE::GetSecondsSinceLastFrame());
+#ifdef ACHERON_YIELD_TESTS
+        if (a_this->IsPlayerTeammate() || (a_this->GetFormID() & 0xFF000000) == 0xFF000000) {
+            // shortcut: fresh-process discovery only; clear observations on load before adding persistence tests.
+            static std::unordered_map<RE::FormID, std::pair<RE::ATTACK_STATE_ENUM, std::chrono::steady_clock::time_point>> observations;
+            static std::mutex observationMutex;
+            const std::lock_guard lock(observationMutex);
+            const auto now = std::chrono::steady_clock::now();
+            const auto state = a_this->AsActorState()->GetAttackState();
+            auto& previous = observations[a_this->GetFormID()];
+            if (state != previous.first || now - previous.second >= 250ms) {
+                const auto target = a_this->GetActorRuntimeData().currentCombatTarget.get();
+                logger::info("[YieldAttack] source={:08X} target={:08X} state={} combat={} defeated={} pacified={} dead={} tickMs={}",
+                    a_this->GetFormID(), target ? target->GetFormID() : 0,
+                    static_cast<std::uint32_t>(state), a_this->IsInCombat(),
+                    Defeat::IsDefeated(a_this), Defeat::IsPacified(a_this), a_this->IsDead(),
+                    std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count());
+                previous = { state, now };
+                if (Defeat::IsPacified(a_this)) {
+                    const auto process = a_this->GetActorRuntimeData().currentProcess;
+                    const auto key = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSKeyword>(0x812, "Acheron.esm");
+                    const auto threat = key ? a_this->GetLinkedRef(key) : nullptr;
+                    const auto package = a_this->GetCurrentPackage();
+                    const auto packageTarget = process ? process->currentPackage.target.get() : nullptr;
+                    logger::info("[PeacefulProbeSample] actor={:08X} package={:08X} procedure={} target={:08X} threat={:08X} delta={}",
+                        a_this->GetFormID(), package ? package->GetFormID() : 0,
+                        process ? process->currentPackage.currentProcedureIndex : -1,
+                        packageTarget ? packageTarget->GetFormID() : 0, threat ? threat->GetFormID() : 0, a_delta);
+                }
+            }
+        }
+#endif
 
         const auto data = Defeat::GetVictimData(a_this->GetFormID());
         if (data) {
@@ -233,8 +276,23 @@ namespace Acheron
 
         if (!a_target || a_target->IsCommandedActor() || !IsNPC(a_target))
             return HitResult::Allow;
-        if (Defeat::IsDamageImmune(a_target))
-            return HitResult::Prevent;
+#ifdef ACHERON_YIELD_TESTS
+        const auto hitSource = a_hitData.aggressor.get();
+        logger::info("[YieldHit] target={:08X} source={:08X} damage={} immune={} tickMs={}",
+            a_target->GetFormID(), hitSource ? hitSource->GetFormID() : 0,
+            a_hitData.totalDamage, Defeat::IsDamageImmune(a_target),
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
+#endif
+        if (Defeat::IsDamageImmune(a_target)) {
+            const auto source = a_hitData.aggressor.get();
+            const bool allow = CanPlayerFinish(a_target, source.get());
+#ifdef ACHERON_YIELD_TESTS
+            logger::info("[YieldFinish] target={:08X} source={:08X} kind=physical allowed={} essential={}",
+                a_target->GetFormID(), source ? source->GetFormID() : 0, allow, a_target->IsEssential());
+#endif
+            // Keep defeat protection until Skyrim's death event performs existing cleanup.
+            return allow ? HitResult::Allow : HitResult::Prevent;
+        }
 
         if (!Validation::CanProcessDamage())
             return HitResult::Allow;
@@ -285,7 +343,15 @@ namespace Acheron
         default:
             negate = false;
         }
-        if (negate && Processing::RegisterDefeat(a_target, { aggressor, a_target })) {
+        const bool registeredDefeat = negate && Processing::RegisterDefeat(a_target, { aggressor, a_target });
+#ifdef ACHERON_YIELD_TESTS
+        if (aggressor) {
+            logger::info("[YieldTest] target={:08X} source={:08X} health={} damage={} lethal={} defeated={} pacified={} registered={}",
+                a_target->GetFormID(), aggressor->GetFormID(), hp, dmg, hp <= dmg,
+                Defeat::IsDefeated(a_target), Defeat::IsPacified(a_target), registeredDefeat);
+        }
+#endif
+        if (registeredDefeat) {
             return HitResult::Prevent;
         } else if (a_hitData.flags.none(RE::HitData::Flag::kBlocked, RE::HitData::Flag::kBlockWithWeapon)) {
             ValidateStrip(a_target);
@@ -318,12 +384,19 @@ namespace Acheron
             return none;
         }()) {
         case healing:
-            if (Defeat::IsDefeated(target) && Validation::AllowRescueEffect(base))
-                Defeat::RescueActor(target, true);
+            if (Defeat::IsDefeated(target) && Validation::AllowRescueEffect(base)) {
+                if (REL::Module::IsVR() || !Pacification::IsEligible(target)) Defeat::RescueActor(target, true);
+            }
             break;
         case damaging:
             if (Defeat::IsDamageImmune(target)) {
-                dispel = true;
+                const auto source = effect.caster.get();
+                const bool allow = CanPlayerFinish(target, source.get());
+#ifdef ACHERON_YIELD_TESTS
+                logger::info("[YieldFinish] target={:08X} source={:08X} kind=magic allowed={} essential={}",
+                    target->GetFormID(), source ? source->GetFormID() : 0, allow, target->IsEssential());
+#endif
+                dispel = !allow;
                 break;
             }
             if (Validation::CanProcessDamage()) {
@@ -367,6 +440,39 @@ namespace Acheron
         _MagicHit(unk1, effect, unk3, unk4, unk5);
     }
 
+    namespace
+    {
+        template <typename Apply>
+        void ObserveHealthEffect(RE::ActiveEffect* effect, Apply apply)
+        {
+            const auto target = effect->target ? effect->target->GetTargetStatsObject() : nullptr;
+            const auto actor = target ? target->As<RE::Actor>() : nullptr;
+            const auto base = effect->GetBaseObject();
+            const bool eligible = Pacification::IsEligible(actor) && Defeat::IsDefeated(actor) && base &&
+                (base->data.primaryAV == RE::ActorValue::kHealth || base->data.secondaryAV == RE::ActorValue::kHealth) &&
+                !base->HasArchetype(Archetype::kPeakValueModifier) && effect->magnitude > 0 &&
+                // Recover reverses a temporary modifier on expiry; native healing is non-recovering.
+                !base->data.flags.any(RE::EffectSetting::EffectSettingData::Flag::kRecover) &&
+                !base->data.flags.any(RE::EffectSetting::EffectSettingData::Flag::kDetrimental) && Validation::AllowRescueEffect(base);
+            const auto victim = eligible ? Defeat::GetVictimData(actor->GetFormID()) : nullptr;
+            const float before = eligible ? actor->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth) : 0.0f;
+            apply();
+            if (eligible && actor->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth) > before &&
+                Defeat::GetVictimData(actor->GetFormID()) == victim)
+                Pacification::ObserveHealing(actor, before);
+        }
+    }
+    template <unsigned Index>
+    void Hooks::HealingStart(RE::ActiveEffect* effect)
+    {
+        ObserveHealthEffect(effect, [effect]() { _HealingStart[Index](effect); });
+    }
+    template <unsigned Index>
+    void Hooks::HealingUpdate(RE::ActiveEffect* effect, float delta)
+    {
+        ObserveHealthEffect(effect, [effect, delta]() { _HealingUpdate[Index](effect, delta); });
+    }
+
     bool Hooks::DoesMagicHitApply(RE::MagicTarget* a_target, RE::MagicTarget::AddTargetData* a_data)
     {
         const auto target = [&a_target]() {
@@ -374,6 +480,13 @@ namespace Acheron
             return obj ? obj->As<RE::Actor>() : nullptr;
         }();
         if (target && !target->IsDead() && Defeat::IsDamageImmune(target)) {
+            const auto caster = a_data && a_data->caster ? a_data->caster->As<RE::Actor>() : nullptr;
+            if (CanPlayerFinish(target, caster)) {
+#ifdef ACHERON_YIELD_TESTS
+                logger::info("[YieldMagicApply] target={:08X} source={:08X} allowed=true essential=false", target->GetFormID(), caster->GetFormID());
+#endif
+                return _DoesMagicHitApply(a_target, a_data);
+            }
             auto spell = a_data ? a_data->magicItem : nullptr;
             if (!spell)
                 return _DoesMagicHitApply(a_target, a_data);
@@ -381,6 +494,10 @@ namespace Acheron
             for (auto& e : spell->effects) {
                 auto base = e ? e->baseEffect : nullptr;
                 if (base && base->data.flags.all(RE::EffectSetting::EffectSettingData::Flag::kDetrimental) && !Validation::AllowDetrimentalEffect(base)) {
+#ifdef ACHERON_YIELD_TESTS
+                    logger::info("[YieldMagicApply] target={:08X} source={:08X} allowed=false essential={}",
+                        target->GetFormID(), caster ? caster->GetFormID() : 0, target->IsEssential());
+#endif
                     return false;
                 }
             }
@@ -413,11 +530,19 @@ namespace Acheron
 
     uint8_t* Hooks::DoDetect(RE::Actor* viewer, RE::Actor* target, int32_t& detectval, uint8_t& unk04, uint8_t& unk05, uint32_t& unk06, RE::NiPoint3& pos, float& unk08, float& unk09, float& unk10)
     {
-        if (target && Defeat::IsPacified(target) || viewer && Defeat::IsPacified(viewer)) {
+        if ((target && Defeat::IsPacified(target)) || (viewer && Defeat::IsPacified(viewer))) {
             detectval = -1000;
             return nullptr;
         }
         return _DoDetect(viewer, target, detectval, unk04, unk05, unk06, pos, unk08, unk09, unk10);
+    }
+
+    bool Hooks::CanPlayerFinish(RE::Actor* a_target, const RE::Actor* a_source)
+    {
+        // Use the actual source, never AggressorInfo's summon owner or nearest attacker.
+        return a_source && a_source->IsPlayerRef() && a_target && !a_target->IsPlayerRef() &&
+               IsNPC(a_target) && !a_target->IsCommandedActor() && !a_target->IsDead() &&
+               !a_target->IsEssential() && Defeat::IsDefeated(a_target);
     }
 
     Hooks::ProcessType Hooks::GetProcessType(RE::Actor* a_aggressor, bool a_lethal)

@@ -1,0 +1,7 @@
+FormKey: 00082A:Acheron.esm
+EditorID: AcheronDefeatedExecute
+Quest: 000818:Acheron.esm
+Category: Player
+Flags:
+- TopLevel
+StartingTopic: 00082B:Acheron.esm

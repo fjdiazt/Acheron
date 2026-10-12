@@ -1,0 +1,8 @@
+FormKey: 00082E:Acheron.esm
+EditorID: AcheronDefeatedDrainTopic
+Name:
+  TargetLanguage: English
+  Value: Drain
+Branch: 00082D:Acheron.esm
+Quest: 000818:Acheron.esm
+SubtypeName: CUST

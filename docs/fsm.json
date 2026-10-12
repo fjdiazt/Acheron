@@ -1,0 +1,1205 @@
+{
+    "id": "SkyrimCombat",
+    "initial": "Combat",
+    "states": {
+        "Combat": {
+            "on": {
+                "Hit [outcome = yield]": [
+                    {
+                        "target": "Yielding",
+                        "actions": [],
+                        "meta": {}
+                    }
+                ],
+                "Hit [outcome = knockout]": [
+                    {
+                        "target": "Unconscious",
+                        "actions": [],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Separate optional hit-triggered knockout proposal; not the health-based yield-expiry roll. Attack eligibility remains undecided."
+                        }
+                    }
+                ],
+                "Death": [
+                    {
+                        "target": "Dead",
+                        "actions": []
+                    }
+                ],
+                "Hit [outcome = continue]": [
+                    {
+                        "target": "Combat",
+                        "actions": []
+                    }
+                ]
+            }
+        },
+        "Yielding": {
+            "on": {
+                "Rescue/healing [succeeded, eligible desktop NPC, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "End defeat and damage immunity; retain actual healing; begin rescued pacification",
+                            "Reset wander budget to valid requested duration (1-600 seconds)"
+                        ],
+                        "meta": {
+                            "plannedEffects": [
+                                "Cancel pending yield-expiry resolution"
+                            ]
+                        }
+                    }
+                ],
+                "Rescue/healing [succeeded, eligible desktop NPC, no nearby combat]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "End defeat and damage immunity; retain actual healing; begin rescued pacification",
+                            "Reset wander budget to valid requested duration (1-600 seconds)"
+                        ],
+                        "meta": {
+                            "plannedEffects": [
+                                "Cancel pending yield-expiry resolution"
+                            ]
+                        }
+                    }
+                ],
+                "Kneel [eligible loaded desktop NPC]": [
+                    {
+                        "target": "Kneeling",
+                        "actions": [
+                            "End defeat and damage immunity without healing; begin pacification",
+                            "Set CommandHoldDurationSeconds to 1800 real seconds; preserve wander budget"
+                        ],
+                        "meta": {
+                            "plannedEffects": [
+                                "Cancel pending yield-expiry resolution"
+                            ]
+                        }
+                    }
+                ],
+                "Yield recovery timer expires [allow_recovery]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "RescueActor(actor, true): remove defeat and pacification; restore ordinary AI"
+                        ],
+                        "meta": {
+                            "status": "current",
+                            "description": "Current code restores ordinary AI. Planned single-roll expiry resolution replaces this handler; both must never execute for one expiry."
+                        }
+                    }
+                ],
+                "Death": [
+                    {
+                        "target": "Dead",
+                        "actions": [
+                            "Remove defeat and pacification"
+                        ],
+                        "meta": {
+                            "plannedEffects": [
+                                "Cancel pending yield-expiry resolution"
+                            ]
+                        }
+                    }
+                ],
+                "Yield timer expires [allow_recovery, same eligible yield episode, unresolved]": [
+                    {
+                        "target": "Yielding",
+                        "actions": [
+                            "Snapshot meaningful injury health including healing",
+                            "Compute exclusive death, unconscious and survival probabilities",
+                            "Draw one r in [0, 1); select one outcome using cumulative thresholds",
+                            "Persist episode resolution and chosen outcome before applying effects"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "One decision per yield episode, replacing current unconditional recovery. This self edge records a result; Observe and save/load cannot reroll it."
+                        }
+                    }
+                ],
+                "Yield resolution [recorded outcome = death, death not requested]": [
+                    {
+                        "target": "Yielding",
+                        "actions": [
+                            "Request eligible engine death once; record death request",
+                            "Wait for Skyrim Death notification"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Chosen mortality requests death; Dead is entered only through the existing Death edge. Essential-NPC protections remain mandatory."
+                        }
+                    }
+                ],
+                "Yield resolution [recorded outcome = unconscious, not applied]": [
+                    {
+                        "target": "Unconscious",
+                        "actions": [
+                            "End yield episode without healing; apply living unconscious behavior once"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Uses persisted outcome, not a fresh probability roll. Knockout and its later recovery remain unimplemented."
+                        }
+                    }
+                ],
+                "Yield resolution [recorded outcome = survival, not applied]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "End yield episode; release defeat and pacification; hand surviving NPC to ordinary AI"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Provisional survival destination. Future fleeing-versus-normal survivor policy remains undecided; do not assume Rescue pacification."
+                        }
+                    }
+                ],
+                "Surrender [eligible loaded desktop NPC, unpaused, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "End yield episode and defeat/bleedout damage protection without potion consumption or added healing",
+                            "Cancel pending yield-expiry resolution and deadline; do not roll an outcome",
+                            "Begin unbound, talkable peaceful movement; set configured rescued wander budget (1-600 seconds, default 60); no commanded hold"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "New Surrender NPC dialogue command. Current Rescue already has these destinations through healing; Surrender is separate from Rescue and Kneel. Player surrender remains disabled."
+                        }
+                    }
+                ],
+                "Surrender [eligible loaded desktop NPC, unpaused, no nearby combat]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "End yield episode and defeat/bleedout damage protection without potion consumption or added healing",
+                            "Cancel pending yield-expiry resolution and deadline; do not roll an outcome",
+                            "Begin unbound, talkable peaceful movement; set configured rescued wander budget (1-600 seconds, default 60); no commanded hold"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "New Surrender NPC dialogue command. Current Rescue already has these destinations through healing; Surrender is separate from Rescue and Kneel. Player surrender remains disabled."
+                        }
+                    }
+                ]
+            }
+        },
+        "Unconscious": {
+            "on": {
+                "Wake up [nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Wake up [no nearby combat]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Death": [
+                    {
+                        "target": "Dead",
+                        "actions": [],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Wake up [low health]": [
+                    {
+                        "target": "Yielding",
+                        "actions": [],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Wound resolution [recorded fatal outcome, death not requested]": [
+                    {
+                        "target": "Unconscious",
+                        "actions": [
+                            "Request eligible engine death once; wait for Death notification"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Later unconscious wound-resolution timing remains undecided. Never re-run the same yield-expiry lottery; confirmed death uses the Death edge."
+                        }
+                    }
+                ]
+            },
+            "meta": {
+                "status": "planned",
+                "description": "Knockout, wake-up and wound-resolution rules remain proposals."
+            }
+        },
+        "Dead": {
+            "type": "final",
+            "meta": {
+                "description": "Actor remains dead. Death cleanup does not restore living Normal behavior."
+            }
+        },
+        "AvoidingCombat": {
+            "on": {
+                "Death": [
+                    {
+                        "target": "Dead",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Observe [renewed defeat]": [
+                    {
+                        "target": "Yielding",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides",
+                            "Preserve new defeat ownership and protection"
+                        ]
+                    }
+                ],
+                "Observe [ineligible or invalid peaceful state]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Release": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Nearby combat ends [loaded, unpaused, wander budget > 0 or dialogue open]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Resume peaceful wandering; retain pacification"
+                        ]
+                    }
+                ],
+                "Nearby combat ends [loaded, unpaused, wander budget = 0, dialogue closed]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Kneel [loaded, unpaused]": [
+                    {
+                        "target": "Kneeling",
+                        "actions": [
+                            "Set CommandHoldDurationSeconds to 1800 real seconds; preserve wander budget"
+                        ]
+                    }
+                ],
+                "Refresh [valid duration, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Reset wander budget to valid requested duration (1-600 seconds)"
+                        ]
+                    }
+                ],
+                "Refresh [valid duration, no nearby combat]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Reset wander budget to valid requested duration (1-600 seconds)"
+                        ]
+                    }
+                ],
+                "Bind [eligible owned enemy, loaded, unpaused]": [
+                    {
+                        "target": "StandingBound",
+                        "actions": [
+                            "Enter standing hands-bound pose without healing; retain pacification and dialogue",
+                            "Set CommandHoldDurationSeconds to 1800 real seconds; preserve frozen wander budget"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Standing binding proposal; current Bind accepts only Kneeling. Standing topic: You're my prisoner now."
+                        }
+                    }
+                ]
+            },
+            "meta": {
+                "timer": "No avoidance expiry. Wander budget frozen until Wandering; actor remains pacified and talkable."
+            }
+        },
+        "Wandering": {
+            "on": {
+                "Death": [
+                    {
+                        "target": "Dead",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Observe [renewed defeat]": [
+                    {
+                        "target": "Yielding",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides",
+                            "Preserve new defeat ownership and protection"
+                        ]
+                    }
+                ],
+                "Observe [ineligible or invalid peaceful state]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Release": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Nearby combat starts [loaded, unpaused]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Freeze wander budget; retain pacification"
+                        ]
+                    }
+                ],
+                "Wandering timer expires [loaded, unpaused, no nearby combat, dialogue closed]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Kneel [loaded, unpaused]": [
+                    {
+                        "target": "Kneeling",
+                        "actions": [
+                            "Set CommandHoldDurationSeconds to 1800 real seconds; preserve wander budget"
+                        ]
+                    }
+                ],
+                "Refresh [valid duration, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Reset wander budget to valid requested duration (1-600 seconds)"
+                        ]
+                    }
+                ],
+                "Refresh [valid duration, no nearby combat]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Reset wander budget to valid requested duration (1-600 seconds)"
+                        ]
+                    }
+                ],
+                "Bind [eligible owned enemy, loaded, unpaused]": [
+                    {
+                        "target": "StandingBound",
+                        "actions": [
+                            "Enter standing hands-bound pose without healing; retain pacification and dialogue",
+                            "Set CommandHoldDurationSeconds to 1800 real seconds; preserve frozen wander budget"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Standing binding proposal; current Bind accepts only Kneeling. Standing topic: You're my prisoner now."
+                        }
+                    }
+                ]
+            },
+            "meta": {
+                "timer": "Wander budget counts down only in loaded, unpaused Wandering. Avoidance and command holds freeze it; dialogue defers expiry, not countdown."
+            }
+        },
+        "Kneeling": {
+            "on": {
+                "Death": [
+                    {
+                        "target": "Dead",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Observe [renewed defeat]": [
+                    {
+                        "target": "Yielding",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides",
+                            "Preserve new defeat ownership and protection"
+                        ]
+                    }
+                ],
+                "Observe [ineligible or invalid peaceful state]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Release": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Hold Timer Expires [loaded, unpaused, dialogue closed, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ]
+                    }
+                ],
+                "Hold Timer Expires [loaded, unpaused, dialogue closed, no nearby combat, wander budget > 0]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ]
+                    }
+                ],
+                "Hold Timer Expires [loaded, unpaused, dialogue closed, no nearby combat, wander budget = 0]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Resume [loaded, unpaused, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ]
+                    }
+                ],
+                "Resume [loaded, unpaused, no nearby combat, wander budget > 0]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ]
+                    }
+                ],
+                "Resume [loaded, unpaused, no nearby combat, wander budget = 0, dialogue closed]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Resume [loaded, unpaused, no nearby combat, wander budget = 0, dialogue open]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ]
+                    }
+                ],
+                "Refresh [valid duration, hold remaining > 0]": [
+                    {
+                        "target": "Kneeling",
+                        "actions": [
+                            "Reset wander budget to valid requested duration (1-600 seconds)"
+                        ]
+                    }
+                ],
+                "Refresh [valid duration, hold expired, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Reset wander budget to valid requested duration (1-600 seconds)",
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ]
+                    }
+                ],
+                "Refresh [valid duration, hold expired, no nearby combat]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Reset wander budget to valid requested duration (1-600 seconds)",
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ]
+                    }
+                ],
+                "Bind [loaded, unpaused, owned unbound Kneeling]": [
+                    {
+                        "target": "KneelingBound",
+                        "actions": [
+                            "Enter native bound kneeling pose",
+                            "Restart CommandHoldDurationSeconds at 1800 real seconds; preserve wander budget"
+                        ]
+                    }
+                ]
+            },
+            "meta": {
+                "timer": "Separate 1800-real-second CommandHoldDurationSeconds. Combat does not pause it; elapsed wall time is accounted for on observation. Hold expiry waits for loaded/unpaused actor and closed dialogue.",
+                "wanderBudget": "Frozen during hold; preserved on Bind and Resume. Refresh changes wander budget without restarting hold.",
+                "commands": "Kneel does not reset an existing hold or unbind KneelingBound."
+            }
+        },
+        "Normal": {
+            "meta": {
+                "description": "Unmanaged by the peaceful controller; ordinary Skyrim AI owns behavior. Cleanup restores AI without requiring another event."
+            }
+        },
+        "KneelingBound": {
+            "on": {
+                "Death": [
+                    {
+                        "target": "Dead",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Observe [renewed defeat]": [
+                    {
+                        "target": "Yielding",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides",
+                            "Preserve new defeat ownership and protection"
+                        ],
+                        "meta": {
+                            "description": "Existing lifecycle fallback for externally forced defeat. Planned bound-hit policy prevents ordinary hits from creating renewed defeat."
+                        }
+                    }
+                ],
+                "Observe [ineligible or invalid peaceful state]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Release": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Hold Timer Expires [loaded, unpaused, dialogue closed, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ]
+                    }
+                ],
+                "Hold Timer Expires [loaded, unpaused, dialogue closed, no nearby combat, wander budget > 0]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ]
+                    }
+                ],
+                "Hold Timer Expires [loaded, unpaused, dialogue closed, no nearby combat, wander budget = 0]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Resume [loaded, unpaused, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ]
+                    }
+                ],
+                "Resume [loaded, unpaused, no nearby combat, wander budget > 0]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ]
+                    }
+                ],
+                "Resume [loaded, unpaused, no nearby combat, wander budget = 0, dialogue closed]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Resume [loaded, unpaused, no nearby combat, wander budget = 0, dialogue open]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ]
+                    }
+                ],
+                "Refresh [valid duration, hold remaining > 0]": [
+                    {
+                        "target": "KneelingBound",
+                        "actions": [
+                            "Reset wander budget to valid requested duration (1-600 seconds)"
+                        ]
+                    }
+                ],
+                "Refresh [valid duration, hold expired, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Reset wander budget to valid requested duration (1-600 seconds)",
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ]
+                    }
+                ],
+                "Refresh [valid duration, hold expired, no nearby combat]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Reset wander budget to valid requested duration (1-600 seconds)",
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ]
+                    }
+                ],
+                "Hit [post-damage health > 0]": [
+                    {
+                        "target": "KneelingBound",
+                        "actions": [
+                            "Apply ordinary hit damage; retain binding, pacification and held pose",
+                            "Restart CommandHoldDurationSeconds at 1800 real seconds; preserve frozen wander budget; do not roll an outcome"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Nonfatal hit retains binding and resets only its commanded hold to 1800 real seconds. Applies only to bound states: KneelingBound, StandingBound and FollowingBound."
+                        }
+                    }
+                ],
+                "Hit [post-damage health <= 0, eligible to die]": [
+                    {
+                        "target": "KneelingBound",
+                        "actions": [
+                            "Allow engine fatal damage instead of defeat or knockout interception",
+                            "Wait for Skyrim Death notification; retain binding until death cleanup"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Dead is entered through the existing Death edge; this hit edge does not run yield-expiry probabilities. Preserve essential-NPC protections."
+                        }
+                    }
+                ],
+                "Let go": [
+                    {
+                        "target": "Fleeing",
+                        "actions": [
+                            "Remove binding, bound pose, follow/stay orders, prisoner ownership and hold timer without healing",
+                            "Start temporary fleeing from the player; retain only flee AI/pacification until safe-distance or finite-time end condition"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Explicit release unbinds the NPC and starts temporary fleeing; distinct from current low-level KneelingBound Release cleanup."
+                        }
+                    }
+                ],
+                "Stand [loaded, unpaused, hold remaining > 0]": [
+                    {
+                        "target": "StandingBound",
+                        "actions": [
+                            "Preserve binding, pacification and frozen wander budget; do not heal or recruit",
+                            "Restart CommandHoldDurationSeconds at 1800 real seconds when the posture command is accepted; keep counting during animation; do not reset again on completion",
+                            "Play kneeling exit/stand-up animation and await completion",
+                            "Then play standing-bound entry and idle; settle in StandingBound"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "timer": "Either bound posture command restarts hold at 1800 real seconds on acceptance, not again on animation completion. Nonfatal bound hits still reset it. Follow/Stay preserve remaining time. No timer pause during choreography.",
+                            "completion": "Wait for posture-animation completion before destination bound entry/idle; settle destination posture only after ordered choreography. Exact clips/events and failure timeout remain unqualified.",
+                            "cancellation": "Death, release, hold expiry or ownership loss cancels pending sequence. Ignore stale animation callbacks; failure/timeout must not wait forever or rebind a released NPC.",
+                            "description": "Dialogue: On your feet. Applies only to KneelingBound; no intermediate unbound phase. Current code has no Stand event or StandingBound phase."
+                        }
+                    }
+                ]
+            },
+            "meta": {
+                "timer": "Separate 1800-real-second CommandHoldDurationSeconds. Combat does not pause it; elapsed wall time is accounted for on observation. Hold expiry waits for loaded/unpaused actor and closed dialogue. Planned nonfatal-hit policy restarts this hold at 1800 real seconds only in KneelingBound, StandingBound and FollowingBound; fatal hits take the death path instead. Planned Stand / On your feet. also restarts hold at 1800 real seconds on command acceptance; animation completion does not reset it again.",
+                "wanderBudget": "Frozen during hold; preserved on Bind and Resume. Refresh changes wander budget without restarting hold.",
+                "commands": "Current Kneel does not reset an existing hold or unbind KneelingBound. Planned On your feet. / Stand enters StandingBound through stand-up then standing-bound animation, retaining binding and restarting hold at 1800 real seconds on command acceptance.",
+                "boundDamage": {
+                    "status": "planned",
+                    "rule": "Ordinary damage; nonfatal hits retain binding and restart commanded hold at 1800 real seconds while preserving frozen wander budget. Health zero causes eligible engine death, confirmed by Death notification.",
+                    "codeGap": "Damage hooks have no bound-state defeat bypass; new DefeatActor removes peaceful ownership. Hit-triggered hold restart is not implemented; existing Refresh resets wander budget, not hold. StandingBound and FollowingBound are also unimplemented.",
+                    "health": "Actual post-damage actor Health, distinct from meaningful injury health used for yield-expiry resolution.",
+                    "validation": "Qualify visible pose retention, ordinary damage, nonfatal-hit hold restart to 1800, unchanged wander budget, near-expiry hits and lethal-hit death; non-bound states must not receive hit-driven timer restart."
+                }
+            }
+        },
+        "StandingBound": {
+            "on": {
+                "Death": [
+                    {
+                        "target": "Dead",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Observe [renewed defeat]": [
+                    {
+                        "target": "Yielding",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides",
+                            "Preserve new defeat ownership and protection"
+                        ],
+                        "meta": {
+                            "description": "Planned lifecycle fallback for externally forced defeat. Ordinary bound hits must not create renewed defeat.",
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Observe [ineligible or invalid peaceful state]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Release": [
+                    {
+                        "target": "Fleeing",
+                        "actions": [
+                            "Remove binding, bound pose, follow/stay orders, prisoner ownership and hold timer without healing",
+                            "Start temporary fleeing from the player; retain only flee AI/pacification until safe-distance or finite-time end condition"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Planned standing binding release uses the same unbind-and-flee behavior as Let go."
+                        }
+                    }
+                ],
+                "Refresh [valid duration, hold remaining > 0]": [
+                    {
+                        "target": "StandingBound",
+                        "actions": [
+                            "Reset wander budget to valid requested duration (1-600 seconds)"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Hit [post-damage health > 0]": [
+                    {
+                        "target": "StandingBound",
+                        "actions": [
+                            "Apply ordinary hit damage; retain binding, pacification and held pose",
+                            "Restart CommandHoldDurationSeconds at 1800 real seconds; preserve frozen wander budget; do not roll an outcome"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Nonfatal hit retains binding and resets only its commanded hold to 1800 real seconds. Applies only to bound states: KneelingBound, StandingBound and FollowingBound."
+                        }
+                    }
+                ],
+                "Hit [post-damage health <= 0, eligible to die]": [
+                    {
+                        "target": "StandingBound",
+                        "actions": [
+                            "Allow engine fatal damage instead of defeat or knockout interception",
+                            "Wait for Skyrim Death notification; retain binding until death cleanup"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Dead is entered through the Death edge; this hit edge does not run yield-expiry probabilities. Preserve essential-NPC protections."
+                        }
+                    }
+                ],
+                "Let go": [
+                    {
+                        "target": "Fleeing",
+                        "actions": [
+                            "Remove binding, bound pose, follow/stay orders, prisoner ownership and hold timer without healing",
+                            "Start temporary fleeing from the player; retain only flee AI/pacification until safe-distance or finite-time end condition"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Explicit release unbinds the NPC and starts temporary fleeing; distinct from current low-level KneelingBound Release cleanup."
+                        }
+                    }
+                ],
+                "Resume [loaded, unpaused]": [
+                    {
+                        "target": "Fleeing",
+                        "actions": [
+                            "Remove binding, bound pose, follow/stay orders, prisoner ownership and hold timer without healing",
+                            "Start temporary fleeing from the player; retain only flee AI/pacification until safe-distance or finite-time end condition"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Planned internal resume exits binding through fleeing; Follow is the distinct command that retains binding."
+                        }
+                    }
+                ],
+                "Refresh [valid duration, hold expired, loaded, unpaused, dialogue closed]": [
+                    {
+                        "target": "Fleeing",
+                        "actions": [
+                            "Remove binding, bound pose, follow/stay orders, prisoner ownership and hold timer without healing",
+                            "Start temporary fleeing from the player; retain only flee AI/pacification until safe-distance or finite-time end condition"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "A due bound hold exits to fleeing; a wander-budget refresh must not keep the NPC imprisoned."
+                        }
+                    }
+                ],
+                "Follow [loaded, unpaused]": [
+                    {
+                        "target": "FollowingBound",
+                        "actions": [
+                            "Replace stationary standing pose with bound following behavior targeting player; retain pacification",
+                            "Preserve remaining CommandHoldDurationSeconds and frozen wander budget; do not recruit as a follower"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Follow changes movement behavior without restarting the hold."
+                        }
+                    }
+                ],
+                "Hold Timer Expires [dialogue closed]": [
+                    {
+                        "target": "Fleeing",
+                        "actions": [
+                            "Remove binding, bound pose, follow/stay orders, prisoner ownership and hold timer without healing",
+                            "Start temporary fleeing from the player; retain only flee AI/pacification until safe-distance or finite-time end condition"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Latest agreed forgotten-NPC safeguard: unbind and flee on the shared hold expiry, regardless of combat or remaining wander budget. Expiry tracking must not depend on actor loading. Record release while unloaded; physical pose cleanup and flee movement wait for loading."
+                        }
+                    }
+                ],
+                "Kneel [loaded, unpaused, hold remaining > 0]": [
+                    {
+                        "target": "KneelingBound",
+                        "actions": [
+                            "Preserve binding, pacification and frozen wander budget; do not heal or recruit",
+                            "Restart CommandHoldDurationSeconds at 1800 real seconds when the posture command is accepted; keep counting during animation; do not reset again on completion",
+                            "Play kneeling-entry animation and await completion",
+                            "Then play kneeling-bound entry and idle; settle in KneelingBound"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "timer": "Either bound posture command restarts hold at 1800 real seconds on acceptance, not again on animation completion. Nonfatal bound hits still reset it. Follow/Stay preserve remaining time. No timer pause during choreography.",
+                            "completion": "Wait for posture-animation completion before destination bound entry/idle; settle destination posture only after ordered choreography. Exact clips/events and failure timeout remain unqualified.",
+                            "cancellation": "Death, release, hold expiry or ownership loss cancels pending sequence. Ignore stale animation callbacks; failure/timeout must not wait forever or rebind a released NPC.",
+                            "description": "Dialogue: On your knees. Context-sensitive bound path; AvoidingCombat/Wandering still enter unbound Kneeling. Current Kneel ignores held phases."
+                        }
+                    }
+                ]
+            },
+            "meta": {
+                "timer": "Separate 1800-real-second CommandHoldDurationSeconds; nonfatal bound hits and accepted bound posture commands reset it, Follow/Stay preserve remaining time, wander budget frozen. Combat does not pause it. Expiry enters Fleeing after dialogue closes, including unloaded NPCs: record release when due, defer physical cleanup/movement until loaded, and apply pending release before any bound pose. Persist remaining time across save/load; catch up paused elapsed time when processing resumes. Game-closed time excluded.",
+                "wanderBudget": "Frozen during hold; preserved on Bind and Resume. Refresh changes wander budget without restarting hold.",
+                "commands": "Standing binding topic: You're my prisoner now.; event: Bind. On your knees. / Kneel enters KneelingBound through kneeling then bound-kneeling animation, retaining binding and restarting hold at 1800 real seconds on command acceptance. Follow enters FollowingBound; Stay from FollowingBound returns here. Follow/Stay preserve remaining hold; bound posture commands restart it. Let go unbinds and flees. Civilian eligibility remains open.",
+                "boundDamage": {
+                    "status": "planned",
+                    "rule": "Ordinary damage; nonfatal hits retain binding and restart commanded hold at 1800 real seconds while preserving frozen wander budget. Health zero causes eligible engine death, confirmed by Death notification.",
+                    "codeGap": "Damage hooks have no bound-state defeat bypass; new DefeatActor removes peaceful ownership. Hit-triggered hold restart is not implemented; existing Refresh resets wander budget, not hold. StandingBound and FollowingBound are also unimplemented.",
+                    "health": "Actual post-damage actor Health, distinct from meaningful injury health used for yield-expiry resolution.",
+                    "validation": "Qualify visible pose retention, ordinary damage, nonfatal-hit hold restart to 1800, unchanged wander budget, near-expiry hits and lethal-hit death; non-bound states must not receive hit-driven timer restart."
+                },
+                "status": "planned",
+                "description": "Eligible owned rescued enemy bound while standing, from Wandering or AvoidingCombat; remains pacified and talkable without healing. Shares KneelingBound hold and hit rules. Current code has no StandingBound phase; standing animation/form remains unidentified."
+            }
+        },
+        "FollowingBound": {
+            "on": {
+                "Death": [
+                    {
+                        "target": "Dead",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Observe [renewed defeat]": [
+                    {
+                        "target": "Yielding",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides",
+                            "Preserve new defeat ownership and protection"
+                        ],
+                        "meta": {
+                            "description": "Planned lifecycle fallback for externally forced defeat. Ordinary bound hits must not create renewed defeat.",
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Observe [ineligible or invalid peaceful state]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Release": [
+                    {
+                        "target": "Fleeing",
+                        "actions": [
+                            "Remove binding, bound pose, follow/stay orders, prisoner ownership and hold timer without healing",
+                            "Start temporary fleeing from the player; retain only flee AI/pacification until safe-distance or finite-time end condition"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Planned standing binding release uses the same unbind-and-flee behavior as Let go."
+                        }
+                    }
+                ],
+                "Refresh [valid duration, hold remaining > 0]": [
+                    {
+                        "target": "FollowingBound",
+                        "actions": [
+                            "Reset wander budget to valid requested duration (1-600 seconds)"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Hit [post-damage health > 0]": [
+                    {
+                        "target": "FollowingBound",
+                        "actions": [
+                            "Apply ordinary hit damage; retain binding, pacification and bound following behavior",
+                            "Restart CommandHoldDurationSeconds at 1800 real seconds; preserve frozen wander budget; do not roll an outcome"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Nonfatal hit retains binding and resets only its commanded hold to 1800 real seconds. Applies only to bound states: KneelingBound, StandingBound and FollowingBound."
+                        }
+                    }
+                ],
+                "Hit [post-damage health <= 0, eligible to die]": [
+                    {
+                        "target": "FollowingBound",
+                        "actions": [
+                            "Allow engine fatal damage instead of defeat or knockout interception",
+                            "Wait for Skyrim Death notification; retain binding until death cleanup"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Dead is entered through the Death edge; this hit edge does not run yield-expiry probabilities. Preserve essential-NPC protections."
+                        }
+                    }
+                ],
+                "Let go": [
+                    {
+                        "target": "Fleeing",
+                        "actions": [
+                            "Remove binding, bound pose, follow/stay orders, prisoner ownership and hold timer without healing",
+                            "Start temporary fleeing from the player; retain only flee AI/pacification until safe-distance or finite-time end condition"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Explicit release unbinds the NPC and starts temporary fleeing; distinct from current low-level KneelingBound Release cleanup."
+                        }
+                    }
+                ],
+                "Resume [loaded, unpaused]": [
+                    {
+                        "target": "Fleeing",
+                        "actions": [
+                            "Remove binding, bound pose, follow/stay orders, prisoner ownership and hold timer without healing",
+                            "Start temporary fleeing from the player; retain only flee AI/pacification until safe-distance or finite-time end condition"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Planned internal resume exits binding through fleeing; Follow is the distinct command that retains binding."
+                        }
+                    }
+                ],
+                "Refresh [valid duration, hold expired, loaded, unpaused, dialogue closed]": [
+                    {
+                        "target": "Fleeing",
+                        "actions": [
+                            "Remove binding, bound pose, follow/stay orders, prisoner ownership and hold timer without healing",
+                            "Start temporary fleeing from the player; retain only flee AI/pacification until safe-distance or finite-time end condition"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "A due bound hold exits to fleeing; a wander-budget refresh must not keep the NPC imprisoned."
+                        }
+                    }
+                ],
+                "Stay [loaded, unpaused]": [
+                    {
+                        "target": "StandingBound",
+                        "actions": [
+                            "Stop temporary following; enter standing bound waiting pose",
+                            "Preserve remaining CommandHoldDurationSeconds and frozen wander budget"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Stay changes movement behavior without restarting the hold."
+                        }
+                    }
+                ],
+                "Hold Timer Expires [dialogue closed]": [
+                    {
+                        "target": "Fleeing",
+                        "actions": [
+                            "Remove binding, bound pose, follow/stay orders, prisoner ownership and hold timer without healing",
+                            "Start temporary fleeing from the player; retain only flee AI/pacification until safe-distance or finite-time end condition"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Latest agreed forgotten-NPC safeguard: unbind and flee on the shared hold expiry, regardless of combat or remaining wander budget. Expiry tracking must not depend on actor loading. Record release while unloaded; physical pose cleanup and flee movement wait for loading."
+                        }
+                    }
+                ]
+            },
+            "meta": {
+                "timer": "Separate 1800-real-second CommandHoldDurationSeconds; nonfatal bound hits reset it, Follow/Stay preserve remaining time, wander budget frozen. Combat does not pause it. Expiry enters Fleeing after dialogue closes, including unloaded NPCs: record release when due, defer physical cleanup/movement until loaded, and apply pending release before any bound pose. Persist remaining time across save/load; catch up paused elapsed time when processing resumes. Game-closed time excluded.",
+                "wanderBudget": "Frozen during hold; preserved on Bind and Resume. Refresh changes wander budget without restarting hold.",
+                "commands": "Stay returns to StandingBound; Let go unbinds and flees. Preserve remaining hold on Follow/Stay. Do not modify follower factions, follower count or recruitment state.",
+                "boundDamage": {
+                    "status": "planned",
+                    "rule": "Ordinary damage; nonfatal hits retain binding and restart commanded hold at 1800 real seconds while preserving frozen wander budget. Health zero causes eligible engine death, confirmed by Death notification.",
+                    "codeGap": "Damage hooks have no bound-state defeat bypass; new DefeatActor removes peaceful ownership. Hit-triggered hold restart is not implemented; existing Refresh resets wander budget, not hold. StandingBound and FollowingBound are also unimplemented.",
+                    "health": "Actual post-damage actor Health, distinct from meaningful injury health used for yield-expiry resolution.",
+                    "validation": "Qualify visible binding and following retention, ordinary damage, nonfatal-hit hold restart to 1800, unchanged wander budget, near-expiry hits and lethal-hit death; non-bound states must not receive hit-driven timer restart."
+                },
+                "status": "planned",
+                "description": "Planned owned bound-following phase entered by Follow from StandingBound. Temporary follow AI targets player without follower recruitment. Bound walking animation remains unidentified."
+            }
+        },
+        "Fleeing": {
+            "on": {
+                "Flee ends [safe distance reached or finite flee timeout]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove temporary flee AI/pacification; restore underlying Skyrim/quest AI"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Release is finite; exact safe distance and flee time limit remain undecided."
+                        }
+                    }
+                ],
+                "Death": [
+                    {
+                        "target": "Dead",
+                        "actions": [
+                            "Remove temporary flee AI/pacification and any remaining owned overrides"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Confirmed engine Death cancels flight."
+                        }
+                    }
+                ],
+                "Observe [ineligible or invalid flee state]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove temporary flee AI/pacification; restore underlying Skyrim/quest AI"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "description": "Remove only our overrides; no permanent faction or relationship change."
+                        }
+                    }
+                ]
+            },
+            "meta": {
+                "status": "planned",
+                "description": "Unbound temporary flight after Let go or standing/following bound hold expiry. No prisoner ownership, hold timer or bound follow/stay commands. Only temporary flee AI/pacification persists until flight ends.",
+                "timer": "A finite flee timeout and/or safe-distance end condition is required; exact constants remain undecided.",
+                "codeGap": "No Fleeing phase or release-flight handler is implemented.",
+                "unloaded": "If release occurred unloaded, pending physical cleanup and flight apply on loading before any bound/follow/stay behavior. Captivity does not survive the recorded release."
+            }
+        }
+    },
+    "meta": {
+        "description": "Documentation diagram, not an executable controller. Event keys include human-readable guards; actions describe effects, not registered runtime callbacks.",
+        "events": "Hit means incoming damage processing. Death means Skyrim reported actor death from any cause; cleanup actions do not kill the actor. Planned mortality outcomes request engine death and wait for the same Death notification.",
+        "sources": [
+            "src/Acheron/PacificationState.h",
+            "src/Acheron/Pacification.cpp",
+            "src/Acheron/Hooks/Hooks.cpp",
+            "src/Acheron/EventSink.cpp"
+        ],
+        "scope": "Combat, Yielding, Normal and Dead describe engine/defeat behavior. Only AvoidingCombat, Wandering, Kneeling and KneelingBound are currently implemented owned peaceful phases; their adapter is desktop-only. StandingBound and FollowingBound are planned owned bound phases. Fleeing is planned temporary flight after release, without prisoner ownership.",
+        "priority": "Death, renewed defeat, invalid state and ineligibility remove peaceful ownership before ordinary phase decisions. Release also removes ownership while paused. Planned standing/following bound expiry and release remove prisoner controls and start finite flight; fatal damage/Death outranks timer refresh or movement commands.",
+        "planned": "Transitions marked planned are retained proposals, not current implementation.",
+        "documentation": "fsm.md",
+        "yieldResolution": {
+            "status": "planned",
+            "trigger": "Yield timer ending; one persisted decision per yield episode, never an ordinary Observe tick",
+            "probabilities": "D + U + S = 1; U = (1 - D) * K; S = (1 - D) * (1 - K). K is conditional knockout chance among survivors.",
+            "health": "Meaningful injury health at expiry including healing, not the artificial defeated-health clamp",
+            "constraints": "For death-eligible NPCs D(0)=1, U(0)=S(0)=0; death increases as health falls and exceeds unconscious chance near zero. Nonlinear curve constants remain undecided.",
+            "sampling": "One r in [0,1): r<D selects death; D<=r<D+U selects unconscious; otherwise survival.",
+            "persistence": "Record outcome before effects; repeat updates and save/load resume it without rerolling. Rescue/healing, Surrender, Kneel or Death cancels pending expiry.",
+            "compatibility": "Current recovery-timer handler remains documented separately until this replacement is implemented."
+        },
+        "boundPosture": {
+            "status": "planned",
+            "standing": "KneelingBound --Stand (On your feet.)--> StandingBound: stand-up first, then standing-bound entry/idle.",
+            "kneeling": "StandingBound --Kneel (On your knees.)--> KneelingBound: kneeling entry first, then bound-kneeling entry/idle.",
+            "invariants": "No unbound intermediate phase; binding/pacification and frozen wander budget retained. Restart hold at 1800 real seconds on posture command acceptance, not again at animation completion. Hold counts during choreography. Follow/Stay preserve remaining time. Death/release/expiry invalidates choreography.",
+            "codeGap": "Current held phases ignore Kneel, and Stand/StandingBound are unimplemented. Ordered animation completion and failure handling require qualification."
+        },
+        "yieldSurrender": {
+            "status": "planned",
+            "routing": "Yielding --Surrender--> AvoidingCombat if nearby combat active, otherwise Wandering.",
+            "effects": "End defeat protection without potion or added healing; cancel pending yield outcome; begin unbound peaceful movement with configured rescued wander budget. No 1800-second hold.",
+            "codeGap": "No Surrender native dialogue topic/action exists; current Rescue heals and On your knees. enters Kneeling. Reuse defeat-to-peaceful handoff with separate no-heal command routing."
+        }
+    }
+}

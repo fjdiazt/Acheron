@@ -1,8 +1,8 @@
 #include "Serialization/Serialize.h"
 
 #include "Acheron/Defeat.h"
+#include "Acheron/Pacification.h"
 #include "Acheron/EventSink.h"
-#include "Acheron/Interface/HunterPride.h"
 #include "Serialization/EventManager.h"
 
 namespace Serialization
@@ -11,7 +11,7 @@ namespace Serialization
     {
         EventManager::GetSingleton()->Save(a_intfc, _Version);
 
-        if (!a_intfc->OpenRecord(_Defeated, _Version))
+        if (!a_intfc->OpenRecord(_Defeated, _DefeatedVersion))
             logger::error("Failed to open record <Defeated>");
         else
             Acheron::Defeat::Save(a_intfc, _Defeated);
@@ -20,11 +20,6 @@ namespace Serialization
             logger::error("Failed to open record <Pacified>");
         else
             Acheron::Defeat::Save(a_intfc, _Pacified);
-
-        if (!a_intfc->OpenRecord(_HunterPride, _Version))
-            logger::error("Failed to open record <HunterPride>");
-        else
-            Acheron::Interface::HunterPride::Save(a_intfc);
 
         if (!a_intfc->OpenRecord(_Processing, _Version))
             logger::error("Failed to open record <Processing>");
@@ -36,6 +31,8 @@ namespace Serialization
         else if (!a_intfc->WriteRecordData(Settings::ConsequenceEnabled))
             logger::error("Failed to serialize record <Processing>");
 
+        if (a_intfc->OpenRecord(_Peaceful, _PeacefulVersion)) Acheron::Pacification::Save(a_intfc);
+        else logger::error("Unable to open peaceful cosave record");
         logger::info("Finished writing data to cosave");
     }
 
@@ -45,6 +42,17 @@ namespace Serialization
         uint32_t version;
         uint32_t length;
         while (a_intfc->GetNextRecordInfo(type, version, length)) {
+            if (type == _HunterPride || type == EventManager::HunterPrideSelect) continue; // Discard obsolete custom-menu data.
+            if (type == _Defeated) {
+                if (version == 1 || version == _DefeatedVersion) Acheron::Defeat::Load(a_intfc, type, version);
+                else logger::warn("Unsupported defeated cosave version {}", version);
+                continue;
+            }
+            if (type == _Peaceful) {
+                if (version == 1 || version == _PeacefulVersion) Acheron::Pacification::Load(a_intfc, version);
+                else logger::warn("Unsupported peaceful cosave version {}", version);
+                continue;
+            }
             const auto ty = GetTypeName(type);
             if (version != _Version) {
                 logger::info("Invalid Version for loaded Data of Type = {}. Expected = {}; Got = {}", ty, static_cast<uint32_t>(_Version), version);
@@ -52,12 +60,8 @@ namespace Serialization
             }
             logger::info("Loading record {}", ty);
             switch (type) {
-            case _Defeated:
             case _Pacified:
                 Acheron::Defeat::Load(a_intfc, type);
-                break;
-            case _HunterPride:
-                Acheron::Interface::HunterPride::Load(a_intfc);
                 break;
             case _Processing:
                 a_intfc->ReadRecordData(Settings::ProcessingEnabled);
@@ -72,13 +76,14 @@ namespace Serialization
         }
 
         logger::info("Finished loading data from cosave");
+        Acheron::Pacification::Reconcile();
     }
 
     void Serialize::RevertCallback(SKSE::SerializationInterface* a_intfc)
     {
+        Acheron::Pacification::Revert();
         EventManager::GetSingleton()->Revert(a_intfc);
         Acheron::Defeat::Revert(a_intfc);
-        Acheron::Interface::HunterPride::Revert(a_intfc);
     }
 
     void Serialize::FormDeleteCallback(RE::VMHandle a_handle)

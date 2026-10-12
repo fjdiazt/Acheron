@@ -1,63 +1,15 @@
 FormKey: 000803:Acheron.esm
 EditorID: AcheronInteraction
-VirtualMachineAdapter:
-  Scripts:
-  - Name: PRKF_AcheronInteraction_05000805
-    Properties:
-    - MutagenObjectType: ScriptObjectProperty
-      Name: hunterpride
-      Object: 000800:Acheron.esm
-  ScriptFragments:
-    FileName: PRKF_AcheronInteraction_05000805
-    Fragments:
-    - Unknown2: 1
-      ScriptName: PRKF_AcheronInteraction_05000805
-      FragmentName: Fragment_0
 Name:
   TargetLanguage: English
   Value: Acheron Interaction
 Description:
   TargetLanguage: English
-  Value: >-
-    Perk suppresses activation of pacified, hostile Actors, to avoid them entering combat upon entering dialogue
-
-    and displays the interaction menu for defeated ones
+  Value: Labels living defeated actors for native Talk activation.
 NumRanks: 1
 Playable: True
 Hidden: True
 Effects:
-- MutagenObjectType: PerkEntryPointAddActivateChoice
-  Priority: 9
-  Conditions:
-  - RunOnTabIndex: 1
-    Conditions:
-    - MutagenObjectType: ConditionFloat
-      Data:
-        MutagenObjectType: GetDeadConditionData
-    - MutagenObjectType: ConditionFloat
-      Data:
-        MutagenObjectType: HasKeywordConditionData
-        Keyword: 000801:Acheron.esm
-      ComparisonValue: 1
-  Flags:
-    Flags:
-    - RunImmediately
-    - ReplaceDefault
-  EntryPoint: Activate
-  PerkConditionTabCount: 2
-- MutagenObjectType: PerkEntryPointModifyValue
-  Priority: 10
-  Conditions:
-  - Conditions:
-    - MutagenObjectType: ConditionFloat
-      Data:
-        MutagenObjectType: HasKeywordConditionData
-        Keyword: 000801:Acheron.esm
-      ComparisonValue: 1
-  EntryPoint: FilterActivation
-  PerkConditionTabCount: 2
-  Modification: Add
-  Value: 1
 - MutagenObjectType: PerkEntryPointSetText
   Priority: 10
   Conditions:
@@ -75,30 +27,4 @@ Effects:
   PerkConditionTabCount: 2
   Text:
     TargetLanguage: English
-    Value: Defeated
-- MutagenObjectType: PerkEntryPointModifyValue
-  Priority: 10
-  Conditions:
-  - RunOnTabIndex: 1
-    Conditions:
-    - MutagenObjectType: ConditionFloat
-      Data:
-        MutagenObjectType: GetDeadConditionData
-    - MutagenObjectType: ConditionFloat
-      Data:
-        MutagenObjectType: HasKeywordConditionData
-        Keyword: 000801:Acheron.esm
-    - MutagenObjectType: ConditionFloat
-      Data:
-        MutagenObjectType: HasKeywordConditionData
-        Keyword: 000802:Acheron.esm
-      ComparisonValue: 1
-    - MutagenObjectType: ConditionFloat
-      Data:
-        MutagenObjectType: IsHostileToActorConditionData
-        TargetNpc: 000014:Skyrim.esm
-      ComparisonValue: 1
-  EntryPoint: FilterActivation
-  PerkConditionTabCount: 2
-  Modification: Add
-  Value: 1
+    Value: Talk

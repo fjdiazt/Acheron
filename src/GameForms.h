@@ -6,8 +6,8 @@ namespace Acheron
     {
 #define LOOKUPFORM(form, formid)                                                                                             \
     form = RE::TESDataHandler::GetSingleton()->LookupForm<std::remove_pointer<decltype(form)>::type>(formid, "Acheron.esm"); \
-    if (!form)                                                                                                               \
-        return false;
+    if (!form) { logger::error("Missing game form {} ({:06X})", #form, formid);                                                  \
+        return false; }
 
         // Vanilla Game
         static inline RE::TESFaction* GuardDiaFac;
@@ -30,6 +30,20 @@ namespace Acheron
         static inline RE::TESFaction* IgnoredFaction;
 
         static inline RE::BGSPerk* InteractionPerk;
+        static inline RE::BGSKeyword* PeacefulAnchor;
+        static inline RE::BGSKeyword* PeacefulGoal;
+        static inline RE::TESPackage* PeacefulAvoid;
+        static inline RE::TESPackage* PeacefulWander;
+        static inline RE::TESPackage* PeacefulKneel;
+        static inline RE::TESPackage* PeacefulKneelBound;
+        static inline RE::TESFurniture* PeacefulBoundMarker;
+        static inline RE::FormID KneelDialogueInfoID;
+        static inline RE::FormID YieldKneelDialogueInfoID;
+        static inline RE::FormID BindDialogueInfoID;
+        static inline std::array<RE::FormID, 4> DefeatedDialogueInfoIDs{};
+        static inline RE::TESQuest* MainQuest;
+        static inline RE::TESQuest* PeacefulDialogue;
+        static inline RE::TESFaction* RescuedWounded;
 
 
         [[nodiscard]] static bool LoadForms()
@@ -63,6 +77,27 @@ namespace Acheron
             LOOKUPFORM(IgnoredFaction, 0x80C);
 
             LOOKUPFORM(InteractionPerk, 0x803);
+            if (!REL::Module::IsVR()) {
+                LOOKUPFORM(PeacefulAnchor, 0x811);
+                LOOKUPFORM(PeacefulGoal, 0x812);
+                LOOKUPFORM(PeacefulAvoid, 0x813);
+                LOOKUPFORM(PeacefulWander, 0x814);
+                LOOKUPFORM(PeacefulDialogue, 0x818);
+                YieldKneelDialogueInfoID = RE::TESDataHandler::GetSingleton()->LookupFormID(0x830, "Acheron.esm");
+                if (!YieldKneelDialogueInfoID) return false;
+                LOOKUPFORM(MainQuest, 0x800);
+                for (std::size_t i = 0; i < DefeatedDialogueInfoIDs.size(); ++i) {
+                    DefeatedDialogueInfoIDs[i] = RE::TESDataHandler::GetSingleton()->LookupFormID(static_cast<RE::FormID>(0x826 + i * 3), "Acheron.esm");
+                    if (!DefeatedDialogueInfoIDs[i]) return false;
+                }
+                LOOKUPFORM(RescuedWounded, 0x819);
+                LOOKUPFORM(PeacefulKneel, 0x81A);
+                LOOKUPFORM(PeacefulKneelBound, 0x81E);
+                LOOKUPFORM(PeacefulBoundMarker, 0x822);
+                KneelDialogueInfoID = RE::TESDataHandler::GetSingleton()->LookupFormID(0x81C, "Acheron.esm");
+                BindDialogueInfoID = RE::TESDataHandler::GetSingleton()->LookupFormID(0x820, "Acheron.esm");
+                if (!KneelDialogueInfoID || !BindDialogueInfoID) return false;
+            }
 
             return true;
         }

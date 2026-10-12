@@ -7,7 +7,6 @@ namespace Serialization
         _actordefeated.Save(a_intfc, ActorDefeated, a_version);
         _actorrescued.Save(a_intfc, ActorRescued, a_version);
         _playerdeathevent.Save(a_intfc, PlayerDeathEvent, a_version);
-        _hunterprideselect.Save(a_intfc, HunterPrideSelect, a_version);
     }
 
     void EventManager::Load(SKSE::SerializationInterface* a_intfc, std::uint32_t a_type)
@@ -22,9 +21,6 @@ namespace Serialization
         case PlayerDeathEvent:
             _playerdeathevent.Load(a_intfc);
             break;
-        case HunterPrideSelect:
-            _hunterprideselect.Load(a_intfc);
-            break;
         default:
             logger::warn("Unknown Type = {}", a_type);
             break;
@@ -36,7 +32,6 @@ namespace Serialization
         _actordefeated.Revert(a_intfc);
         _actorrescued.Revert(a_intfc);
         _playerdeathevent.Revert(a_intfc);
-        _hunterprideselect.Revert(a_intfc);
     }
 
     void EventManager::FormDelete(RE::VMHandle a_handle)
@@ -44,7 +39,6 @@ namespace Serialization
         _actordefeated.Unregister(a_handle);
         _actorrescued.Unregister(a_handle);
         _playerdeathevent.Unregister(a_handle);
-        _hunterprideselect.Unregister(a_handle);
     }
 
 }  // namespace Serialization

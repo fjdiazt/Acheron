@@ -31,6 +31,8 @@ namespace Acheron
             float registered_at;              // GameDaysPassed at construction
             bool allow_recovery{ true };      // if this actor may passively recover
             bool mark_for_recovery{ false };  // Rescue this actor the next time they load in?
+            std::uint8_t dialogueFlags{};     // Prior extra-talk presence/value and bleedout dialogue flag.
+            float dialogueAggression{}, dialogueAggressionModifierBefore{};
             std::atomic<VictimState> state{ VictimState::Defeating };
         };
 
@@ -53,13 +55,15 @@ namespace Acheron
         static bool IsPacified(const RE::Actor* a_victim);
 
       public:
-        static void Load(SKSE::SerializationInterface* a_intfc, uint32_t a_type);
+        static void Load(SKSE::SerializationInterface* a_intfc, uint32_t a_type, uint32_t version = 1);
         static void Save(SKSE::SerializationInterface* a_intfc, uint32_t a_type);
         static void Revert(SKSE::SerializationInterface* a_intfc);
         static void Delete(RE::FormID a_formid);
 
       private:
         static void PacifyUnsafe(RE::Actor* a_victim);
+        static std::uint8_t CaptureDialogue(RE::Actor* actor);
+        static void RestoreDialogue(RE::Actor* actor, const VictimData& data);
 
       private:
         static inline std::map<RE::FormID, std::shared_ptr<VictimData>> Victims;

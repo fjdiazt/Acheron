@@ -22,7 +22,7 @@ String[] Function GetEvents(int aiType) native
 String Function SetEventWeight(String asEvent, int aiType, int aiNewWeight) native
 
 String[] _typesList
-int _type = 0
+int _type = 4
 
 String[] _events  ; [Flags] Name;Weight;ID
 
@@ -98,18 +98,16 @@ Event OnPageReset(string page)
     AddColorOptionST("notifycolorchoice", "$Achr_NotifyColorChoice", GetSettingColor("rNotifyColor"), getFlag((bNotifyDefeat || bNotifyDestroy) && bNotifyColored))
 
     SetCursorPosition(1)
+    AddKeyMapOptionST("godkey", "God preset key (desktop)", GetSettingInt("iGodKey"))
     AddKeyMapOptionST("hunterpridemodkey", "$Achr_ModifierKey", GetSettingInt("iHunterPrideKeyMod"))
     AddHeaderOption("$Achr_HunterPride")
     AddKeyMapOptionST("hunterpridekey", "$Achr_HunterPrideKey", GetSettingInt("iHunterPrideKey"))
     AddToggleOptionST("hunterpridefollower", "$Achr_HunterPrideFollower", GetSettingBool("bHunterPrideFollower"))
     AddToggleOptionST("hunterpridekillanim", "$Achr_HunterPrideKillAnim", GetSettingBool("bHunterPrideKillAnim"))
-    AddHeaderOption("$Achr_Surrender")
-    AddKeyMapOptionST("surrenderkey", "$Achr_SurrenderKey", GetSettingInt("iSurrenderKey"))
 
   ElseIf (page == "$Achr_Defeat")
     AddHeaderOption("$Achr_Lethal")
     AddToggleoptionST("lethalessential", "$Achr_LethalEssential", GetSettingBool("bLethalEssential"))
-    AddSliderOptionST("lethalplayer", "$Achr_LethalPlayer", GetSettingFloat("fLethalPlayer"), "{1}%")
     AddSliderOptionST("lethalfollower", "$Achr_LethalFollower", GetSettingFloat("fLethalFollower"), "{1}%")
     AddSliderOptionST("lethalnpc", "$Achr_LethalNPC", GetSettingFloat("fLethalNPC"), "{1}%")
 
@@ -125,18 +123,14 @@ Event OnPageReset(string page)
 
     SetCursorPosition(1)
     AddHeaderOption("$Achr_Knockdown")
-    AddSliderOptionST("midcmbtblackout", "$Achr_DefeatEndCmt", GetSettingFloat("fMidCombatBlackout"), "{1}%")
-    AddToggleoptionST("kdplayer", "$Achr_KdPlayer", GetSettingBool("bPlayerDefeat"))
     AddToggleoptionST("kdfollower", "$Achr_KdFollower", GetSettingBool("bFollowerDefeat"))
-    AddToggleOptionST("kdfolwithplayer", "$Achr_KdFolWithplayer", GetSettingBool("bFolWithPlDefeat"))
     AddToggleoptionST("kdnpc", "$Achr_KdNPC", GetSettingBool("bNPCDefeat"))
 
     AddHeaderOption("$Achr_Recovery")
-    AddSliderOptionST("recoverhealththresh", "$Achr_RecHealThresh", GetSettingFloat("fKdHealthThresh") * 100, "{1}%")
-    AddSliderOptionST("recoverhealfallback", "$Achr_RecHealFallback", GetSettingInt("iKdFallbackTimer"), "{0}s")
     AddMenuOptionST("FollowerRescue", "$Achr_FollowerRescue", _FollowerRescue[GetSettingInt("iFollowerRescue")])
     AddToggleoptionST("NPCRescueReload", "$Achr_NPCRescueReload", GetSettingBool("bNPCRescueReload"))
     AddSliderOptionST("NPCRescueTimer", "$Achr_NPCRescueTimer", GetSettingInt("iNPCRescueTimer"), "{0}s")
+    AddSliderOptionST("PeacefulWanderDuration", "$Achr_PeacefulWanderDuration", GetSettingInt("iPeacefulWanderDuration"), "{0}s")
 
     AddHeaderOption("$Achr_Stripping")
     AddSliderOptionST("stripchance", "$Achr_StripChance", GetSettingFloat("fStripChance"), "{1}%")
@@ -162,9 +156,10 @@ Event OnPageReset(string page)
     EndWhile
 
   ElseIf(page == "$Achr_Events")
+    _type = 4
     _events = GetEvents(_type)
     SetCursorFillMode(LEFT_TO_RIGHT)
-    AddMenuOptionST("viewingevents", "$Achr_EventView", _typesList[_type])
+    AddMenuOptionST("viewingevents", "$Achr_EventView", _typesList[_type], OPTION_FLAG_DISABLED)
     AddTextOptionST("readmeevents", "$Achr_ReadMe", "")
     AddHeaderOption("")
     AddHeaderOption("")
@@ -336,6 +331,11 @@ Event OnSliderOpenST()
     SetSliderDialogDefaultValue(450)
     SetSliderDialogRange(0, 600)
     SetSliderDialogInterval(10)
+  ElseIf (s[0] == "PeacefulWanderDuration")
+    SetSliderDialogStartValue(GetSettingInt("iPeacefulWanderDuration"))
+    SetSliderDialogDefaultValue(60)
+    SetSliderDialogRange(1, 600)
+    SetSliderDialogInterval(1)
 
   ; --------------- Events
   ElseIf(s[0] == "event")
@@ -391,6 +391,9 @@ Event OnSliderAcceptST(float value)
   ElseIf (s[0] == "NPCRescueTimer")
     SetSettingInt("iNPCRescueTimer", value as int)
     SetSliderOptionValueST(value, "{0}s")
+  ElseIf (s[0] == "PeacefulWanderDuration")
+    SetSettingInt("iPeacefulWanderDuration", value as int)
+    SetSliderOptionValueST(value, "{0}s")
   ; --------------- Events
   ElseIf(s[0] == "event")
     int i = s[1] as int
@@ -425,6 +428,8 @@ Event OnKeyMapChangeST(int newKeyCode, string conflictControl, string conflictNa
     EndIf
     If(s[0] == "hunterpridekey")
       SetSettingInt("iHunterPrideKey", newKeyCode)
+    ElseIf(s[0] == "godkey")
+      SetSettingInt("iGodKey", newKeyCode)
     ElseIf (s[0] == "surrenderkey")
       SetSettingInt("iSurrenderKey", newKeyCode)
     EndIf
@@ -504,6 +509,8 @@ Event OnHighlightST()
     SetInfoText("$Achr_NPCRescueReloadHighlight")
   ElseIf(s[0] == "NPCRescueTimer")
     SetInfoText("$Achr_NPCRescueTimerHighlight")
+  ElseIf(s[0] == "PeacefulWanderDuration")
+    SetInfoText("$Achr_PeacefulWanderDurationHighlight")
   ; --------------- Stripping
   ElseIf(s[0] == "strips")
     int i = s[1] as int
@@ -585,7 +592,9 @@ Function Toggle(String asSetting)
 EndFunction
 
 String Function GetCustomControl(int keyCode)
-	If(keyCode == GetSettingInt("iHunterPrideKey"))
+	If(keyCode == GetSettingInt("iGodKey"))
+    return "God preset"
+  ElseIf(keyCode == GetSettingInt("iHunterPrideKey"))
     return "Hunter's Pride"
   Else
 		return ""

@@ -1,4 +1,19 @@
 Scriptname Acheron Hidden
+
+; Desktop testing preset; modifies the current character permanently when saved.
+Function ApplyGodPreset() global native
+
+; True means queued; IsPeacefulState confirms the acquired state.
+bool Function BeginPeacefulState(Actor akActor, int aiDurationSeconds) native global
+; Queued commands; no health restoration. Resume returns to avoidance/wandering.
+bool Function KneelActor(Actor akActor) native global
+bool Function BindActor(Actor akActor) native global
+bool Function ResumePeacefulState(Actor akActor) native global
+bool Function IsPeacefulState(Actor akActor) native global
+; Selects native healing rescue; legacy fallback remains for VR/followers.
+bool Function SupportsPeacefulRescue(Actor akActor) native global
+; Test build only; logs the controller's current state without changing it.
+Function ProbePeacefulState(Actor akActor) native global
 { Global API for Acheron }
 
 ; Disable/Enable hit processing
@@ -20,6 +35,8 @@ Function DefeatActor(Actor akActor) native global
 Function RescueActor(Actor akActor, bool abRelease = true) native global
 Function PacifyActor(Actor akActor) native global
 Function ReleaseActor(Actor akActor) native global
+; Diagnostic builds only; disposable actors and markers.
+Function ProbePeacefulLinks(Actor akActor, ObjectReference akAnchor, ObjectReference akThreat) native global
 bool Function IsDefeated(Actor akActor) native global
 bool Function IsPacified(Actor akActor) native global
 
@@ -55,32 +72,6 @@ Function UnregisterForPlayerDeathEvent_Alias(ReferenceAlias akAlias) native glob
 Function RegisterForPlayerDeathEvent_MgEff(ActiveMagicEffect akEffect) native global
 Function UnregisterForPlayerDeathEvent_MgEff(ActiveMagicEffect akEffect) native global
 Event OnPlayerDeathEvent()
-EndEvent
-
-; ================================ Hunter Pride
-; 'Hunter Pride' is the menu called when the player activates a defeated victim. The menu can be dynamically expanded with the below functions
-; When registering a new option, use the callback event to be notified when your option is being selected
-; See https://github.com/Scrabx3/Acheron/wiki/Hunter-Pride for a more throughout documentation
-; --- Params:
-; asOptionID:   An ID-String with the option to add. Has to be unique among all options, recommended to prefix
-; asOptionName: A human readable, descriptive name for your option. Shorter is better, supports localization
-; asIconSource: A file path to an icon that is used for the option, relative to 'Interface\\Acheron'
-; asConditions: A json string of conditions, stating when the option is available/disabled
-; -- Return:
-; The associated integer representing this option, or -1 if the option could not be added
-int Function AddOption(String asOptionID, String asOptionName, String asIconSource, String asConditions = "") native global
-bool Function RemoveOption(String asOptionID) native global
-bool Function HasOption(String asOptionID) native global
-int Function GetOptionID(String asOptionID) native global
-
-; Invoked whenever an option is selected
-Function RegisterForHunterPrideSelect(Form akForm) native global
-Function UnregisterForHunterPrideSelect(Form akForm) native global
-Function RegisterForHunterPrideSelect_Alias(ReferenceAlias akAlias) native global
-Function UnregisterForHunterPrideSelect_Alias(ReferenceAlias akAlias) native global
-Function RegisterForHunterPrideSelect_MgEff(ActiveMagicEffect akEffect) native global
-Function UnregisterForHunterPrideSelect_MgEff(ActiveMagicEffect akEffect) native global
-Event OnHunterPrideSelect(int aiOptionID, Actor akTarget)
 EndEvent
 
 ; ================================ ObjectReference

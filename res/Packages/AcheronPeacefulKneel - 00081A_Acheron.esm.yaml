@@ -1,0 +1,40 @@
+FormKey: 00081A:Acheron.esm
+EditorID: AcheronPeacefulKneel
+Flags:
+- IgnoreCombat
+- WeaponsUnequipped
+- NoCombatAlert
+Type: Package
+PreferredSpeed: Walk
+InteruptFlags:
+- HellosToPlayer
+ScheduleMonth: -1
+ScheduleDayOfWeek: Any
+ScheduleHour: -1
+ScheduleMinute: -1
+PackageTemplate: 0A9277:Skyrim.esm
+DataInputVersion: 2
+Data:
+- Key: 16
+  Value:
+    MutagenObjectType: PackageDataTarget
+    Type: SingleRef
+    Target:
+      MutagenObjectType: PackageTargetLinkedReference
+      Keyword: 000812:Acheron.esm
+- Key: 3
+  Value:
+    MutagenObjectType: PackageDataFloat
+- Key: 4
+  Value:
+    MutagenObjectType: PackageDataBool
+XnamMarker: 0x11
+OnBegin:
+  Topics:
+  - MutagenObjectType: TopicReference
+OnEnd:
+  Topics:
+  - MutagenObjectType: TopicReference
+OnChange:
+  Topics:
+  - MutagenObjectType: TopicReference

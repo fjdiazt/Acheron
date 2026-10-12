@@ -61,7 +61,7 @@ namespace Papyrus
         if (!s)
             return;
 
-        *s = a_value;
+        *s = a_setting == "iPeacefulWanderDuration" ? std::clamp(a_value, 1, 600) : a_value;
     }
 
     void SetSettingFloat(VM* a_vm, StackID a_stackID, RE::TESQuest*, std::string a_setting, float a_value)

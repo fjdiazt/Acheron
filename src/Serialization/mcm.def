@@ -6,6 +6,7 @@ MCM_SETTING(bCreatureDefeat, false)
 MCM_SETTING(bKillMove, true)
 
 MCM_SETTING(iSurrenderKey, -1)
+MCM_SETTING(iGodKey, 34)
 
 MCM_SETTING(iHunterPrideKey, -1)
 MCM_SETTING(iHunterPrideKeyMod, -1)
@@ -18,19 +19,20 @@ MCM_SETTING(bNotifyColored, false)
 MCM_SETTING(rNotifyColor, "#FF0000"s)
 
 MCM_SETTING(fMidCombatBlackout, 10.0f)
-MCM_SETTING(bPlayerDefeat, true)
+MCM_SETTING(bPlayerDefeat, false)
 MCM_SETTING(bFollowerDefeat, true)
 MCM_SETTING(bFolWithPlDefeat, false)
-MCM_SETTING(bNPCDefeat, true)
+MCM_SETTING(bNPCDefeat, false)
 
 MCM_SETTING(fKdHealthThresh, 0.20f)
 MCM_SETTING(iKdFallbackTimer, 90)
 MCM_SETTING(iFollowerRescue, 1)
 MCM_SETTING(bNPCRescueReload, true)
 MCM_SETTING(iNPCRescueTimer, 90)
+MCM_SETTING(iPeacefulWanderDuration, 60)
 
 MCM_SETTING(bLethalEssential, true)
-MCM_SETTING(fLethalPlayer, 100.0f)
+MCM_SETTING(fLethalPlayer, 0.0f)
 MCM_SETTING(fLethalFollower, 100.0f)
 MCM_SETTING(fLethalNPC, 100.0f)
 

@@ -1,11 +1,29 @@
 #include "Acheron/Defeat.h"
 
 #include "Acheron/EventSink.h"
+#include "Acheron/Pacification.h"
 #include "Serialization/EventManager.h"
 #include "shared/KrisV/Script.h"
 
 namespace Acheron
 {
+    std::uint8_t Defeat::CaptureDialogue(RE::Actor* actor)
+    {
+        const auto talk = actor->extraList.GetByType<RE::ExtraCanTalkToPlayer>();
+        return static_cast<std::uint8_t>((talk ? 1 : 0) | (talk && talk->talk ? 2 : 0) |
+            (actor->GetActorRuntimeData().boolFlags.any(RE::Actor::BOOL_FLAGS::kCanSpeakToEssentialDown) ? 4 : 0));
+    }
+    void Defeat::RestoreDialogue(RE::Actor* actor, const VictimData& data)
+    {
+        const auto flags = data.dialogueFlags;
+        if (actor->GetActorValueModifier(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kAggression) != data.dialogueAggressionModifierBefore)
+            actor->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kAggression, data.dialogueAggression);
+        actor->AllowBleedoutDialogue((flags & 4) != 0);
+        if (const auto talk = actor->extraList.GetByType<RE::ExtraCanTalkToPlayer>(); talk && talk->talk) {
+            if (flags & 1) talk->talk = (flags & 2) != 0;
+            else actor->extraList.RemoveByType(RE::ExtraDataType::kCanTalkToPlayer);
+        }
+    }
     struct PackageOverrideCallback : public RE::BSScript::IStackCallbackFunctor
     {
       public:
@@ -26,6 +44,10 @@ namespace Acheron
 
     void Defeat::DefeatActor(RE::Actor* a_victim)
     {
+        if (a_victim->IsPlayerRef()) {
+            logger::warn("Player defeat is disabled in this NPC-only build");
+            return;
+        }
         const auto state = a_victim->AsActorState()->GetLifeState();
         if (state == RE::ACTOR_LIFE_STATE::kDying || state == RE::ACTOR_LIFE_STATE::kDead) {
             logger::error("{:X} ({}) is dead and cannot be defeated", a_victim->GetFormID(), a_victim->GetDisplayFullName());
@@ -44,6 +66,17 @@ namespace Acheron
             }
         }
 
+        Pacification::End(a_victim->GetFormID());
+        data->dialogueFlags = CaptureDialogue(a_victim);
+        if (!REL::Module::IsVR()) {
+            // Native dialogue refuses aggressive enemies even after combat is stopped.
+            data->dialogueAggression = a_victim->AsActorValueOwner()->GetActorValue(RE::ActorValue::kAggression);
+            data->dialogueAggressionModifierBefore = a_victim->GetActorValueModifier(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kAggression);
+            a_victim->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kAggression, -data->dialogueAggression);
+            a_victim->AllowPCDialogue(true);
+            a_victim->AllowBleedoutDialogue(true);
+            if (!Pacification::EnsureDialogue()) logger::error("Unable to start defeated dialogue quest");
+        }
         if (a_victim->IsPlayerRef()) {
             const auto cmap = RE::ControlMap::GetSingleton();
             cmap->ToggleControls(RE::UserEvents::USER_EVENT_FLAG::kActivate, false, true);
@@ -83,7 +116,8 @@ namespace Acheron
             }
         }
         const auto health = a_victim->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth);
-        a_victim->AsActorValueOwner()->RestoreActorValue(RE::ActorValue::kHealth, -health + 0.05f);
+        if (health > 0.05f) a_victim->AsActorValueOwner()->DamageActorValue(RE::ActorValue::kHealth, health - 0.05f);
+        else a_victim->AsActorValueOwner()->RestoreActorValue(RE::ActorValue::kHealth, 0.05f - health);
 
         data->state.store(VictimState::Defeated);
 
@@ -134,6 +168,7 @@ namespace Acheron
         }
 
 
+        if (const auto data = GetVictimData(a_victim->GetFormID()); data && !REL::Module::IsVR()) RestoreDialogue(a_victim, *data);
         a_victim->GetActorRuntimeData().boolFlags.reset(RE::Actor::BOOL_FLAGS::kNoBleedoutRecovery);
         if (a_victim->Is3DLoaded() && !a_victim->IsDead()) {
             if (const auto& process = a_victim->GetActorRuntimeData().currentProcess) {
@@ -177,6 +212,10 @@ namespace Acheron
 
     void Defeat::Pacify(RE::Actor* a_victim)
     {
+        if (a_victim->IsPlayerRef()) {
+            logger::warn("Player pacification is disabled in this NPC-only build");
+            return;
+        }
         const auto state = a_victim->AsActorState()->GetLifeState();
         if (state == RE::ACTOR_LIFE_STATE::kDying || state == RE::ACTOR_LIFE_STATE::kDead) {
             logger::error("{:X} ({}) is dead and cannot be pacified", a_victim->GetFormID(), a_victim->GetDisplayFullName());
@@ -324,7 +363,7 @@ namespace Acheron
     /// Serialization
     ///
 
-    void Defeat::Load(SKSE::SerializationInterface* a_intfc, uint32_t a_type)
+    void Defeat::Load(SKSE::SerializationInterface* a_intfc, uint32_t a_type, uint32_t version)
     {
         std::unique_lock lock{ _m };
         switch (a_type) {
@@ -337,12 +376,17 @@ namespace Acheron
                 RE::FormID formID;
                 float time;
                 for (size_t i = 0; i < numRegs; i++) {
-                    a_intfc->ReadRecordData(formID);
+                    std::uint8_t dialogueFlags{};
+                    float aggression{}, aggressionBefore{};
+                    if (!a_intfc->ReadRecordData(formID) || !a_intfc->ReadRecordData(time) ||
+                        (version >= 2 && (!a_intfc->ReadRecordData(dialogueFlags) || !a_intfc->ReadRecordData(aggression) || !a_intfc->ReadRecordData(aggressionBefore))) ||
+                        dialogueFlags > 7 || !std::isfinite(aggression) || std::abs(aggression) > 1000 || !std::isfinite(aggressionBefore) || std::abs(aggressionBefore) > 1000) {
+                        logger::error("Invalid defeated dialogue cosave record"); return;
+                    }
                     if (!a_intfc->ResolveFormID(formID, formID)) {
                         logger::warn("Error reading formID ({:X})", formID);
                         continue;
                     }
-                    a_intfc->ReadRecordData(time);
                     auto victim = RE::TESForm::LookupByID<RE::Actor>(formID);
                     if (victim) {
                         if (victim->IsPlayerRef()) {
@@ -356,6 +400,19 @@ namespace Acheron
                         ref->As<RE::BGSKeywordForm>()->AddKeyword(GameForms::Defeated);
                     }
                     auto data = std::make_shared<VictimData>(time);
+                    data->dialogueFlags = version >= 2 ? dialogueFlags : victim ? CaptureDialogue(victim) : 0;
+                    data->dialogueAggression = aggression;
+                    data->dialogueAggressionModifierBefore = aggressionBefore;
+                    if (victim && !REL::Module::IsVR()) {
+                        if (version == 1) {
+                            data->dialogueAggression = victim->AsActorValueOwner()->GetActorValue(RE::ActorValue::kAggression);
+                            data->dialogueAggressionModifierBefore = victim->GetActorValueModifier(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kAggression);
+                        }
+                        if (victim->GetActorValueModifier(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kAggression) == data->dialogueAggressionModifierBefore)
+                            victim->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kAggression, -data->dialogueAggression);
+                        victim->AllowPCDialogue(true); victim->AllowBleedoutDialogue(true);
+                        Pacification::EnsureDialogue();
+                    }
                     data->state.store(VictimState::Defeated);
                     Victims.emplace(formID, data);
                 }
@@ -412,6 +469,8 @@ namespace Acheron
                         logger::error("Failed to save reg ({})", data->registered_at);
                         continue;
                     }
+                    if (!a_intfc->WriteRecordData(data->dialogueFlags) || !a_intfc->WriteRecordData(data->dialogueAggression) ||
+                        !a_intfc->WriteRecordData(data->dialogueAggressionModifierBefore)) { logger::error("Failed to save defeated dialogue state"); return; }
                 }
             }
             break;
@@ -440,6 +499,7 @@ namespace Acheron
             auto actor = RE::TESForm::LookupByID<RE::Actor>(formid);
             if (!actor)
                 continue;
+            if (!REL::Module::IsVR()) RestoreDialogue(actor, *data);
             if (actor->IsPlayerRef())
                 actor->RemoveAnimationGraphEventSink(EventHandler::GetSingleton());
             if (auto ref = actor->GetObjectReference()) {

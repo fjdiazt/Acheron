@@ -1,0 +1,8 @@
+FormKey: 000825:Acheron.esm
+EditorID: AcheronDefeatedRescueTopic
+Name:
+  TargetLanguage: English
+  Value: Rescue
+Branch: 000824:Acheron.esm
+Quest: 000818:Acheron.esm
+SubtypeName: CUST

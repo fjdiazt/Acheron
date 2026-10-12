@@ -1,0 +1,21 @@
+FormKey: 00081C:Acheron.esm
+Flags:
+  Flags:
+  - Goodbye
+PreviousDialog: Null
+FavorLevel: None
+ResponseData: 019B8C:Dawnguard.esm
+Conditions:
+- MutagenObjectType: ConditionFloat
+  Data:
+    MutagenObjectType: HasLinkedRefConditionData
+    Keyword: 000811:Acheron.esm
+  ComparisonValue: 1
+- MutagenObjectType: ConditionFloat
+  Data:
+    MutagenObjectType: GetIsCurrentPackageConditionData
+    Package: 00081A:Acheron.esm
+- MutagenObjectType: ConditionFloat
+  Data:
+    MutagenObjectType: GetIsCurrentPackageConditionData
+    Package: 00081E:Acheron.esm

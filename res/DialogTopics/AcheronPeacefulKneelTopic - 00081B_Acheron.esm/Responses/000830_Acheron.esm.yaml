@@ -1,0 +1,19 @@
+FormKey: 000830:Acheron.esm
+Flags:
+  Flags:
+  - Goodbye
+PreviousDialog: 00081C:Acheron.esm
+FavorLevel: None
+ResponseData: 019B8C:Dawnguard.esm
+Conditions:
+- MutagenObjectType: ConditionFloat
+  Data:
+    MutagenObjectType: HasKeywordConditionData
+    Keyword: 000801:Acheron.esm
+  ComparisonValue: 1
+- MutagenObjectType: ConditionFloat
+  Data:
+    MutagenObjectType: GetDeadConditionData
+- MutagenObjectType: ConditionFloat
+  Data:
+    MutagenObjectType: GetPlayerTeammateConditionData

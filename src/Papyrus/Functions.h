@@ -35,6 +35,16 @@ namespace Papyrus
 
     namespace Defeat
     {
+        bool BeginPeacefulState(RE::StaticFunctionTag*, RE::Actor*, int);
+        bool KneelActor(RE::StaticFunctionTag*, RE::Actor*);
+        bool BindActor(RE::StaticFunctionTag*, RE::Actor*);
+        bool ResumePeacefulState(RE::StaticFunctionTag*, RE::Actor*);
+        bool IsPeacefulState(RE::StaticFunctionTag*, RE::Actor*);
+        bool SupportsPeacefulRescue(RE::StaticFunctionTag*, RE::Actor*);
+#ifdef ACHERON_YIELD_TESTS
+        void ProbePeacefulState(RE::StaticFunctionTag*, RE::Actor*);
+        void ProbePeacefulLinks(RE::StaticFunctionTag*, RE::Actor*, RE::TESObjectREFR*, RE::TESObjectREFR*);
+#endif
         void DefeatActor(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*, RE::Actor* a_actor);
         void RescueActor(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*, RE::Actor* a_actor, bool undo_pacify);
         void PacifyActor(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*, RE::Actor* a_actor);
@@ -47,6 +57,16 @@ namespace Papyrus
 
         inline void Register(VM* a_vm)
         {
+            REGISTERFUNC(BeginPeacefulState, "Acheron");
+            REGISTERFUNC(KneelActor, "Acheron");
+            REGISTERFUNC(BindActor, "Acheron");
+            REGISTERFUNC(ResumePeacefulState, "Acheron");
+            REGISTERFUNC(IsPeacefulState, "Acheron");
+            REGISTERFUNC(SupportsPeacefulRescue, "Acheron");
+#ifdef ACHERON_YIELD_TESTS
+            REGISTERFUNC(ProbePeacefulState, "Acheron");
+            REGISTERFUNC(ProbePeacefulLinks, "Acheron");
+#endif
             REGISTERFUNC(DefeatActor, "Acheron");
             REGISTERFUNC(RescueActor, "Acheron");
             REGISTERFUNC(PacifyActor, "Acheron");
@@ -59,25 +79,6 @@ namespace Papyrus
         }
     }
 
-    namespace Interface
-    {
-        int AddOption(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*, RE::BSFixedString a_id, std::string a_name, std::string a_url, std::string a_condition);
-        bool RemoveOption(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*, RE::BSFixedString a_id);
-        bool HasOption(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*, RE::BSFixedString a_id);
-        int GetOptionID(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*, RE::BSFixedString a_id);
-
-        void OpenHunterPrideMenu(VM* a_vm, StackID a_stackID, RE::TESQuest*, RE::Actor* a_target);
-
-        inline void Register(VM* a_vm)
-        {
-            REGISTERFUNC(AddOption, "Acheron");
-            REGISTERFUNC(RemoveOption, "Acheron");
-            REGISTERFUNC(HasOption, "Acheron");
-            REGISTERFUNC(GetOptionID, "Acheron");
-
-            REGISTERFUNC(OpenHunterPrideMenu, "AcheronHunterPride");
-        }
-    }
     namespace ObjectRef
     {
         void SetLinkedRef(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*, RE::TESObjectREFR* object, RE::TESObjectREFR* target, RE::BGSKeyword* keyword);
@@ -116,12 +117,14 @@ namespace Papyrus
         inline void PrintConsole(RE::StaticFunctionTag*, RE::BSFixedString a_msg) { Util::PrintConsole(a_msg.c_str()); }
         bool OpenCustomMenu(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*, std::string_view a_filepath);
         void CloseCustomMenu(RE::StaticFunctionTag*);
+        void ApplyGodPreset(RE::StaticFunctionTag*);
 
         inline void Register(VM* a_vm)
         {
             REGISTERFUNC(PrintConsole, "Acheron");
             REGISTERFUNC(OpenCustomMenu, "Acheron");
             REGISTERFUNC(CloseCustomMenu, "Acheron");
+            REGISTERFUNC(ApplyGodPreset, "Acheron");
         }
     }
 
@@ -132,7 +135,6 @@ namespace Papyrus
         ObjectRef::Register(a_vm);
         Actor::Register(a_vm);
         Utility::Register(a_vm);
-        Interface::Register(a_vm);
 
         logger::info("Registered Papyrus Functions");
         return true;

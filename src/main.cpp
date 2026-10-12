@@ -1,7 +1,6 @@
 #include "Acheron/EventSink.h"
 #include "Acheron/Hooks/Hooks.h"
 #include "Acheron/Interface/CustomMenu.h"
-#include "Acheron/Interface/HunterPride.h"
 #include "Acheron/Resolution.h"
 #include "Acheron/Validation.h"
 #include "Papyrus/Config.h"
@@ -15,7 +14,6 @@ static void SKSEMessageHandler(SKSE::MessagingInterface::Message* message)
         Acheron::Hooks::Install();
 
         if (!REL::Module::IsVR()) {
-            Acheron::Interface::HunterPride::Register();
             Acheron::Interface::CustomMenu::Register();
         }
         break;
@@ -35,6 +33,11 @@ static void SKSEMessageHandler(SKSE::MessagingInterface::Message* message)
         }
         Settings::bKillMove = Acheron::GameForms::KillMove->value != 0.0f;
         Settings::Initialize();
+#ifdef ACHERON_YIELD_TESTS
+        logger::info("[YieldPolicy] npcDefeat={} followerDefeat={} hunterPrideFollower={} lethalNPC={} processing={} consequence={}",
+            Settings::bNPCDefeat, Settings::bFollowerDefeat, Settings::bHunterPrideFollower,
+            Settings::fLethalNPC, Settings::ProcessingEnabled, Settings::ConsequenceEnabled);
+#endif
         Acheron::Validation::Initialize();
         Acheron::Resolution::Initialize();
         Acheron::EventHandler::GetSingleton()->Register();
@@ -44,6 +47,8 @@ static void SKSEMessageHandler(SKSE::MessagingInterface::Message* message)
     case SKSE::MessagingInterface::kPostLoadGame:
         {
             const auto player = RE::PlayerCharacter::GetSingleton();
+            if (Settings::ProcessingEnabled && !Settings::bNPCDefeat)
+                player->AddSpell(Acheron::GameForms::HunterPride);
             const auto base = player->GetActorBase();
             bool success = base && base->AddPerk(Acheron::GameForms::InteractionPerk, 1);
             if (success) {

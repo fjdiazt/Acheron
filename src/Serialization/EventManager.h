@@ -20,7 +20,6 @@ namespace Serialization
         SKSE::RegistrationSet<const RE::Actor*> _actordefeated{ "OnActorDefeated"sv };
         SKSE::RegistrationSet<const RE::Actor*> _actorrescued{ "OnActorRescued"sv };
         SKSE::RegistrationSet<> _playerdeathevent{ "OnPlayerDeathEvent"sv };
-        SKSE::RegistrationSet<int32_t, const RE::Actor*> _hunterprideselect{ "OnHunterPrideSelect"sv };
 
       public:
         void Save(SKSE::SerializationInterface* a_intfc, std::uint32_t a_version);
