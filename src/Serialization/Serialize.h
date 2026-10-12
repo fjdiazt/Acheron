@@ -21,7 +21,7 @@ namespace Serialization
 
             _HunterPride = 'htpr',
             _Peaceful = 'pcfl',
-            _PeacefulVersion = 2
+            _PeacefulVersion = 3
         };
 
         static void SaveCallback(SKSE::SerializationInterface* a_intfc);

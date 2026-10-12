@@ -49,7 +49,7 @@ namespace Serialization
                 continue;
             }
             if (type == _Peaceful) {
-                if (version == 1 || version == _PeacefulVersion) Acheron::Pacification::Load(a_intfc, version);
+                if (version >= 1 && version <= _PeacefulVersion) Acheron::Pacification::Load(a_intfc, version);
                 else logger::warn("Unsupported peaceful cosave version {}", version);
                 continue;
             }

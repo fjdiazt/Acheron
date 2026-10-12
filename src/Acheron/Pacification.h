@@ -1,12 +1,15 @@
 #pragma once
+#include "Acheron/PacificationState.h"
+#include "Acheron/TestState.h"
 
 namespace Acheron::Pacification
 {
     bool EnsureDialogue();
-    bool Begin(RE::Actor* actor, int seconds, bool rescued = false);
+    bool Begin(RE::Actor* actor, int seconds, bool rescued = false, Peaceful::Phase entry = Peaceful::Phase::Wandering);
     void RequestBegin(RE::Actor* actor, int seconds);
     void RequestKneel(RE::Actor* actor, bool bind = false);
     void RequestResume(RE::Actor* actor);
+    void RequestTestState(RE::Actor* actor, Peaceful::TestState command);
     void End(RE::FormID actorId, bool reset = false);
     void RequestEnd(RE::FormID actorId, bool reset = false);
     void RequestRelease(RE::Actor* actor);

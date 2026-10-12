@@ -1,6 +1,6 @@
 param(
     [string] $GameRoot='S:\games\The Elder Scrolls V - Skyrim Special Edition',
-    [ValidateSet('injured-locomotion','rescue-locomotion','peaceful-bind','peaceful-kneeling')] [string] $Test='injured-locomotion'
+    [ValidateSet('injured-locomotion','rescue-locomotion','peaceful-bind','peaceful-kneeling','peaceful-kneeling-variants','peaceful-test-dialogue')] [string] $Test='injured-locomotion'
 )
 $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot 'Desktop-Isolation.ps1')

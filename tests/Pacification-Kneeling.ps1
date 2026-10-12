@@ -24,18 +24,44 @@ function New-KneelingActor([string] $Base, [double] $X) {
     Invoke-NpcPapyrus Actor SetActorValue $id @('Confidence',4.0) | Out-Null
     return $id
 }
-function Assert-Kneeling([string] $Actor, [string] $Entry, [double] $Health) {
-    $case=@{entry=$Entry;actor=$Actor;state=Wait-PeacefulPhase $Actor 3}
+function Assert-Kneeling([string] $Actor, [string] $Entry, [double] $Health, [int] $LogStart) {
+    # Capture travel before readiness now requires settled furniture occupancy.
+    $deadline=(Get-Date).AddSeconds(5)
+    do {$state=Read-PeacefulState $Actor} while($state.phase -ne 3 -and (Get-Date) -lt $deadline)
+    if($state.phase -ne 3) {throw "Kneeling owner missing: $Entry"}
+    $case=@{entry=$Entry;actor=$Actor;state=$state}
+    $id=[regex]::Escape(($Actor -replace '^0x',''))
+    $requests=[regex]::Matches((Get-Content $logPath -Raw).Substring($LogStart), "\[PeacefulPackage\] actor=$id generation=\d+ stage=request phase=(\d+)", 'IgnoreCase')
+    $case.packageRequests=@($requests | ForEach-Object {[int]$_.Groups[1].Value})
+    if($requests.Count -ne 1 -or $case.packageRequests[0] -ne 3) {throw "Kneeling must request only its target package: $Entry; phases=$($case.packageRequests -join ',')"}
+    $entryPoint=[regex]::Match((Get-Content $logPath -Raw).Substring($LogStart), "\[PeacefulKneelEntry\] actor=$id bind=false x=(?<x>[-+0-9.eE]+) y=(?<y>[-+0-9.eE]+) z=(?<z>[-+0-9.eE]+)", 'IgnoreCase')
+    if(-not $entryPoint.Success) {throw 'Command-time kneeling origin missing'}
+    $Origin=@([double]$entryPoint.Groups['x'].Value,[double]$entryPoint.Groups['y'].Value,[double]$entryPoint.Groups['z'].Value)
+    $case.origin=$Origin
+    $marker=(Invoke-YieldTool inspect @{kind='refs';formId=$case.state.goal}).refs[0]
+    if($Origin.Count -ne 3 -or $marker.position.Count -ne 3) {throw 'Kneeling position evidence missing'}
+    $case.markerDistance=[math]::Sqrt([math]::Pow($marker.position[0]-$Origin[0],2)+[math]::Pow($marker.position[1]-$Origin[1],2)+[math]::Pow($marker.position[2]-$Origin[2],2))
+    $case.markerRotation=$marker.rotation
+    $summary.lastKneelingCheck=$case
+    if($case.markerDistance -gt 1 -or [math]::Abs($marker.rotation[0]) -gt 0.001 -or [math]::Abs($marker.rotation[1]) -gt 0.001) {throw "Kneeling marker displaced/tilted: $Entry; distance=$($case.markerDistance); rotation=$($marker.rotation -join ',')"}
+    $case.maximumTravel=0.0
     $deadline=(Get-Date).AddSeconds(12)
     do {
+        $position=(Invoke-YieldTool inspect @{kind='refs';formId=$Actor}).refs[0].position
+        if($position.Count -ne 3) {throw 'Kneeling movement evidence missing'}
+        $distance=[math]::Sqrt([math]::Pow($position[0]-$Origin[0],2)+[math]::Pow($position[1]-$Origin[1],2)+[math]::Pow($position[2]-$Origin[2],2))
+        $case.maximumTravel=[math]::Max($case.maximumTravel,$distance)
         $case.sitState=(Invoke-NpcPapyrus Actor GetSitState $Actor).returned
         $case.furniture=(Invoke-NpcPapyrus Actor GetFurnitureReference $Actor).returned.formId
         if($case.sitState -eq 3 -and $case.furniture -eq $case.state.goal) {break}
         Start-Sleep -Milliseconds 100
     } while((Get-Date) -lt $deadline)
     if($case.sitState -ne 3 -or $case.furniture -ne $case.state.goal) {throw "Native kneeling pose not acquired: $Entry"}
+    if($case.maximumTravel -gt 10) {throw "Kneeling walked away before pose: $Entry; maximumTravel=$($case.maximumTravel)"}
     $case.base=(Invoke-NpcPapyrus ObjectReference GetBaseObject $case.furniture).returned.formId
-    if($case.base -ne '0x000E8E4E') {throw 'Actor using wrong furniture pose'}
+    $expectedBase=if($case.state.selectedKneelingVariant -eq 1) {'0x000F11F1'}else{'0x000E8E4E'}
+    if($case.base -ne $expectedBase) {throw 'Actor using wrong furniture pose'}
+    $case.state=Wait-PeacefulPhase $Actor 3
     if($case.state.commandHoldRemaining -lt 1750 -or $case.state.commandHoldRemaining -gt 1800) {throw 'Separate 30-minute command hold timer missing'}
     $case.health=(Invoke-NpcPapyrus Actor GetActorValue $Actor @('Health')).returned
     $summary.lastKneelingCheck=$case
@@ -122,9 +148,10 @@ try {
     $health=(Invoke-NpcPapyrus Actor GetActorValue $actor @('Health')).returned
     Assert-YieldDefeatEvidence (Get-Content $logPath -Raw) $actor (Invoke-NpcPapyrus Actor IsDead $actor).returned $defeated (Invoke-NpcPapyrus Acheron IsPacified '' @(@{form=$actor})).returned $health
     Invoke-NpcPapyrus Actor SheatheWeapon $player | Out-Null
+    $start=(Get-Content $logPath -Raw).Length
     $summary.yieldDialogueSelection=Select-DownedChoice $actor 'On your knees.' 0x830 -Interact
     Invoke-NpcPapyrus Actor SetDontMove $actor @($false) | Out-Null
-    $summary.fromYield=Assert-Kneeling $actor 'Yielding/native dialogue' $health
+    $summary.fromYield=Assert-Kneeling $actor 'Yielding/native dialogue' $health $start
     if(-not $BindOnly) {
     Invoke-NpcPapyrus Acheron ResumePeacefulState '' @(@{form=$actor}) | Out-Null
     Wait-PeacefulPhase $actor 2 | Out-Null
@@ -143,7 +170,7 @@ try {
     $start=(Get-Content $logPath -Raw).Length
     Invoke-YieldTool input @{action='tap';device='keyboard';key='e';durationMs=50;owner=$RunId} | Out-Null
     Invoke-NpcPapyrus Actor SetDontMove $actor @($false) | Out-Null
-    $summary.fromWander=Assert-Kneeling $actor 'Wandering/dialogue' $health
+    $summary.fromWander=Assert-Kneeling $actor 'Wandering/dialogue' $health $start
     $info=(Invoke-NpcPapyrus Game GetFormFromFile '' @(0x81C,'Acheron.esm')).returned.formId
     $summary.dialogueSelection=Assert-PeacefulTopicSelected ((Get-Content $logPath -Raw).Substring($start)) $actor $info
     Invoke-NpcPapyrus ObjectReference Activate $actor @(@{form=$player},$false) | Out-Null
@@ -160,8 +187,9 @@ try {
     Invoke-NpcPapyrus Actor StartCombat $guard @(@{form=$enemy}) | Out-Null
     Invoke-NpcPapyrus Actor StartCombat $enemy @(@{form=$guard}) | Out-Null
     Wait-PeacefulPhase $actor 1 | Out-Null
+    $start=(Get-Content $logPath -Raw).Length
     Invoke-NpcPapyrus Acheron KneelActor '' @(@{form=$actor}) | Out-Null
-    $summary.fromAvoid=Assert-Kneeling $actor 'AvoidingCombat' $health
+    $summary.fromAvoid=Assert-Kneeling $actor 'AvoidingCombat' $health $start
     foreach($id in @($enemy,$guard)) {
         Invoke-NpcPapyrus Actor EnableAI $id @($false) | Out-Null
         Invoke-NpcPapyrus Actor StopCombat $id | Out-Null

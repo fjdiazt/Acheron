@@ -26,6 +26,13 @@ foreach ($bad in @('[Other]', $original.Replace('iSize H=1080', "iSize H=1080`r`
     Assert $rejected 'ambiguous/missing Display settings accepted'
 }
 $started = [datetime]'2026-10-11T12:00:00'
+$background="[General]`r`nsIntroSequence=`r`n[Other]`r`nbAlwaysActive=0`r`n"
+Assert ((Enable-YieldBackground $background) -ceq "[General]`r`nbAlwaysActive=1`r`nsIntroSequence=`r`n[Other]`r`nbAlwaysActive=0`r`n") 'background setting escaped General'
+Assert ((Enable-YieldBackground "[General]`r`nbAlwaysActive=0`r`n") -ceq "[General]`r`nbAlwaysActive=1`r`n") 'background value not replaced'
+foreach($bad in @('[Other]',"[General]`nbAlwaysActive=0`nbAlwaysActive=1`n")) {
+    $rejected=$false; try {Enable-YieldBackground $bad | Out-Null} catch {$rejected=$true}
+    Assert $rejected 'ambiguous/missing background settings accepted'
+}
 $owned = [pscustomobject]@{ ProcessId=42; ParentProcessId=7; ExecutablePath='S:\game\SkyrimSE.exe'; CreationDate=$started.AddSeconds(1) }
 Assert (Test-YieldProcessOwnership $owned 'S:\game\SkyrimSE.exe' 7 $started) 'owned game rejected'
 foreach ($foreign in @(

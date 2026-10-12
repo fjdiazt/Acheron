@@ -1,0 +1,8 @@
+FormKey: 000832:Acheron.esm
+EditorID: AcheronPeacefulStandTopic
+Name:
+  TargetLanguage: English
+  Value: On your feet.
+Branch: 000831:Acheron.esm
+Quest: 000818:Acheron.esm
+SubtypeName: CUST

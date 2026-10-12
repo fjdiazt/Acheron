@@ -10,6 +10,13 @@ namespace Acheron
     EventResult EventHandler::ProcessEvent(const RE::TESTopicInfoEvent* event, RE::BSTEventSource<RE::TESTopicInfoEvent>*)
     {
         if (REL::Module::IsVR() || !event || !event->speakerRef) return EventResult::kContinue;
+        static_assert(GameForms::TestDialogueInfoIDs.size() == static_cast<std::size_t>(Peaceful::TestState::Count));
+        if (event->type.underlying() == 0) {
+            for (std::size_t i = 0; i < GameForms::TestDialogueInfoIDs.size(); ++i) {
+                if (event->topicInfoFormID == GameForms::TestDialogueInfoIDs[i])
+                    Pacification::RequestTestState(event->speakerRef->As<RE::Actor>(), static_cast<Peaceful::TestState>(i));
+            }
+        }
         if ((event->topicInfoFormID == GameForms::KneelDialogueInfoID || event->topicInfoFormID == GameForms::YieldKneelDialogueInfoID) && event->type.underlying() == 0) {
             const auto actor = event->speakerRef->As<RE::Actor>();
             if (actor && (Pacification::IsActive(actor) || Defeat::IsDefeated(actor))) Pacification::RequestKneel(actor);
@@ -17,6 +24,10 @@ namespace Acheron
         if (GameForms::BindDialogueInfoID && event->topicInfoFormID == GameForms::BindDialogueInfoID && event->type.underlying() == 0) {
             const auto actor = event->speakerRef->As<RE::Actor>();
             if (actor && Pacification::IsActive(actor)) Pacification::RequestKneel(actor, true);
+        }
+        if (GameForms::StandDialogueInfoID && event->topicInfoFormID == GameForms::StandDialogueInfoID && event->type.underlying() == 0) {
+            const auto actor = event->speakerRef->As<RE::Actor>();
+            if (actor && Pacification::IsActive(actor)) Pacification::RequestResume(actor);
         }
         if (event->type.underlying() == 0) {
             for (std::size_t i = 0; i < GameForms::DefeatedDialogueInfoIDs.size(); ++i) {
@@ -34,6 +45,9 @@ namespace Acheron
         if ((info && event->topicInfoFormID == info->GetFormID()) || (GameForms::KneelDialogueInfoID && event->topicInfoFormID == GameForms::KneelDialogueInfoID) ||
             (GameForms::YieldKneelDialogueInfoID && event->topicInfoFormID == GameForms::YieldKneelDialogueInfoID) ||
             (GameForms::BindDialogueInfoID && event->topicInfoFormID == GameForms::BindDialogueInfoID) ||
+            (GameForms::StandDialogueInfoID && event->topicInfoFormID == GameForms::StandDialogueInfoID) ||
+            std::ranges::find(GameForms::TestRootInfoIDs, event->topicInfoFormID) != GameForms::TestRootInfoIDs.end() ||
+            std::ranges::find(GameForms::TestDialogueInfoIDs, event->topicInfoFormID) != GameForms::TestDialogueInfoIDs.end() ||
             std::ranges::find(GameForms::DefeatedDialogueInfoIDs, event->topicInfoFormID) != GameForms::DefeatedDialogueInfoIDs.end()) {
             logger::info("[PeacefulTopic] actor={:08X} info={:08X} begin={}", event->speakerRef->GetFormID(), event->topicInfoFormID,
                 event->type.underlying() == 0);

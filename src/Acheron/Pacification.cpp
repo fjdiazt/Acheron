@@ -3,6 +3,7 @@
 #include "Acheron/Defeat.h"
 #include "Acheron/Misc.h"
 #include "shared/KrisV/Script.h"
+#include "shared/KrisV/Random.h"
 
 namespace Acheron::Pacification
 {
@@ -16,6 +17,10 @@ namespace Acheron::Pacification
     namespace
     {
         using Peaceful::Phase;
+        constexpr RE::FormID KneelingMarkerID(Peaceful::KneelingVariant variant)
+        {
+            return variant == Peaceful::KneelingVariant::Blessing ? 0xF11F1 : 0xE8E4E;
+        }
         struct Record
         {
             RE::ActorHandle actor;
@@ -23,7 +28,9 @@ namespace Acheron::Pacification
             Peaceful::State state;
             std::uint64_t generation{};
             float aggression{}, aggressionModifierBefore{};
-            bool hadTalk{}, talk{}, ready{}, pending{}, requested{}, combat{}, rescued{}, exitingForBind{};
+            bool hadTalk{}, talk{}, ready{}, pending{}, requested{}, combat{}, rescued{};
+            std::optional<Peaceful::EventKind> exitingFor;
+            std::optional<Peaceful::TestState> testTarget;
             float applyAge{};
             float encounterAge{ 1.0f };
             std::chrono::steady_clock::time_point realObserved{ std::chrono::steady_clock::now() };
@@ -42,6 +49,28 @@ namespace Acheron::Pacification
         {
             const auto cell = actor->GetParentCell();
             return actor->Is3DLoaded() && cell && cell->IsAttached();
+        }
+        RE::NiPointer<RE::TESObjectREFR> PlaceKneelingGoal(RE::Actor* actor, Peaceful::State& state, bool choose = true, bool fallback = true)
+        {
+            using Peaceful::KneelingVariant;
+            if (choose) {
+                // Child sit/kneel is not enabled until adult playback is qualified.
+                state.selectedKneelingVariant = RE::TESForm::LookupByID<RE::TESFurniture>(0xF11F1) && Random::draw<unsigned>(0, 1) ?
+                    KneelingVariant::Blessing : KneelingVariant::Regular;
+            }
+            const auto position = actor->GetPosition();
+            const auto yaw = actor->GetAngle().z;
+            const auto place = [&]() {
+                const auto marker = RE::TESForm::LookupByID<RE::TESFurniture>(KneelingMarkerID(state.selectedKneelingVariant));
+                return marker ? actor->PlaceObjectAtMe(marker, true) : RE::NiPointer<RE::TESObjectREFR>{};
+            };
+            auto goal = place();
+            if (!goal && fallback && state.selectedKneelingVariant != KneelingVariant::Regular) {
+                state.selectedKneelingVariant = KneelingVariant::Regular;
+                goal = place();
+            }
+            if (goal) { goal->SetPosition(position); goal->SetAngle({ 0.0f, 0.0f, yaw }); }
+            return goal;
         }
         RE::TESPackage* Package(Phase phase)
         {
@@ -131,6 +160,16 @@ namespace Acheron::Pacification
             }
         };
 
+        bool StartPoseExit(Record& record, RE::Actor* actor, Peaceful::EventKind next)
+        {
+            record.exitingFor = next;
+            record.ready = false;
+            record.applyAge = 0;
+            actor->NotifyAnimationGraph("IdleChairExitStart");
+            Script::CallbackPtr callback(new EvaluateCallback(actor));
+            return Script::DispatchStaticCall("ActorUtil", "RemovePackageOverride", callback, record.actor.get().get(), Package(record.state.phase));
+        }
+
         struct PackageCallback final : RE::BSScript::IStackCallbackFunctor
         {
             RE::ActorHandle actor;
@@ -207,6 +246,9 @@ namespace Acheron::Pacification
             record.pending = true;
             record.requested = true;
             record.applyAge = 0;
+#ifdef ACHERON_YIELD_TESTS
+            logger::info("[PeacefulPackage] actor={:08X} generation={} stage=request phase={}", actor->GetFormID(), record.generation, static_cast<unsigned>(phase));
+#endif
             Observe(actor->GetFormID(), record.generation);
             // Remove only our other phases, in order, before adding the requested package.
             Script::CallbackPtr callback(new RemovePhaseCallback(actor->GetFormID(), record.generation));
@@ -231,22 +273,47 @@ namespace Acheron::Pacification
                 if (!actor) { End(id); continue; }
                 if ((!record.ready || GameForms::PeacefulDialogue->IsStopped()) && Loaded(actor.get()) && !RE::UI::GetSingleton()->GameIsPaused()) {
                     record.applyAge += pending.delta;
-                    if (record.applyAge >= (Peaceful::IsCommandHold(record.state.phase) ? 15.0f : 5.0f)) { logger::warn("Peaceful package/dialogue did not become ready for {:08X}", id); End(id); continue; }
+                    if (record.applyAge >= (Peaceful::IsCommandHold(record.state.phase) ? 15.0f : 5.0f)) {
+                        if (!record.testTarget && !record.exitingFor && !record.pending && record.state.phase == Phase::Kneeling &&
+                            record.state.selectedKneelingVariant == Peaceful::KneelingVariant::Blessing) {
+                            logger::warn("Kneeling blessing entry failed for {:08X}; using native fallback", id);
+                            if (!StartPoseExit(record, actor.get(), Peaceful::EventKind::Kneel)) End(id);
+                        } else { logger::warn("Peaceful package/dialogue did not become ready for {:08X}", id); End(id); }
+                        continue;
+                    }
                 }
-                if (record.exitingForBind) {
+                if (record.exitingFor) {
                     if (!IsEligible(actor.get()) || Defeat::IsDefeated(actor.get())) { End(id); continue; }
-                    if (Loaded(actor.get()) && !RE::UI::GetSingleton()->GameIsPaused() && actor->AsActorState()->GetSitSleepState() == RE::SIT_SLEEP_STATE::kNormal) RequestKneel(actor.get(), true);
+                    if (Loaded(actor.get()) && !RE::UI::GetSingleton()->GameIsPaused() && actor->AsActorState()->GetSitSleepState() == RE::SIT_SLEEP_STATE::kNormal) {
+                        if (*record.exitingFor == Peaceful::EventKind::Test && record.testTarget) RequestTestState(actor.get(), *record.testTarget);
+                        else if (*record.exitingFor == Peaceful::EventKind::Bind) RequestKneel(actor.get(), true);
+                        else if (*record.exitingFor == Peaceful::EventKind::Resume) RequestResume(actor.get());
+                        else {
+                            record.state.selectedKneelingVariant = Peaceful::KneelingVariant::Regular;
+                            const auto goal = PlaceKneelingGoal(actor.get(), record.state, false);
+                            if (!goal) { End(id); continue; }
+                            const auto old = record.goal;
+                            record.goal = goal->GetHandle();
+                            actor->extraList.SetLinkedRef(goal.get(), GameForms::PeacefulGoal);
+                            Destroy(old);
+                            record.exitingFor.reset();
+                            if (!Apply(record, Phase::Kneeling)) End(id);
+                        }
+                    }
                     continue;
                 }
                 if (!record.ready && !record.pending && actor->Is3DLoaded()) {
                     if (!record.requested) { if (!Apply(record, record.state.phase)) End(id); continue; }
                     if (actor->GetCurrentPackage() == Package(record.state.phase)) {
+                        if (Peaceful::IsCommandHold(record.state.phase) &&
+                            (actor->AsActorState()->GetSitSleepState() != RE::SIT_SLEEP_STATE::kIsSitting || actor->GetOccupiedFurniture().get().get() != record.goal.get().get())) continue;
                         if (record.state.phase == Phase::KneelingBound) {
                             // Enter working kneel furniture first; the bound pose is a native graph event.
                             if (actor->AsActorState()->GetSitSleepState() != RE::SIT_SLEEP_STATE::kIsSitting) continue;
                             if (!actor->NotifyAnimationGraph("IdleBoundKneesEnterInstant")) { End(id); continue; }
                         }
                         record.ready = true;
+                        record.testTarget.reset();
                         logger::info("[PeacefulState] actor={:08X} phase={} remaining={} generation={} tickMs={}", id,
                             static_cast<unsigned>(record.state.phase), record.state.remaining, record.generation,
                             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
@@ -297,12 +364,14 @@ namespace Acheron::Pacification
         const auto found = mailbox.find(actor->GetFormID());
         return found != mailbox.end() && found->second.generation != 0;
     }
-    bool Begin(RE::Actor* actor, int seconds, bool rescued)
+    static bool BeginManaged(RE::Actor* actor, int seconds, bool rescued, Phase entry, std::optional<Peaceful::State> initial = {})
     {
         if (REL::Module::IsVR() || !IsEligible(actor) || !Loaded(actor) || Defeat::IsDefeated(actor) ||
+            (!initial && entry != Phase::Wandering && entry != Phase::Kneeling) || (initial && !Peaceful::ValidState(*initial)) ||
             !Peaceful::ValidDuration(static_cast<float>(seconds)) || !GameForms::PeacefulAvoid || !GameForms::PeacefulWander || !GameForms::PeacefulKneel || !GameForms::PeacefulKneelBound || !GameForms::PeacefulDialogue) return false;
         const auto id = actor->GetFormID();
         if (auto found = records.find(id); found != records.end()) {
+            if (entry != Phase::Wandering || initial) return false;
             auto& record = found->second;
             if (rescued) {
                 record.rescued = true;
@@ -312,8 +381,9 @@ namespace Acheron::Pacification
             record.combat = facts.nearbyCombat = Encounter(record);
             const auto next = Peaceful::Decide(record.state, { Peaceful::EventKind::Refresh, static_cast<float>(seconds) }, facts);
             if (!next) { End(id); return false; }
-            const bool change = !record.ready || next->phase != record.state.phase;
+            const bool change = (!record.ready && !record.exitingFor) || next->phase != record.state.phase;
             record.state.remaining = next->remaining;
+            if (record.exitingFor) return true;
             if (change) return Apply(record, next->phase);
             record.generation = ++generation;
             Observe(id, record.generation);
@@ -322,16 +392,25 @@ namespace Acheron::Pacification
         if (Defeat::IsPacified(actor) || actor->GetLinkedRef(GameForms::PeacefulAnchor) || actor->GetLinkedRef(GameForms::PeacefulGoal)) return false;
         Record record;
         record.actor = actor->GetHandle(); record.state = { Phase::Wandering, static_cast<float>(seconds) };
+        if (initial) record.state = *initial;
+        else if (entry == Phase::Kneeling) {
+            const auto next = Peaceful::Decide(record.state, { Peaceful::EventKind::Kneel }, {});
+            if (!next) return false;
+            record.state = *next;
+        }
         const auto marker = RE::TESForm::LookupByID<RE::TESBoundObject>(0x3B);
         if (!marker) return false;
         const auto anchor = actor->PlaceObjectAtMe(marker, true);
-        const auto goal = actor->PlaceObjectAtMe(marker, true);
+        const auto goal = record.state.phase == Phase::KneelingBound ? actor->PlaceObjectAtMe(GameForms::PeacefulBoundMarker, true) :
+            record.state.phase == Phase::Kneeling ? PlaceKneelingGoal(actor, record.state, !initial, !initial) : actor->PlaceObjectAtMe(marker, true);
         if (!anchor || !goal) {
             if (anchor) Destroy(anchor->GetHandle()); if (goal) Destroy(goal->GetHandle()); return false;
         }
         record.anchor = anchor->GetHandle(); record.goal = goal->GetHandle();
+        if (record.state.phase == Phase::KneelingBound) { goal->SetPosition(actor->GetPosition()); goal->SetAngle({ 0.0f, 0.0f, actor->GetAngle().z }); }
         const auto talk = actor->extraList.GetByType<RE::ExtraCanTalkToPlayer>();
         record.hadTalk = talk != nullptr; record.talk = talk && talk->talk;
+        Defeat::SetEnemyRelationship(actor);
         record.aggression = actor->AsActorValueOwner()->GetActorValue(RE::ActorValue::kAggression);
         record.aggressionModifierBefore = actor->GetActorValueModifier(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kAggression);
         actor->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kAggression, -record.aggression);
@@ -340,15 +419,97 @@ namespace Acheron::Pacification
         actor->extraList.SetLinkedRef(goal.get(), GameForms::PeacefulGoal);
         Defeat::Pacify(actor);
         record.combat = Encounter(record);
-        record.state.phase = record.combat ? Phase::AvoidingCombat : Phase::Wandering;
+        if (!initial && entry == Phase::Wandering) record.state.phase = record.combat ? Phase::AvoidingCombat : Phase::Wandering;
         records.emplace(id, record);
         if (rescued) {
             records.at(id).rescued = true;
-            actor->AddToFaction(GameForms::RescuedWounded, 0);
+            if (!Peaceful::IsCommandHold(record.state.phase)) actor->AddToFaction(GameForms::RescuedWounded, 0);
         }
         if (!EnsureDialogue()) { End(id); return false; }
         if (!Apply(records.at(id), record.state.phase)) { End(id); return false; }
         return true;
+    }
+    bool Begin(RE::Actor* actor, int seconds, bool rescued, Phase entry)
+    {
+        return BeginManaged(actor, seconds, rescued, entry);
+    }
+    void RequestTestState(RE::Actor* actor, Peaceful::TestState command)
+    {
+        if (!actor || command >= Peaceful::TestState::Count) return;
+        const auto handle = actor->GetHandle(); const auto world = epoch.load();
+        SKSE::GetTaskInterface()->AddTask([handle, world, command]() {
+            using Peaceful::TestState;
+            if (world != epoch || REL::Module::IsVR()) return;
+            const auto subject = handle.get();
+            if (!subject || !IsEligible(subject.get()) || !Loaded(subject.get())) return;
+            const auto id = subject->GetFormID();
+            const auto found = records.find(id);
+            if (found == records.end() && !Defeat::IsDefeated(subject.get())) return;
+            if (found != records.end()) {
+                auto& record = found->second;
+                if (record.exitingFor && (*record.exitingFor != Peaceful::EventKind::Test || record.testTarget != command)) return;
+                if (!record.exitingFor && Peaceful::IsCommandHold(record.state.phase)) {
+                    record.testTarget = command;
+                    if (!StartPoseExit(record, subject.get(), Peaceful::EventKind::Test)) End(id);
+                    return;
+                }
+                if (record.exitingFor && subject->AsActorState()->GetSitSleepState() != RE::SIT_SLEEP_STATE::kNormal) return;
+                record.exitingFor.reset();
+            }
+            const auto seconds = std::clamp(Settings::iPeacefulWanderDuration, 1, 600);
+            const auto previous = found == records.end() ? Peaceful::State{ Phase::Wandering, static_cast<float>(seconds) } : found->second.state;
+            const auto next = Peaceful::SelectTestState(command, previous, static_cast<float>(seconds));
+            // Resolve an explicit family before changing defeat/ownership. Never silently substitute a test variant.
+            if (command == TestState::KneelingBlessing && !RE::TESForm::LookupByID<RE::TESFurniture>(0xF11F1)) {
+                if (found != records.end()) { found->second.testTarget.reset(); Apply(found->second, found->second.state.phase); }
+                logger::warn("[PeacefulTest] actor={:08X} unavailable blessing", id); return;
+            }
+            if (Defeat::IsDefeated(subject.get())) { Defeat::RescueActor(subject.get(), false); Defeat::UndoPacify(subject.get()); }
+            if (Defeat::IsDefeated(subject.get())) return;
+            if (next) {
+                if (found == records.end()) {
+                    if (!BeginManaged(subject.get(), seconds, true, next->phase, next)) {
+                        logger::error("[PeacefulTest] actor={:08X} entry failed command={}", id, static_cast<unsigned>(command)); return;
+                    }
+                } else {
+                    auto& record = found->second;
+                    const auto marker = RE::TESForm::LookupByID<RE::TESBoundObject>(0x3B);
+                    auto state = *next;
+                    const auto goal = state.phase == Phase::KneelingBound ? subject->PlaceObjectAtMe(GameForms::PeacefulBoundMarker, true) :
+                        state.phase == Phase::Kneeling ? PlaceKneelingGoal(subject.get(), state, false, false) :
+                        marker ? subject->PlaceObjectAtMe(marker, true) : RE::NiPointer<RE::TESObjectREFR>{};
+                    if (!goal) { End(id); logger::error("[PeacefulTest] actor={:08X} goal failed", id); return; }
+                    goal->SetPosition(subject->GetPosition()); goal->SetAngle({ 0.0f, 0.0f, subject->GetAngle().z });
+                    const auto old = record.goal;
+                    record.goal = goal->GetHandle(); subject->extraList.SetLinkedRef(goal.get(), GameForms::PeacefulGoal); Destroy(old);
+                    record.state = state; record.rescued = true;
+                    record.realObserved = std::chrono::steady_clock::now();
+                    record.testTarget = command; // Explicit families fail visibly instead of random/fallback selection.
+                    if (!Apply(record, state.phase)) { End(id); return; }
+                }
+                records.at(id).testTarget = command;
+            } else {
+                End(id);
+                if (Defeat::IsPacified(subject.get())) Defeat::UndoPacify(subject.get());
+                switch (command) {
+                case TestState::Yielding: Defeat::DefeatActor(subject.get()); break;
+                case TestState::Combat: {
+                    const auto script = Script::GetScriptObject(subject.get(), "Actor", true);
+                    if (!script || !Script::DispatchMethodCall(script, "StartCombat", nullptr, static_cast<RE::Actor*>(RE::PlayerCharacter::GetSingleton())))
+                        logger::error("[PeacefulTest] actor={:08X} StartCombat dispatch failed", id);
+                    break;
+                }
+                case TestState::Dead: {
+                    const auto script = Script::GetScriptObject(subject.get(), "Actor", true);
+                    if (!script || !Script::DispatchMethodCall(script, "Kill", nullptr, static_cast<RE::Actor*>(RE::PlayerCharacter::GetSingleton())))
+                        logger::error("[PeacefulTest] actor={:08X} Kill dispatch failed", id);
+                    break;
+                }
+                default: break;
+                }
+            }
+            logger::info("[PeacefulTest] actor={:08X} command={} dispatched", id, static_cast<unsigned>(command));
+        });
     }
     void RequestBegin(RE::Actor* actor, int seconds)
     {
@@ -370,32 +531,36 @@ namespace Acheron::Pacification
                 const auto owner = records.find(subject->GetFormID());
                 if (owner == records.end() || owner->second.state.phase != Phase::Kneeling) return;
             }
+#ifdef ACHERON_YIELD_TESTS
+            const auto origin = subject->GetPosition();
+            logger::info("[PeacefulKneelEntry] actor={:08X} bind={} x={} y={} z={}", subject->GetFormID(), bind, origin.x, origin.y, origin.z);
+#endif
             if (Defeat::IsDefeated(subject.get())) {
                 Defeat::RescueActor(subject.get(), false);
                 if (Defeat::IsDefeated(subject.get())) return;
                 Defeat::UndoPacify(subject.get());
-                if (!Begin(subject.get(), std::clamp(Settings::iPeacefulWanderDuration, 1, 600))) return;
+                if (!Begin(subject.get(), std::clamp(Settings::iPeacefulWanderDuration, 1, 600), false, Phase::Kneeling))
+                    logger::warn("Kneeling request rejected for {:08X}", subject->GetFormID());
+                return;
             }
             const auto found = records.find(subject->GetFormID());
             if (found == records.end() || (!bind && Peaceful::IsCommandHold(found->second.state.phase))) return;
             auto& record = found->second;
-            if (bind && !record.exitingForBind) {
+            if (record.exitingFor && *record.exitingFor != Peaceful::EventKind::Bind) return;
+            if (bind && !record.exitingFor) {
                 // Finish the old furniture exit before replacing its marker and starting another pose.
-                record.exitingForBind = true;
-                record.ready = false;
-                record.applyAge = 0;
-                subject->NotifyAnimationGraph("IdleChairExitStart");
-                Script::CallbackPtr callback(new EvaluateCallback(subject.get()));
-                if (!Script::DispatchStaticCall("ActorUtil", "RemovePackageOverride", callback, subject.get(), Package(Phase::Kneeling))) End(subject->GetFormID());
+                if (!StartPoseExit(record, subject.get(), Peaceful::EventKind::Bind)) End(subject->GetFormID());
                 return;
             }
             if (bind && subject->AsActorState()->GetSitSleepState() != RE::SIT_SLEEP_STATE::kNormal) return;
             // Native BoundCaptiveMarker does not enter under SitTarget; use working kneel geometry.
-            const auto marker = bind ? GameForms::PeacefulBoundMarker : RE::TESForm::LookupByID<RE::TESFurniture>(0xE8E4E);
-            const auto point = marker ? subject->PlaceObjectAtMe(marker, true) : nullptr;
-            if (!point) return;
-            record.exitingForBind = false;
-            point->SetAngle(subject->GetAngle());
+            const auto position = subject->GetPosition();
+            const auto yaw = subject->GetAngle().z;
+            const auto point = bind ? subject->PlaceObjectAtMe(GameForms::PeacefulBoundMarker, true) : PlaceKneelingGoal(subject.get(), record.state);
+            if (!point) { End(subject->GetFormID()); return; }
+            record.exitingFor.reset();
+            point->SetPosition(position);
+            point->SetAngle({ 0.0f, 0.0f, yaw });
             const auto old = record.goal;
             record.goal = point->GetHandle();
             subject->extraList.SetLinkedRef(point.get(), GameForms::PeacefulGoal);
@@ -416,11 +581,17 @@ namespace Acheron::Pacification
             const auto subject = handle.get(); if (!subject) return;
             const auto found = records.find(subject->GetFormID());
             if (found == records.end() || !Peaceful::IsCommandHold(found->second.state.phase)) return;
-            found->second.exitingForBind = false;
+            auto& record = found->second;
+            if (record.exitingFor && *record.exitingFor != Peaceful::EventKind::Resume) return;
+            if (!record.exitingFor) {
+                if (!StartPoseExit(record, subject.get(), Peaceful::EventKind::Resume)) End(subject->GetFormID());
+                return;
+            }
+            if (subject->AsActorState()->GetSitSleepState() != RE::SIT_SLEEP_STATE::kNormal) return;
+            record.exitingFor.reset();
             Peaceful::Facts facts;
             found->second.combat = facts.nearbyCombat = Encounter(found->second);
             const auto next = Peaceful::Decide(found->second.state, { Peaceful::EventKind::Resume }, facts);
-            subject->NotifyAnimationGraph("IdleChairExitStart");
             if (!next) { End(subject->GetFormID()); return; }
             found->second.state.commandHoldRemaining = next->commandHoldRemaining;
             if (!Apply(found->second, next->phase)) End(subject->GetFormID());
@@ -534,7 +705,7 @@ namespace Acheron::Pacification
             const auto found = records.find(subject->GetFormID()); if (found == records.end()) return;
             const auto& record = found->second;
             const auto anchor = record.anchor.get(), goal = record.goal.get();
-            logger::info("[PeacefulSnapshot] actor={:08X} phase={} remaining={} generation={} anchor={:08X} goal={:08X} ready={} loaded={} commandHoldRemaining={}", subject->GetFormID(), static_cast<unsigned>(record.state.phase), record.state.remaining, record.generation, anchor ? anchor->GetFormID() : 0, goal ? goal->GetFormID() : 0, record.ready, Loaded(subject.get()), record.state.commandHoldRemaining);
+            logger::info("[PeacefulSnapshot] actor={:08X} phase={} remaining={} generation={} anchor={:08X} goal={:08X} ready={} loaded={} commandHoldRemaining={} selectedKneelingVariant={}", subject->GetFormID(), static_cast<unsigned>(record.state.phase), record.state.remaining, record.generation, anchor ? anchor->GetFormID() : 0, goal ? goal->GetFormID() : 0, record.ready, Loaded(subject.get()), record.state.commandHoldRemaining, static_cast<unsigned>(record.state.selectedKneelingVariant));
         });
     }
 #endif
@@ -579,13 +750,14 @@ namespace Acheron::Pacification
             const auto anchor = record.anchor.get(), goal = record.goal.get();
             const RE::FormID anchorId = anchor ? anchor->GetFormID() : 0, goalId = goal ? goal->GetFormID() : 0;
             const auto phase = static_cast<std::uint8_t>(record.state.phase);
+            const auto variant = static_cast<std::uint8_t>(record.state.selectedKneelingVariant);
             const std::uint8_t talk = static_cast<std::uint8_t>((record.hadTalk ? 1 : 0) | (record.talk ? 2 : 0) | (record.rescued ? 4 : 0));
             const auto commandHoldRemaining = Peaceful::IsCommandHold(record.state.phase) ? std::max(0.0f,
                 record.state.commandHoldRemaining - std::chrono::duration<float>(std::chrono::steady_clock::now() - record.realObserved).count()) : 0.0f;
             if (!stream->WriteRecordData(id) || !stream->WriteRecordData(anchorId) || !stream->WriteRecordData(goalId) ||
                 !stream->WriteRecordData(phase) || !stream->WriteRecordData(record.state.remaining) ||
                 !stream->WriteRecordData(record.aggression) || !stream->WriteRecordData(record.aggressionModifierBefore) || !stream->WriteRecordData(talk) ||
-                !stream->WriteRecordData(commandHoldRemaining)) {
+                !stream->WriteRecordData(commandHoldRemaining) || !stream->WriteRecordData(variant)) {
                 logger::error("Unable to save peaceful actor {:08X}", id); return;
             }
         }
@@ -595,14 +767,16 @@ namespace Acheron::Pacification
         std::uint32_t count{};
         if (!stream->ReadRecordData(count) || count > 4096) { logger::error("Invalid peaceful record count"); return; }
         for (std::uint32_t index = 0; index < count; ++index) {
-            RE::FormID id{}, anchorId{}, goalId{}; std::uint8_t phase{}, talk{}; Record record;
+            RE::FormID id{}, anchorId{}, goalId{}; std::uint8_t phase{}, talk{}, variant{}; Record record;
             if (!stream->ReadRecordData(id) || !stream->ReadRecordData(anchorId) || !stream->ReadRecordData(goalId) ||
                 !stream->ReadRecordData(phase) || !stream->ReadRecordData(record.state.remaining) ||
                 !stream->ReadRecordData(record.aggression) || !stream->ReadRecordData(record.aggressionModifierBefore) || !stream->ReadRecordData(talk) ||
-                (version >= 2 && !stream->ReadRecordData(record.state.commandHoldRemaining))) {
+                (version >= 2 && !stream->ReadRecordData(record.state.commandHoldRemaining)) ||
+                (version >= 3 && !stream->ReadRecordData(variant))) {
                 logger::error("Truncated peaceful record"); return;
             }
             record.state.phase = static_cast<Phase>(phase);
+            record.state.selectedKneelingVariant = static_cast<Peaceful::KneelingVariant>(variant);
             if (!Peaceful::ValidState(record.state) || !std::isfinite(record.aggression) || std::abs(record.aggression) > 1000 ||
                 !std::isfinite(record.aggressionModifierBefore) || std::abs(record.aggressionModifierBefore) > 1000 || talk > 7) {
                 logger::warn("Invalid peaceful state for {:08X}", id); continue;
@@ -616,7 +790,7 @@ namespace Acheron::Pacification
             const auto goal = RE::TESForm::LookupByID<RE::TESObjectREFR>(resolvedGoal);
             const auto marker = [](RE::TESObjectREFR* ref) { return ref && ref->GetBaseObject() && ref->GetBaseObject()->GetFormID() == 0x3B; };
             const auto destinationMarker = [marker](RE::TESObjectREFR* ref) { return marker(ref) ||
-                (ref && ref->GetBaseObject() && (ref->GetBaseObject()->GetFormID() == 0xE8E4E || ref->GetBaseObject() == GameForms::PeacefulBoundMarker)); };
+                (ref && ref->GetBaseObject() && (ref->GetBaseObject()->GetFormID() == 0xE8E4E || ref->GetBaseObject()->GetFormID() == 0xF11F1 || ref->GetBaseObject() == GameForms::PeacefulBoundMarker)); };
             if (!actor) {
                 // No actor remains to release; only typed markers from this record may be discarded.
                 const auto point = marker(anchor) ? anchor->GetHandle() : RE::ObjectRefHandle{};

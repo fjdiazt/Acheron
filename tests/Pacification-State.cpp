@@ -1,4 +1,5 @@
 #include "Acheron/PacificationState.h"
+#include "Acheron/TestState.h"
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -18,6 +19,24 @@ static void Remaining(const std::optional<State>& state, Phase phase, float seco
 
 int main()
 {
+    for (const auto phase : { Phase::AvoidingCombat, Phase::Wandering, Phase::Kneeling, Phase::KneelingBound }) {
+        const State previous{ phase, 37, 12, KneelingVariant::Blessing };
+        for (const auto command : { TestState::KneelingRegular, TestState::KneelingBlessing, TestState::KneelingBound }) {
+            const auto next = SelectTestState(command, previous, 60);
+            Require(next && next->remaining == 37 && next->commandHoldRemaining == CommandHoldDurationSeconds, "Test hold changed peaceful budget or failed to restart hold");
+            Require(next->phase == (command == TestState::KneelingBound ? Phase::KneelingBound : Phase::Kneeling), "Test transition restriction not bypassed");
+            if (command != TestState::KneelingBound)
+                Require(next->selectedKneelingVariant == (command == TestState::KneelingRegular ? KneelingVariant::Regular : KneelingVariant::Blessing), "Test variant not deterministic");
+        }
+        for (const auto command : { TestState::AvoidingCombat, TestState::Wandering }) {
+            const auto next = SelectTestState(command, previous, 60);
+            Require(next && next->remaining == 60 && next->commandHoldRemaining == 0, "Test movement timer incorrect");
+            Require(next->phase == (command == TestState::AvoidingCombat ? Phase::AvoidingCombat : Phase::Wandering), "Test movement destination incorrect");
+        }
+    }
+    Require(!SelectTestState(TestState::KneelingRegular, { Phase::Wandering, 37 }, 0), "Test invalid duration accepted");
+    Require(!SelectTestState(TestState::Normal, { Phase::Wandering, 37 }, 60), "Engine state became peaceful owner");
+    Require(!SelectTestState(static_cast<TestState>(99), { Phase::Wandering, 37 }, 60), "Invalid Test command accepted");
     Facts facts{};
     State state{ Phase::Wandering, 3.0f };
     facts.delta = 1.0f;
@@ -113,5 +132,17 @@ int main()
     Require(Decide(*bound, { EventKind::Kneel }, facts)->phase == Phase::KneelingBound, "Kneel silently unbound actor");
     facts = {};
     Remaining(Decide({ Phase::Wandering, 10.0f }, { EventKind::Bind }, facts), Phase::Wandering, 10.0f);
+    state = { Phase::Kneeling, 37.0f, 50.0f, KneelingVariant::Blessing };
+    for (const auto event : { Event{}, Event{ EventKind::Refresh, 60.0f }, Event{ EventKind::Kneel }, Event{ EventKind::Bind } }) {
+        Require(Decide(state, event, facts)->selectedKneelingVariant == KneelingVariant::Blessing,
+            "Existing kneeling selection changed during observation/refresh/ignored kneel/bind");
+    }
+    for (bool combat : { false, true }) {
+        facts.nearbyCombat = combat;
+        const auto resumed = Decide(state, { EventKind::Resume }, facts);
+        Remaining(resumed, combat ? Phase::AvoidingCombat : Phase::Wandering, 37.0f);
+        Require(resumed->commandHoldRemaining == 0, "On your feet retained command hold");
+    }
+    Require(!ValidState({ Phase::Kneeling, 37.0f, 50.0f, static_cast<KneelingVariant>(99) }), "Unknown saved kneeling variant accepted");
     std::cout << "PASS: FSM transitions, lifecycle priority, timers, refresh and validation\n";
 }

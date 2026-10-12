@@ -1,12 +1,24 @@
 #include "Acheron/Defeat.h"
 
 #include "Acheron/EventSink.h"
+#include "Acheron/Misc.h"
 #include "Acheron/Pacification.h"
 #include "Serialization/EventManager.h"
 #include "shared/KrisV/Script.h"
 
 namespace Acheron
 {
+    void Defeat::SetEnemyRelationship(RE::Actor* actor)
+    {
+        if (REL::Module::IsVR() || !actor || actor->IsPlayerRef() || actor->IsPlayerTeammate() ||
+            actor->IsCommandedActor() || !IsNPC(actor) || !actor->IsHostileToActor(RE::PlayerCharacter::GetSingleton())) return;
+        // Capture hostility before aggression suppression; release deliberately retains personal resentment.
+        const auto script = Script::GetScriptObject(actor, "Actor", true);
+        if (!script || !Script::DispatchMethodCall(script, "SetRelationshipRank", nullptr,
+                RE::PlayerCharacter::GetSingleton(), std::int32_t{ -3 }))
+            logger::error("Unable to set enemy relationship for {:08X}", actor->GetFormID());
+    }
+
     std::uint8_t Defeat::CaptureDialogue(RE::Actor* actor)
     {
         const auto talk = actor->extraList.GetByType<RE::ExtraCanTalkToPlayer>();
@@ -67,6 +79,7 @@ namespace Acheron
         }
 
         Pacification::End(a_victim->GetFormID());
+        SetEnemyRelationship(a_victim);
         data->dialogueFlags = CaptureDialogue(a_victim);
         if (!REL::Module::IsVR()) {
             // Native dialogue refuses aggressive enemies even after combat is stopped.

@@ -1,0 +1,7 @@
+FormKey: 000831:Acheron.esm
+EditorID: AcheronPeacefulStandDialogue
+Quest: 000818:Acheron.esm
+Category: Player
+Flags:
+- TopLevel
+StartingTopic: 000832:Acheron.esm

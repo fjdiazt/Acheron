@@ -46,25 +46,8 @@ try {
     $beforeSave=Read-PeacefulState $actor
     $save=Invoke-YieldTool scenario @{steps=@(@{tool='game';args=@{action='save';name=$saveName}},@{waitFor='saveGame';timeoutMs=10000})}
     if($save.ok -ne $true) {throw 'Save lifecycle event missing'}
-    $listing=Invoke-YieldTool game @{action='list';filter=$saveName}
-    if($listing.count -ne 1 -or $listing.dir -ne $saveDir -or $listing.saves[0].name -notlike ($saveName+'*')) {throw 'Owned save not found'}
-    $request=Invoke-YieldTool scenario @{async=$true;steps=@(@{tool='game';args=@{action='load';name=$listing.saves[0].name}},@{waitFor='postLoadGame';timeoutMs=15000})}
-    $deadline=(Get-Date).AddSeconds(17)
-    do {
-        $load=Invoke-YieldTool scenario @{action='status';runId=$request.runId}
-        if($load.done) {break}
-        $menus=Invoke-YieldTool menu @{action='list'}
-        if($menus.messageBoxOpen) {
-            $summary.loadPrompt=Invoke-YieldTool menu @{action='describe'}
-            # Acknowledge only this vanilla warning for our GUID-owned save; never missing-content prompts.
-            if($summary.loadPrompt.bodyText -eq 'Creations are currently loaded. Note: Achievements are disabled.  Do you wish to continue loading this save?' -and
-               ($summary.loadPrompt.buttons -join '|') -eq 'Yes|No') {
-                Invoke-YieldTool menu @{action='accept';index=0} | Out-Null
-            } else {throw ('Load gated by prompt: '+($summary.loadPrompt|ConvertTo-Json -Compress -Depth 10))}
-        }
-        Start-Sleep -Milliseconds 100
-    } while((Get-Date) -lt $deadline)
-    if(-not $load.done -or $load.ok -ne $true -or $load.result.ok -ne $true) {throw 'Load lifecycle event missing'}
+    $listing=Wait-PeacefulSave $saveName $saveDir
+    Load-PeacefulSave $listing.saves[0].name
     $restored=Wait-PeacefulPhase $actor 2
     if($restored.anchor -ne $beforeSave.anchor -or $restored.goal -ne $beforeSave.goal -or
        $restored.remaining -gt $beforeSave.remaining+0.1 -or $restored.remaining -lt $beforeSave.remaining-5 -or

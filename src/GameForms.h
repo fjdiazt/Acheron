@@ -40,6 +40,9 @@ namespace Acheron
         static inline RE::FormID KneelDialogueInfoID;
         static inline RE::FormID YieldKneelDialogueInfoID;
         static inline RE::FormID BindDialogueInfoID;
+        static inline RE::FormID StandDialogueInfoID;
+        static inline std::array<RE::FormID, 2> TestRootInfoIDs{};
+        static inline std::array<RE::FormID, 9> TestDialogueInfoIDs{};
         static inline std::array<RE::FormID, 4> DefeatedDialogueInfoIDs{};
         static inline RE::TESQuest* MainQuest;
         static inline RE::TESQuest* PeacefulDialogue;
@@ -96,7 +99,16 @@ namespace Acheron
                 LOOKUPFORM(PeacefulBoundMarker, 0x822);
                 KneelDialogueInfoID = RE::TESDataHandler::GetSingleton()->LookupFormID(0x81C, "Acheron.esm");
                 BindDialogueInfoID = RE::TESDataHandler::GetSingleton()->LookupFormID(0x820, "Acheron.esm");
-                if (!KneelDialogueInfoID || !BindDialogueInfoID) return false;
+                StandDialogueInfoID = RE::TESDataHandler::GetSingleton()->LookupFormID(0x833, "Acheron.esm");
+                if (!KneelDialogueInfoID || !BindDialogueInfoID || !StandDialogueInfoID) return false;
+                for (std::size_t i = 0; i < TestRootInfoIDs.size(); ++i) {
+                    TestRootInfoIDs[i] = RE::TESDataHandler::GetSingleton()->LookupFormID(static_cast<RE::FormID>(0x836 + i), "Acheron.esm");
+                    if (!TestRootInfoIDs[i]) return false;
+                }
+                for (std::size_t i = 0; i < TestDialogueInfoIDs.size(); ++i) {
+                    TestDialogueInfoIDs[i] = RE::TESDataHandler::GetSingleton()->LookupFormID(static_cast<RE::FormID>(0x839 + 2 * i), "Acheron.esm");
+                    if (!TestDialogueInfoIDs[i]) return false;
+                }
             }
 
             return true;

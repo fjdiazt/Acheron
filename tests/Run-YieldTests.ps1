@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('suite','god-preset','npc-defeat','follower-pacification','npc-pacification','follower-defeat','npc-lethal','player-finish-physical','player-finish-magic','essential-protection','npc-recovery-2s','npc-recovery-3s','native-peaceful-probe','native-talk-probe','peaceful-state','peaceful-healing','peaceful-movement','peaceful-lifecycle','peaceful-persistence','peaceful-talk','peaceful-reset','peaceful-kneeling','peaceful-bind','injured-locomotion','rescue-locomotion','setup-enemy','setup-enemy-follower')]
+    [ValidateSet('suite','god-preset','npc-defeat','follower-pacification','npc-pacification','follower-defeat','npc-lethal','player-finish-physical','player-finish-magic','essential-protection','npc-recovery-2s','npc-recovery-3s','native-peaceful-probe','native-talk-probe','peaceful-state','peaceful-healing','peaceful-movement','peaceful-lifecycle','peaceful-persistence','peaceful-talk','peaceful-reset','peaceful-kneeling','peaceful-kneeling-variants','peaceful-test-dialogue','peaceful-bind','injured-locomotion','rescue-locomotion','setup-enemy','setup-enemy-follower')]
     [string] $Test = 'suite',
     [string] $GameRoot = 'S:\games\The Elder Scrolls V - Skyrim Special Edition',
     [string] $PrefsPath = (Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'My Games\Skyrim Special Edition\SkyrimPrefs.ini'),
@@ -20,6 +20,18 @@ function Set-YieldTestDisplay([string] $Text, [int] $Width=800, [int] $Height=60
         $block = [regex]::Replace($block, $pattern, "$($entry.Key)=$($entry.Value)")
     }
     return $Text.Substring(0, $section.Index) + $block + $Text.Substring($section.Index + $section.Length)
+}
+
+function Enable-YieldBackground([string] $Text) {
+    $sections=[regex]::Matches($Text,'(?ims)^\[General\][ \t]*\r?\n.*?(?=^\[|\z)')
+    if($sections.Count -ne 1) {throw 'Expected one [General] section'}
+    $section=$sections[0]; $block=$section.Value
+    $pattern='(?im)^bAlwaysActive[ \t]*=[^\r\n]*'
+    $matches=[regex]::Matches($block,$pattern)
+    if($matches.Count -gt 1) {throw 'Ambiguous bAlwaysActive setting'}
+    if($matches.Count) {$block=[regex]::Replace($block,$pattern,'bAlwaysActive=1')}
+    else {$block=[regex]::Replace($block,'^(\[General\][ \t]*\r?\n)','$1bAlwaysActive=1' + "`r`n")}
+    return $Text.Substring(0,$section.Index)+$block+$Text.Substring($section.Index+$section.Length)
 }
 
 function Test-YieldProcessOwnership($Candidate, [string] $GameExe, [int] $LoaderId, [datetime] $StartedAt) {
@@ -153,6 +165,11 @@ $script:runId = [guid]::NewGuid().ToString()
 $script:runDirectory = Join-Path ([IO.Path]::GetFullPath($ResultsRoot)) $runId
 New-Item -ItemType Directory -Path $runDirectory | Out-Null
 $originalPrefs = [IO.File]::ReadAllBytes($PrefsPath)
+$mainIni=Join-Path (Split-Path -Parent $PrefsPath) 'Skyrim.ini'
+Assert-DesktopWritePath $mainIni
+$originalIni=[IO.File]::ReadAllBytes($mainIni)
+$activeIni=Enable-YieldBackground ([IO.File]::ReadAllText($mainIni))
+[IO.File]::WriteAllBytes((Join-Path $runDirectory 'Skyrim.ini.before'),$originalIni)
 $smallPrefs = if($setupOnly) {Set-YieldTestDisplay ([IO.File]::ReadAllText($PrefsPath)) 1920 1080} else {Disable-YieldTestAutosaves (Set-YieldTestDisplay ([IO.File]::ReadAllText($PrefsPath)))}
 [IO.File]::WriteAllBytes((Join-Path $runDirectory 'SkyrimPrefs.ini.before'), $originalPrefs)
 $summary = [ordered]@{ schema=1; runId=$runId; test=$Test; status='FAIL'; resolution=$(if($setupOnly){'1920x1080'}else{'800x600'}); screenshot=$null; gracefulExit=$false; settingsRestored=$false }
@@ -177,6 +194,9 @@ $loader = $null
 $exitCode = 1
 
 try {
+    # Runtime setini cannot run if startup is already paused after losing focus.
+    Assert-DesktopWritePath $mainIni
+    [IO.File]::WriteAllText($mainIni,$activeIni,[Text.UTF8Encoding]::new($false))
     Assert-DesktopWritePath $PrefsPath
     [IO.File]::WriteAllText($PrefsPath, $smallPrefs, [Text.UTF8Encoding]::new($false))
     $running = @(Get-Process SkyrimSE,skse64_loader -ErrorAction SilentlyContinue)
@@ -264,6 +284,8 @@ try {
         'peaceful-talk' { 'Pacification-Talk.ps1' }
         'peaceful-reset' { 'Pacification-Reset.ps1' }
         'peaceful-kneeling' { 'Pacification-Kneeling.ps1' }
+        'peaceful-kneeling-variants' { 'Pacification-KneelingVariants.ps1' }
+        'peaceful-test-dialogue' { 'Pacification-TestDialogue.ps1' }
         'peaceful-bind' { 'Pacification-Kneeling.ps1' }
         'injured-locomotion' { 'Injured-Locomotion.ps1' }
         'rescue-locomotion' { 'Rescue-Locomotion.ps1' }
@@ -333,6 +355,13 @@ try {
         } else { $summary.error = 'Game still running; settings backup retained, restoration deferred'; $exitCode = 1 }
         if (-not $summary.settingsRestored -or -not $summary.gracefulExit) { $exitCode = 1 }
     }
+    try {
+        Assert-DesktopWritePath $mainIni
+        if([IO.File]::ReadAllText($mainIni) -cne $activeIni) {throw 'Skyrim.ini changed externally; backup retained'}
+        [IO.File]::WriteAllBytes($mainIni,$originalIni)
+        $summary.startupIniRestored=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData([IO.File]::ReadAllBytes($mainIni))) -eq [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($originalIni))
+        if(-not $summary.startupIniRestored) {throw 'Skyrim.ini restoration mismatch'}
+    } catch {$summary.error=$_.Exception.Message; $exitCode=1}
     foreach ($log in @('skse64.log','devbench.log','Acheron.log','PapyrusUtilDev.log','OpenAnimationReplacer.log','AnimationQueueFix.log')) {
         $source = Join-Path (Split-Path -Parent $PrefsPath) "SKSE\$log"
         if (Test-Path -LiteralPath $source) { Copy-Item -LiteralPath $source -Destination (Join-Path $runDirectory $log) }

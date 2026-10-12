@@ -91,6 +91,13 @@ try {
     $health = (Invoke-NpcPapyrus Actor GetActorValue $actor @('Health')).returned
     $log = Get-Content -LiteralPath $logPath -Raw
     Assert-YieldDefeatEvidence $log $actor $dead $defeated $pacified $health
+    $deadline = (Get-Date).AddSeconds(3)
+    do {
+        $summary.relationshipRank = (Invoke-NpcPapyrus Actor GetRelationshipRank $actor @(@{form=$player})).returned
+        if ($summary.relationshipRank -eq -3) { break }
+        Start-Sleep -Milliseconds 50
+    } while ((Get-Date) -lt $deadline)
+    if ($summary.relationshipRank -ne -3) { throw 'Defeated enemy did not acquire relationship rank -3' }
     $summary.after = @{ dead=$dead; defeated=$defeated; pacified=$pacified; health=$health }
     Set-YieldActionCamera $actor
     if ($FinishMode -ne 'none') {

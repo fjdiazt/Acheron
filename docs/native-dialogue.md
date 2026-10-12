@@ -11,10 +11,21 @@ Recovery restores prior dialogue flags and removes the owned aggression modifier
 subsequent peaceful states acquire their own ownership. Defeated cosave version 2
 stores this state; version 1 still loads. Obsolete menu records are ignored.
 
+Desktop enemies hostile to the player before aggression suppression receive
+native relationship rank -3 (Enemy), enabling resentful vanilla greetings while
+combat remains blocked. Defeat and direct peaceful entry share this policy;
+player teammates, commanded actors and non-hostile civilians are excluded.
+Release deliberately does not restore relationship rank. Factions remain unchanged.
+Native rank persistence for templated actors, quest effects and voice coverage
+require manual qualification; this change adds no custom greeting overrides.
+
 Native choices reuse existing action logic: Rescue, Plunder, Execute and Drain.
 Execute/Drain are hidden for essential actors; Drain requires a vampire player
 and a living, non-undead target. On your knees. enters owned Kneeling without
-healing; Bind remains available from Kneeling.
+healing; Bind remains available from Kneeling. On your feet. is available only
+from unbound Kneeling and resumes avoidance/wandering after the matching pose
+exit, without healing or resetting either timer. Desktop qualification passed in
+run `186bdc37-d88e-46cf-a7c1-37150419d1f1`; bound posture commands remain planned.
 
 ## Desktop evidence
 
@@ -43,3 +54,35 @@ VR production untouched. VR, creature/custom-voice dialogue, old-save migration,
 and native Plunder/Execute/Drain selection remain unchecked. Third-party custom
 Hunter Pride menu add-ons need conversion to dialogue; removed menu APIs are
 intentionally incompatible. Newly added topics currently use English labels.
+
+## Test submenu (desktop)
+
+Branch 0x834, topic 0x835: `Test`. Two root INFOs (0x836 defeated keyword,
+0x837 owned peaceful anchor) link the same nine topics using native INFO `LinkTo`.
+Only the root is top-level; command INFOs end dialogue. No special SWF/menu.
+
+| INFO | Command |
+| --- | --- |
+| 0x839 | Normal |
+| 0x83B | Combat |
+| 0x83D | Yielding |
+| 0x83F | Avoiding combat |
+| 0x841 | Wandering |
+| 0x843 | Kneel (Regular) |
+| 0x845 | Kneel (Blessing) |
+| 0x847 | Kneeling bound |
+| 0x849 | Dead (kill NPC) |
+
+Selections enter existing engine/owned states with full behavior, not animation-only
+previews. Explicit variants are deterministic. Native topic events dispatch through
+Pacification::RequestTestState; actor/epoch validation and native held exits remain.
+Combat and Normal remove managed dialogue; defeat again to reopen Test. Dead kills
+the actor using native rules. Use disposable test NPCs.
+
+Desktop qualification: `build/test-results/9862c8ae-b917-44b1-b3fe-1ab477a7f455/summary.json`
+passed all nine native selections. Regular/blessing/bound clips, bound-to-regular,
+health/pacification, hold restart, Test visibility from all five managed source states,
+Normal/Combat/Yielding/Dead outcomes and avoidance-to-wandering were checked.
+Installed DLL B2D0A6F192FE6A3E70A8E78BC75950E5C5739C7860874AA14870BD4510793BC1;
+ESM B3C4E35E94E0D4C75A90F4EE3307773C37471F0E47D7F03D9CDA39A1C6A59ADC.
+Desktop settings restored and game closed; VR remains unqualified.

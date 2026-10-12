@@ -53,6 +53,7 @@ namespace Acheron
         static void Pacify(RE::Actor* a_victim);
         static void UndoPacify(RE::Actor* a_victim);
         static bool IsPacified(const RE::Actor* a_victim);
+        static void SetEnemyRelationship(RE::Actor* actor);
 
       public:
         static void Load(SKSE::SerializationInterface* a_intfc, uint32_t a_type, uint32_t version = 1);

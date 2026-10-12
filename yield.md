@@ -611,3 +611,11 @@ Source inspection does not establish Mad God, PLANCK/NFF, or headset behavior.
 Issue tracking remains in Beads in the sibling `skyrim` repository:
 `skyrim-ise`, `skyrim-8r9`, `skyrim-dre`, `skyrim-6a1`, `skyrim-yek`,
 `skyrim-6cl`, `skyrim-tpm`, `skyrim-e6q`, and `skyrim-hvc`.
+
+## Manual Test commands
+
+Expose a native `Test` dialogue subtree in each talkable managed state. Every currently
+implemented destination has its own command; each supported random kneeling family
+has an explicit command. Apply full state effects/timers, bypass gameplay transition
+restrictions, preserve lifecycle guards. Planned states/child animations stay excluded.
+See docs/native-dialogue.md and docs/fsm.md for commands and timer semantics.

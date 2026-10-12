@@ -1,0 +1,8 @@
+FormKey: 000848:Acheron.esm
+EditorID: AcheronTest000848
+Name:
+  TargetLanguage: English
+  Value: Dead (kill NPC)
+Branch: 000834:Acheron.esm
+Quest: 000818:Acheron.esm
+SubtypeName: CUST

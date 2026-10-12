@@ -23,9 +23,13 @@ try {
         if($fixture.base -eq $yieldEnemyBase) {Set-NpcEnemyEquipment $actor | Out-Null}
         Invoke-NpcPapyrus ObjectReference MoveTo $actor @(@{form=$player},0.0,-85.0,0.0,$false) | Out-Null
         Invoke-NpcPapyrus Actor StopCombat $player | Out-Null
+        $case.originalRank=(Invoke-NpcPapyrus Actor GetRelationshipRank $actor @(@{form=$player})).returned
+        $expectedRank=if($fixture.kind -eq 'enemy') {-3}else{$case.originalRank}
         Invoke-NpcPapyrus Acheron BeginPeacefulState '' @(@{form=$actor},30) | Out-Null
         Invoke-NpcPapyrus Actor EnableAI $actor @($true) | Out-Null
         $case.state=Wait-PeacefulPhase $actor 2
+        $case.managedRank=(Invoke-NpcPapyrus Actor GetRelationshipRank $actor @(@{form=$player})).returned
+        if($case.managedRank -ne $expectedRank) {throw 'Peaceful relationship policy changed wrong actor or missed enemy'}
         Invoke-NpcPapyrus Actor SetDontMove $actor @($true) | Out-Null
         Invoke-NpcPapyrus ObjectReference MoveTo $actor @(@{form=$player},0.0,-120.0,0.0,$false) | Out-Null
         Invoke-NpcPapyrus ObjectReference SetAngle $player @(0.0,0.0,180.0) | Out-Null
@@ -89,6 +93,8 @@ try {
             Start-Sleep -Milliseconds 50
         } while((Get-Date) -lt $deadline)
         if($active) {throw 'Closed dialogue did not resume expiry'}
+        $case.releasedRank=(Invoke-NpcPapyrus Actor GetRelationshipRank $actor @(@{form=$player})).returned
+        if($case.releasedRank -ne $expectedRank) {throw 'Release restored enemy rank or changed civilian disposition'}
         Invoke-NpcPapyrus ObjectReference Disable $actor @($false) | Out-Null
         Invoke-NpcPapyrus ObjectReference Delete $actor | Out-Null
         $actor=$null;$case.cleaned=$true

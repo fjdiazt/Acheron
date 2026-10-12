@@ -88,20 +88,59 @@ reversal or explain those freezes.
 
 ### Commanded kneeling and binding
 
+Random unbound variants and native **On your feet.**:
+
+```powershell
+pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test peaceful-kneeling-variants -KeepInstalled
+```
+
+Desktop run `186bdc37-d88e-46cf-a7c1-37150419d1f1` passed on the female Forsworn
+fixture: regular/blessing native enter/loop/exit, saved non-default blessing across
+real save/load, no reroll on Refresh/ignored Kneel, native On your feet selection
+to Wandering and nearby-combat AvoidingCombat, retained health/pacification,
+matching exit before Bind, bound pose and restarted hold. GUID-owned saves were
+archived/removed; settings restored and desktop closed. Qualified DLL and plugin
+remain installed; backup `build/pacification-backups/b0e81b89-15b8-4d9a-9bd0-7247ddda57fe`.
+
+Selection is uniform over the two enabled native families; the qualification
+probe bounds random coverage attempts and reports missing coverage as inconclusive.
+Child sit/kneel, forced fallback, old-cosave migration and VR remain unqualified.
+The separate in-place-entry regression below still covers the unresolved native
+furniture walking detour. This pass does not claim that detour fixed.
+
 ```powershell
 pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test peaceful-kneeling -KeepInstalled
 ```
 
 Standalone desktop regression: enter owned `Kneeling` from Yielding,
-AvoidingCombat and Wandering; assert unchanged health, pacification, native
+AvoidingCombat and Wandering; verify each command requests exactly one package
+(phase 3). Assert unchanged health, pacification, native
 `KneelingMarker` furniture occupancy, held pose, Talk choices, real dialogue
 selection, resume and release. The standing dialogue action uses its native
-INFO event; the yielded Hunter Pride menu also exposes **On your knees.**
+INFO event; yielded native dialogue also exposes **On your knees.**
 The same regression selects **Bind** from kneeling dialogue, requires owned
 phase 4 and owned `AcheronPeacefulBoundMarker` (`000822`) occupancy plus native
 bound-kneeling clip selection in OAR logs, checks unchanged
 health/pacification, Talk retention, hidden repeat Bind and release from the bound pose.
 Use `-Test peaceful-bind` for the shorter Yielding → Kneeling → Bind case.
+
+Desktop run `09f5f07a-9b49-443a-bf7c-a6eb29ca7e6a` passed direct package-entry
+checks for Yielding, Wandering and AvoidingCombat: exactly one phase-3 request
+per command, native kneeling occupancy, unchanged health and retained Talk.
+Bind, hold reset, bound clip, release and Rescue checks also passed. Candidate
+DLL installed; game closed and test settings restored. Native exit animations
+remain required; this does not establish instantaneous pose changes or VR behavior.
+
+In-place entry is now a separate, **failing** regression. Command-time origin is
+captured in `[PeacefulKneelEntry]`; checks require a level marker within 1 unit,
+then sample actor position through furniture occupancy, allowing 10 units of
+settling movement. Existing final-pose assertions missed the walking detour.
+Probe `acf847b5-5ef0-43e8-a8fa-652bed4159c3` measured 79.90 units of travel
+despite aligned furniture and one phase-3 request. Temporarily allowing instant
+furniture entry only during package evaluation did not remove native `SitTarget`
+approach; that failed probe was removed. Candidate was rolled back. In-place
+animation entry remains unresolved; the current candidate aligns markers but
+does not remove the native walking detour.
 Both cases temporarily enable OAR clip logging and restore its configuration.
 
 **Commanded Hold Duration** uses `CommandHoldDurationSeconds = 1800` real
@@ -682,3 +721,33 @@ four saves and both desktop INIs unchanged, with no remaining game/loader.
 Negative self-checks reject continued attacks, immune hits, lingering combat,
 disabled attackers and failed/incomplete child results. Further repetition,
 real follower quests/NFF, other factions, collateral damage and VR remain open.
+
+### Native Test dialogue regression
+
+```powershell
+pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test peaceful-test-dialogue -KeepInstalled
+```
+
+Owns disposable female Forsworn fixtures. Selects native Test root and linked choices,
+verifies executed INFOs, exact regular/blessing/bound animation clips, hold restart,
+health/pacification, bound-to-regular override, Yielding/Normal/Combat/Dead routes,
+and avoidance during nearby combat followed by wandering. Logs first; no screenshots.
+Does not run 2s/3s recovery cases. Candidate remains installed only on PASS.
+
+Startup temporarily enables `bAlwaysActive=1` in desktop Skyrim.ini before SKSE
+launch; runtime console `setini` arrives too late if startup already stops on focus
+loss. Original INI bytes are archived and restored, with an external-edit check.
+Summary includes `startupIniRestored`; no VR config is written.
+
+Build-time record gate: `python tests/Test-TestDialogueRecords.py`. This checks the
+compiled ESM root response/conditions and nine native links, catching malformed YAML
+that Spriggit accepts while discarding INFO fields.
+
+Qualified desktop run: `9862c8ae-b917-44b1-b3fe-1ab477a7f455` (all command indices
+0-8, native dialogue selections and expected outcomes; actor cleanup, graceful close,
+preferences and startup INI restoration confirmed). The Combat destination is checked
+before isolating later scenarios on a fresh actor. Separate discovery `skyrim-1ay`
+records an inconclusive direct synthetic-combat -> DefeatActor settling probe; that
+extra bootstrap is not a prerequisite for talkable-source Test commands.
+Acheron's animation-driven defeat can differ from native IsBleedingOut; use its own
+flag/package plus fresh targeted OAR bleedout/locomotion clips for transition readiness.
