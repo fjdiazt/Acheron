@@ -2,6 +2,11 @@ $ErrorActionPreference='Stop'
 function Assert([bool] $Condition, [string] $Reason) {
     if(-not $Condition) {throw "FAIL: $Reason"}
 }
+# Force every catalog choice through the real setup; only randomness is controlled.
+function Get-Random([object[]] $InputObject) {
+    if($InputObject[0] -is [string]) {return $InputObject[[int]$scenarioTestState.enemyIndex]}
+    return $InputObject[[int]$scenarioTestState.followerIndex]
+}
 # Exercise the real fixture with only the DevBench boundary replaced.
 function Invoke-YieldTool([string] $Name, [hashtable] $Arguments) {
     $scenarioTestState.calls.Add(@{tool=$Name;args=$Arguments})
@@ -66,7 +71,7 @@ function Invoke-YieldTool([string] $Name, [hashtable] $Arguments) {
         'Delete' {$scenarioTestState.actors[$id].deleted=$true}
         'Is3DLoaded' {$value=$scenarioTestState.actors[$id].enabled}
         'IsPlayerTeammate' {$value=$scenarioTestState.actors[$id].teammate}
-        'IsHostileToActor' {$value=$scenarioTestState.actors[$id].ref.base.formId -eq '0x00043BE1'}
+        'IsHostileToActor' {$value=$scenarioTestState.actors[$id].ref.base.formId -in @('0x00043BE1','0x00043BE0','0x00043BE2')}
         'IsDead' {$value=$false}
         'IsDefeated' {
             $actor=$scenarioTestState.actors[$a[0].form]
@@ -78,8 +83,14 @@ function Invoke-YieldTool([string] $Name, [hashtable] $Arguments) {
     }
     return @{called=$true;returned=$value}
 }
-foreach($withFollower in @($false,$true)) {
-    $scenarioTestState=@{actors=@{};calls=[Collections.Generic.List[object]]::new();failLabel=$false};$summary=[ordered]@{}
+$cases=@(foreach($enemyIndex in 0..2) {
+    @{withFollower=$false;enemyIndex=$enemyIndex;followerIndex=0}
+    foreach($followerIndex in 0..4) {@{withFollower=$true;enemyIndex=$enemyIndex;followerIndex=$followerIndex}}
+})
+$callCounts=@{}
+foreach($case in $cases) {
+    $withFollower=$case.withFollower
+    $scenarioTestState=@{actors=@{};calls=[Collections.Generic.List[object]]::new();failLabel=$false;enemyIndex=$case.enemyIndex;followerIndex=$case.followerIndex};$summary=[ordered]@{}
     $result=& (Join-Path $PSScriptRoot '../scripts/Setup-Scenario.ps1') -RunId 'self-check' -RunDirectory $PSScriptRoot -WithFollower:$withFollower
     $count=if($withFollower){2}else{1}
     Assert ($summary.scenarioReady -and $summary.actors.Count -eq $count -and $scenarioTestState.actors.Count -eq $count) 'wrong scenario actors or no handoff'
@@ -89,7 +100,14 @@ foreach($withFollower in @($false,$true)) {
     foreach($actor in $scenarioTestState.actors.Values) {Assert ($actor.enabled -and $actor.ai -and -not $actor.deleted -and -not $actor.ghost) 'successful actor not left running or setup protection leaked'}
     Assert (@($summary.actors | Where-Object {$_.role -eq 'enemy' -and $_.hostileToPlayer -and -not $_.teammate}).Count -eq 1) 'enemy role wrong'
     $enemy=$summary.actors | Where-Object {$_.role -eq 'enemy'}
-    Assert ($enemy.base -eq '0x00043BE1' -and $enemy.equipment.sex -eq 1 -and $enemy.equipment.weapon -eq '0x00012EB7' -and $enemy.equipment.shield -eq $false) 'female Forsworn equipment summary wrong'
+    Assert ($enemy.base -eq @('0x00043BE1','0x00043BE0','0x00043BE2')[$case.enemyIndex] -and $enemy.equipment.sex -eq 1 -and $enemy.equipment.weapon -eq '0x00012EB7' -and $enemy.equipment.shield -eq $false) 'female Forsworn equipment summary wrong'
+    if($withFollower) {
+        $follower=$summary.actors | Where-Object {$_.role -eq 'follower'}
+        Assert ($follower.base -eq @('0x000A2C8E','0x000A2C8F','0x000A2C91','0x000A2C90','0x000A2C8C')[$case.followerIndex]) 'wrong follower selection'
+    }
+    $key=[string]$withFollower
+    if($callCounts.ContainsKey($key)) {Assert ($scenarioTestState.calls.Count -eq $callCounts[$key]) 'selection added game calls'}
+    else {$callCounts[$key]=$scenarioTestState.calls.Count}
     $inventory=$scenarioTestState.actors[$enemy.formId].items
     Assert ($inventory.Count -eq 2 -and '0x00000004' -in $inventory -and '0x00012EB7' -in $inventory) 'enemy armor removed or spare combat equipment retained'
     Assert (@($summary.actors | Where-Object {$_.role -eq 'follower' -and -not $_.hostileToPlayer -and $_.teammate}).Count -eq [int]$withFollower) 'follower role wrong'
@@ -131,4 +149,4 @@ try {Set-NpcEnemyEquipment '0xFF000001' | Out-Null} catch {
     $rejected=$true
 }
 Assert ($rejected -and @($scenarioTestState.calls | Where-Object {$_.args.function -in @('RemoveItem','AddItem','EquipItem')}).Count -eq 0) 'foreign NPC inventory could be changed'
-Write-Output 'PASS: shared female Forsworn equipment, armor preserved, enemy/follower handoff, ownership guards and failure cleanup; mocked DevBench'
+Write-Output 'PASS: all 3 Forsworn / 5 follower choices, unchanged call counts, sword-only equipment, handoff, ownership guards and failure cleanup; mocked DevBench'

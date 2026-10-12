@@ -77,14 +77,22 @@ another desktop installation. Processes from other installations, including VR,
 are left running. Automated regressions still refuse an existing desktop session.
 
 Actors are labeled `Test Enemy (Female Forsworn copy)` and, in the second scenario,
-`Test Follower (Lydia copy)`. Lydia is a disposable combat teammate, using the
-same follower fixture as regressions; she is not recruited into the normal
-follower quest. Original Lydia is untouched. Normal AI and combat are enabled;
+`Test Follower (<name> copy)`. Each manual run draws locally from three female
+level-one melee Forsworn bases (`00043BE1`, `00043BE0`, `00043BE2`), and the follower
+scenario draws from Lydia, Jordis, Iona, Calder or Argis. Repeat choices are allowed.
+Followers are disposable combat teammates, not recruited into the normal
+follower quest. Original NPCs are untouched. Normal AI and combat are enabled;
 setup does not force a hit or defeat. Hunter Pride is active for player attacks.
-The enemy uses fixed female `EncForsworn01Melee1HBretonF01` (`00043BE1`), retains
+The enemy uses a female `EncForsworn01Melee1HBretonF01/F02/F03` base, retains
 her armor, and carries only one iron sword (`00012EB7`), with no shield or spare
 weapons. Setup verifies sex and equipped weapon before enabling combat AI.
-All automated enemy fixtures reuse this same base and equipment setup from
+Selection adds no MCP/game calls. A fresh-process two-draw benchmark peaked at
+47.23 ms; the exact selection block peaked at 7.98 ms across 30 draws
+(`build/test-results/random-selection-b5eb5bb9-81b9-4a81-b52f-5e4f4737733a/timing.json`).
+`summary.json` records `actorSelectionMilliseconds` and the selected bases.
+All 3 enemy / 5 follower choices pass host setup checks; different actor asset
+loading times have not been measured in-game.
+Automated enemy regressions retain fixed `00043BE1` and equipment setup from
 `tests/Npc-Papyrus.ps1`; guards, followers and civilian controls keep their roles.
 Desktop one-enemy setup reached `READY` with sex `1`, one equipped iron sword,
 empty left hand and no shield; evidence:

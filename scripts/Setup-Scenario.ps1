@@ -19,8 +19,22 @@ try {
     if($active -ne $true) {throw 'Hunter Pride inactive'}
     Invoke-YieldTool camera @{action='freecam';on=$false} | Out-Null
     Invoke-NpcPapyrus ObjectReference SetAngle $player @(0.0,0.0,180.0) | Out-Null
+    # Local draws only: same spawn/check calls, no in-game search or leveled-list expansion.
+    $selectionWatch=[Diagnostics.Stopwatch]::StartNew()
+    $yieldEnemyBase=Get-Random -InputObject @('0x00043BE1','0x00043BE0','0x00043BE2')
     $roles=@(@{role='enemy';base=$yieldEnemyBase;label='Test Enemy (Female Forsworn copy)';x=0.0;y=-220.0})
-    if($WithFollower) {$roles+=@{role='follower';base='0x000A2C8E';label='Test Follower (Lydia copy)';x=120.0;y=-100.0}}
+    if($WithFollower) {
+        $follower=Get-Random -InputObject @(
+            @{base='0x000A2C8E';name='Lydia'},
+            @{base='0x000A2C8F';name='Jordis'},
+            @{base='0x000A2C91';name='Iona'},
+            @{base='0x000A2C90';name='Calder'},
+            @{base='0x000A2C8C';name='Argis'}
+        )
+        $roles+=@{role='follower';base=$follower.base;label="Test Follower ($($follower.name) copy)";x=120.0;y=-100.0}
+    }
+    $selectionWatch.Stop()
+    $summary.actorSelectionMilliseconds=$selectionWatch.Elapsed.TotalMilliseconds
     foreach($role in $roles) {
         $before=Invoke-YieldTool inspect @{kind='refs';formType='Actor';limit=100}
         $spawn=(Invoke-NpcPapyrus ObjectReference PlaceAtMe $player @(@{form=$role.base},1,$true,$true)).returned
