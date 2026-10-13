@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('suite','god-preset','npc-defeat','follower-pacification','npc-pacification','follower-defeat','npc-lethal','player-finish-physical','player-finish-magic','essential-protection','npc-recovery-2s','npc-recovery-3s','native-peaceful-probe','native-talk-probe','peaceful-state','peaceful-healing','peaceful-movement','peaceful-lifecycle','peaceful-persistence','peaceful-talk','peaceful-reset','peaceful-kneeling','peaceful-kneeling-variants','peaceful-test-dialogue','peaceful-bind','injured-locomotion','rescue-locomotion','setup-enemy','setup-enemy-follower')]
+    [ValidateSet('suite','god-preset','npc-defeat','follower-pacification','npc-pacification','follower-defeat','npc-lethal','player-finish-physical','player-finish-magic','essential-protection','npc-recovery-2s','npc-recovery-3s','native-peaceful-probe','native-talk-probe','native-aggression-probe','peaceful-state','peaceful-healing','peaceful-movement','peaceful-lifecycle','peaceful-persistence','peaceful-talk','peaceful-reset','peaceful-kneeling','peaceful-kneeling-variants','peaceful-test-dialogue','peaceful-bind','injured-locomotion','rescue-locomotion','setup-enemy','setup-enemy-follower')]
     [string] $Test = 'suite',
     [string] $GameRoot = 'S:\games\The Elder Scrolls V - Skyrim Special Edition',
     [string] $PrefsPath = (Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'My Games\Skyrim Special Edition\SkyrimPrefs.ini'),
@@ -276,6 +276,7 @@ try {
         'npc-recovery-3s' { 'Npc-Defeat.ps1' }
         'native-peaceful-probe' { 'Native-Peaceful-Probe.ps1' }
         'native-talk-probe' { 'Native-Peaceful-Probe.ps1' }
+        'native-aggression-probe' { 'Native-Aggression-Probe.ps1' }
         'peaceful-state' { 'Pacification-State.ps1' }
         'peaceful-healing' { 'Pacification-Healing.ps1' }
         'peaceful-movement' { 'Pacification-Movement.ps1' }

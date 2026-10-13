@@ -1,5 +1,25 @@
 # Desktop test harness
 
+### Original aggression/native Talk probe
+
+```powershell
+pwsh -NoProfile -File tests/Run-YieldTests.ps1 -Test native-aggression-probe
+```
+
+Diagnostic comparison, outside the routine suite. One disposable female Forsworn;
+read original aggression before defeat, then drive real crosshair/E input twice
+in Yielding and twice in peaceful movement. Retain dialogue flags and pacification;
+record effective aggression, native choice readiness and combat state. Probe `PASS`
+means the observation and cleanup completed; `originalAggressionTalkPassed` reports
+whether all four original-aggression attempts actually opened selectable choices.
+The installed baseline still suppresses aggression. Comparing an unsuppressed
+candidate requires a separately built DLL and the restoring deployment wrapper:
+`Invoke-PacificationTests.ps1 -Test native-aggression-probe`.
+Desktop baseline `cfbc1105-e85b-4a05-9be8-44c35f229522` opened all four choices at
+aggression `0`; candidate `3699f109-79b5-4267-970e-27d134d55d2b` opened none at
+original aggression `2`. Neither case entered combat. Candidate changes were
+reverted; current suppression remains. See [native dialogue](../docs/native-dialogue.md).
+
 Manual starting scenarios: [scripts/README.md](../scripts/README.md).
 
 All enemy fixtures now use female `EncForsworn01Melee1HBretonF01` (`00043BE1`),
