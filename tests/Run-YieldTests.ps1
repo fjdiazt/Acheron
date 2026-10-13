@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('suite','god-preset','npc-defeat','follower-pacification','npc-pacification','follower-defeat','npc-lethal','player-finish-physical','player-finish-magic','essential-protection','npc-recovery-2s','npc-recovery-3s','native-peaceful-probe','native-talk-probe','native-aggression-probe','greeting-probe','silent-greeting-probe','native-dialogue-bypass-probe','peaceful-state','peaceful-healing','peaceful-movement','peaceful-lifecycle','peaceful-persistence','peaceful-talk','peaceful-reset','peaceful-kneeling','peaceful-kneeling-variants','peaceful-test-dialogue','peaceful-bind','injured-locomotion','rescue-locomotion','setup-enemy','setup-enemy-follower')]
+    [ValidateSet('suite','god-preset','npc-defeat','follower-pacification','npc-pacification','follower-defeat','npc-lethal','player-finish-physical','player-finish-magic','essential-protection','npc-recovery-2s','npc-recovery-3s','native-peaceful-probe','native-talk-probe','native-aggression-probe','greeting-probe','silent-greeting-probe','native-dialogue-bypass-probe','peaceful-state','peaceful-healing','peaceful-movement','peaceful-lifecycle','peaceful-persistence','peaceful-talk','peaceful-reset','peaceful-kneeling','peaceful-kneeling-hold','peaceful-kneeling-variants','peaceful-test-dialogue','peaceful-bind','injured-locomotion','rescue-locomotion','setup-enemy','setup-enemy-follower')]
     [string] $Test = 'suite',
     [string] $GameRoot = 'S:\games\The Elder Scrolls V - Skyrim Special Edition',
     [string] $PrefsPath = (Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'My Games\Skyrim Special Edition\SkyrimPrefs.ini'),
@@ -288,6 +288,7 @@ try {
         'peaceful-talk' { 'Pacification-Talk.ps1' }
         'peaceful-reset' { 'Pacification-Reset.ps1' }
         'peaceful-kneeling' { 'Pacification-Kneeling.ps1' }
+        'peaceful-kneeling-hold' { 'Pacification-KneelingHold.ps1' }
         'peaceful-kneeling-variants' { 'Pacification-KneelingVariants.ps1' }
         'peaceful-test-dialogue' { 'Pacification-TestDialogue.ps1' }
         'peaceful-bind' { 'Pacification-Kneeling.ps1' }

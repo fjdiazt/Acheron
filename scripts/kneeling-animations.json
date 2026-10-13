@@ -1,0 +1,16 @@
+{
+  "regular": {
+    "rank": 0,
+    "priority": 5002,
+    "enter": "idlekneelenter.hkx",
+    "loop": "idlekneelidle.hkx",
+    "exit": "idlekneelexit.hkx"
+  },
+  "blessing": {
+    "rank": 1,
+    "priority": 5003,
+    "enter": "idleblessingkneel_enter.hkx",
+    "loop": "idleblessingkneel_loop.hkx",
+    "exit": "idlekneelexit.hkx"
+  }
+}

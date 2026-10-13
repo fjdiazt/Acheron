@@ -248,22 +248,29 @@ not three extra states or random guards on every update.
 
 Choose uniformly among the verified actor-compatible variants on each new
 commanded Kneeling entry; with all three available, each has a 1/3 chance. Play
-that family's enter, then idle/loop; use its matching exit when leaving, including
+that family's configured enter, then idle/loop; use its configured exit when leaving, including
 before Bind. Observations, Refresh and save/load preserve the selection. Existing
 commands ignored while already in the held phase must not trigger another draw.
 Keep the existing 1800-second commanded hold and frozen peaceful budget.
 
 Bound KneelingBound uses its own bound pose, including StandingBound's Kneel path;
 it never draws from this unbound pool. Automatic Resting keeps its separate pose
-policy. Native regular/blessing furniture keywords select matching enter/loop/exit;
-desktop female Forsworn playback qualified in run `186bdc37-d88e-46cf-a7c1-37150419d1f1`.
-Interruptions and broader actor compatibility remain unverified;
+policy. Both unbound families use persistent regular kneeling furniture. Our hidden
+pose faction selects OAR enter/loop/exit replacements; it remains through ordered
+Resume/Bind exit and clears on the next phase or ownership cleanup. Explicit phase
+mapping is `scripts/kneeling-animations.json`; blessing loops
+`idleblessingkneel_loop.hkx` and exits with `idlekneelexit.hkx`.
+Native blessing furniture auto-exits after one loop despite a live hold; no new
+entry uses it. Older saves containing its marker remain migration-unqualified.
+Broader actor compatibility remains unverified;
 the child-family filename alone does not prove suitability for adult enemies.
 No suitable variant or failed entry uses the existing native kneeling fallback,
 without repeated random retries or timer resets. A blessing entry timeout exits
 its interaction first, then attempts regular kneeling once with the existing
 hold budget. Cosave version 3 saves the selection; versions 1/2 default to regular.
 This does not fix the native furniture approach/walking detour.
+Scoped persistent-graph hold/Talk and current save/load/Bind qualification evidence
+is recorded in the [animation catalog](animations-bookmarks.md#commanded-kneeling-variants).
 The desktop probe also saved/loaded non-default blessing without rerolling,
 checked matching exits before Resume/Bind, both Resume destinations, unchanged
 health/pacification and Bind's hold restart. Forced timeout fallback and old-cosave
@@ -273,7 +280,7 @@ peaceful records; rollback needs a matching older development save.
 ### On your feet.
 
 Unbound Kneeling exposes **On your feet.** in native dialogue. It invokes the
-existing `Resume` event: finish the selected family's native exit, then enter
+existing `Resume` event: finish the selected family's configured exit, then enter
 AvoidingCombat if nearby combat exists, otherwise Wandering. Preserve health,
 pacification and the frozen peaceful budget; clear the command hold without
 restarting it. A zero peaceful budget follows normal expiry rules.

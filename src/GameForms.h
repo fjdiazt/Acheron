@@ -47,6 +47,7 @@ namespace Acheron
         static inline RE::TESQuest* MainQuest;
         static inline RE::TESQuest* PeacefulDialogue;
         static inline RE::TESFaction* RescuedWounded;
+        static inline RE::TESFaction* KneelingPose;
 
 
         [[nodiscard]] static bool LoadForms()
@@ -94,6 +95,7 @@ namespace Acheron
                     if (!DefeatedDialogueInfoIDs[i]) return false;
                 }
                 LOOKUPFORM(RescuedWounded, 0x819);
+                LOOKUPFORM(KneelingPose, 0x84D);
                 LOOKUPFORM(PeacefulKneel, 0x81A);
                 LOOKUPFORM(PeacefulKneelBound, 0x81E);
                 LOOKUPFORM(PeacefulBoundMarker, 0x822);

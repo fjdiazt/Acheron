@@ -152,8 +152,23 @@ reversal or explain those freezes.
 Random unbound variants and native **On your feet.**:
 
 ```powershell
+python scripts/Stage-KneelingAnimations.py
 pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test peaceful-kneeling-variants -KeepInstalled
 ```
+
+Focused sustained blessing hold and repeated native Talk regression:
+
+```powershell
+python tests/Test-KneelingAnimations.py
+pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test peaceful-kneeling-hold
+```
+
+Uses a disposable actor, 12-second hold, three Talk opens, then On your feet.
+Asserts no premature exit, actual sit state 3, selected family, scoped OAR
+replacement paths and cleanup, unchanged health/aggression/pacification.
+Checks repeated loop events and original-clip playback outside commanded Kneeling.
+Candidate wrapper backs up/restores new animation files as well as plugin/DLL.
+Clip contents/overrides are described in [animation catalog](../docs/animations-bookmarks.md#commanded-kneeling-variants).
 
 Desktop run `186bdc37-d88e-46cf-a7c1-37150419d1f1` passed on the female Forsworn
 fixture: regular/blessing native enter/loop/exit, saved non-default blessing across
@@ -163,7 +178,7 @@ matching exit before Bind, bound pose and restarted hold. GUID-owned saves were
 archived/removed; settings restored and desktop closed. Qualified DLL and plugin
 remain installed; backup `build/pacification-backups/b0e81b89-15b8-4d9a-9bd0-7247ddda57fe`.
 
-Selection is uniform over the two enabled native families; the qualification
+Selection is uniform over the two enabled clip families; the qualification
 probe bounds random coverage attempts and reports missing coverage as inconclusive.
 Child sit/kneel, forced fallback, old-cosave migration and VR remain unqualified.
 The separate in-place-entry regression below still covers the unresolved native

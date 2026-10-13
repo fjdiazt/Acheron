@@ -18,7 +18,8 @@ Probe artifacts committed in `332730d`; normal scoped Talk implementation in
 `src/Acheron/Pacification.cpp` still calls
 `actor->SetDialogueWithPlayer(true, false, nullptr)`. Probe source and game candidates
 were restored. Silent records remain outside production `res`; installed desktop
-still uses ordinary greetings. Existing enemy relationship rank -3 policy remains;
+still uses ordinary greetings, including after the subsequent kneeling clip fix.
+Existing enemy relationship rank -3 policy remains;
 removing it is a separate decision, not part of this promotion.
 
 ### Proven mechanism
@@ -53,8 +54,11 @@ Raw evidence: `build/test-results/<run>/summary.json`, `Acheron.log`, `tools.jso
   unqualified (`skyrim-we6`).
 - Blessing kneeling run `77b1684e-c84f-4194-b462-60527d7b8bf8` suppressed speech
   and captions, but failed strict pose occupancy: repeated Talk temporarily
-  unseated the actor. Also observed with ordinary greetings. Do not weaken the
-  pose assertion or claim all kneeling variants qualified.
+  unseated the actor. Also observed with ordinary greetings. Subsequent desktop
+  kneeling fix uses persistent regular furniture with scoped blessing clips
+  ([animation catalog](animations-bookmarks.md#commanded-kneeling-variants));
+  normal Talk/hold now passes. Requalify the silent candidate on that implementation;
+  historical silent runs alone do not qualify its new blessing path.
 - Desktop 1.6.1170/SKSE 2.2.6 only; tested female Forsworn/FemaleEvenToned voice.
   Other voices, third-party speech mods, and VR remain unverified. Silence evidence
   uses native response/events and actual GFx captions; no audio recording proof.

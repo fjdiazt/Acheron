@@ -196,7 +196,7 @@
                         "target": "Kneeling",
                         "actions": [
                             "Exit current held native pose before changing destination",
-                            "Choose explicit regular/blessing native family; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Choose explicit regular/blessing clip family on persistent regular furniture; preserve peaceful budget; restart 1800-real-second command hold"
                         ],
                         "meta": {
                             "status": "implemented",

@@ -69,7 +69,7 @@ try {
     $script:yieldLogStart=(Get-Content $animationLog -Raw).Length
     Invoke-NpcPapyrus Acheron DefeatActor '' @(@{form=$actor}) | Out-Null
     $health=(Invoke-NpcPapyrus Actor GetActorValue $actor @('Health')).returned
-    foreach($pose in @(@{command=5;label='Kneel (Regular)';variant=0;clip='IdleKneelIdle'},@{command=6;label='Kneel (Blessing)';variant=1;clip='IdleBlessingKneel_Loop'},@{command=7;label='Kneeling bound';variant=0;clip='AOBoundKneesIdle'})) {
+    foreach($pose in @(@{command=5;label='Kneel (Regular)';variant=0;clip='_CustomConditions[\\/]5002[\\/]idlekneelidle'},@{command=6;label='Kneel (Blessing)';variant=1;clip='_CustomConditions[\\/]5003[\\/]idlekneelidle'},@{command=7;label='Kneeling bound';variant=0;clip='AOBoundKneesIdle'})) {
         $start=(Get-Content $animationLog -Raw).Length
         Choose-Test $pose.command $pose.label
         Assert-TestPose $(if($pose.command -eq 7){4}else{3}) $pose.variant $pose.clip $start

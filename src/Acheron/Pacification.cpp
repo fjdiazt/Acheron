@@ -17,9 +17,10 @@ namespace Acheron::Pacification
     namespace
     {
         using Peaceful::Phase;
-        constexpr RE::FormID KneelingMarkerID(Peaceful::KneelingVariant variant)
+        constexpr RE::FormID KneelingMarkerID(Peaceful::KneelingVariant)
         {
-            return variant == Peaceful::KneelingVariant::Blessing ? 0xF11F1 : 0xE8E4E;
+            // Native blessing exits after one loop; OAR selects clips on the persistent regular graph.
+            return 0xE8E4E;
         }
         struct Record
         {
@@ -255,6 +256,9 @@ namespace Acheron::Pacification
             const auto actor = record.actor.get();
             if (!actor) return false;
             record.state.phase = phase;
+            if (phase == Phase::Kneeling)
+                actor->AddToFaction(GameForms::KneelingPose, static_cast<std::int8_t>(record.state.selectedKneelingVariant));
+            else actor->RemoveFromFaction(GameForms::KneelingPose);
             if (record.rescued) {
                 if (Peaceful::IsCommandHold(phase)) actor->RemoveFromFaction(GameForms::RescuedWounded);
                 else actor->AddToFaction(GameForms::RescuedWounded, 0);
@@ -652,6 +656,7 @@ namespace Acheron::Pacification
         const auto record = found->second;
         records.erase(found);
         if (const auto actor = record.actor.get()) {
+            actor->RemoveFromFaction(GameForms::KneelingPose);
             if (record.rescued) actor->RemoveFromFaction(GameForms::RescuedWounded);
             if (Peaceful::IsCommandHold(record.state.phase)) actor->NotifyAnimationGraph("IdleChairExitStart");
             for (const auto phase : { Phase::AvoidingCombat, Phase::Wandering, Phase::Kneeling, Phase::KneelingBound }) {

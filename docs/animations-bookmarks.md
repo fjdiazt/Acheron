@@ -88,17 +88,38 @@ Intended three-family pool for **On your knees.** entering unbound Kneeling.
 FSM entry action chooses a family; this catalog records its matching clips.
 Bound kneeling uses its separate pose. Families still need verified playback
 events/forms and actor compatibility, including adult use of Child sit/kneel.
-Desktop enables regular and blessing through native KneelingMarker
-(`0xE8E4E`) and BlessingKneelMarker (`0xF11F1`). Child sit/kneel remains disabled.
-Native behavior assets confirm each enabled family's clip triple. Desktop female
-Forsworn qualification passed in run `186bdc37-d88e-46cf-a7c1-37150419d1f1`, including
-matching loops/exits and non-default blessing save/load. Bound selection stays separate.
+Desktop uses persistent native KneelingMarker (`0xE8E4E`) for both enabled families.
+OAR replaces its enter/idle/exit clips only for our hidden `AcheronKneelingPose`
+faction (`0x84D`, rank 0 regular, rank 1 blessing). Native BlessingKneelMarker
+plays its exit after one loop even while the command hold remains active; it is
+not used for new entries. Child sit/kneel remains disabled. Bound pose stays separate.
 
 | Variant ID | Enter | Idle/loop | Exit |
 | --- | --- | --- | --- |
-| blessing | `idleblessingkneel_enter.hkx` | `idleblessingkneel_loop.hkx` | `idleblessingkneel_exit.hkx` |
+| blessing | `idleblessingkneel_enter.hkx` | `idleblessingkneel_loop.hkx` | `idlekneelexit.hkx` (explicit override) |
 | kneeling | `idlekneelenter.hkx` | `idlekneelidle.hkx` | `idlekneelexit.hkx` |
 | childSitKneel | `special_childsitkneelenter.hkx` | `special_childsitkneelidle.hkx` | `special_childsitkneelexit.hkx` |
+
+Explicit phase overrides live in `scripts/kneeling-animations.json`; no filename
+suffix inference. Edit enter/loop/exit independently using an HKX basename from the
+desktop animation archive, then run `python scripts/Stage-KneelingAnimations.py`.
+The script extracts independent clips into candidate staging, not the game or VR.
+The persistent graph slots remain `idlekneelenter`, `idlekneelidle`, `idlekneelexit`;
+replacement content follows the selected family. Source HKX assets are not stored
+in Git. OAR remains required for the family-specific visuals.
+
+Desktop qualification: baseline `24d1c149-7c66-4f4a-acf1-bb17ecadec22` failed when
+native blessing exited three seconds after loop start with 1788 seconds of hold
+remaining, without an FSM exit request. Fixed run
+`3d798e2d-524c-42b5-8d04-4b8e62c15207` passed a 12-second hold with repeated
+loop events, three native Talk interactions, requested regular exit, actor invariant
+checks, marker cleanup and original-clip control outside commanded Kneeling.
+Run `8934b36f-2518-483d-9816-b77e5384afff` passed both families, save/load without
+reroll, both On your feet destinations, exit before Bind, restarted hold, bound
+dialogue and hold expiry. Candidate installed on desktop; VR unchanged.
+Earlier `72989f68-f72f-41e6-a9c7-1fe94ef5c0b5` stopped on a REST socket error;
+candidate restored, then retry passed. Old native blessing-marker saves, child
+pose and VR remain unqualified. Silent-opening promotion remains separate.
 
 Many animation families have **start/enter**, **idle/loop**, and/or **exit** clips.
 Check related clips together when selecting behavior; one bookmarked clip may be

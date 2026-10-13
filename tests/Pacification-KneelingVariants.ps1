@@ -35,14 +35,15 @@ function New-VariantActor([string] $Base, [double] $X) {
 function Assert-Variant([string] $Actor, [int] $Start) {
     $state=Wait-PeacefulPhase $Actor 3 20
     if($null -eq $state.selectedKneelingVariant -or $state.selectedKneelingVariant -notin @(0,1)) {throw 'Saved kneeling variant missing/invalid'}
-    $expected=if($state.selectedKneelingVariant -eq 1) {'0x000F11F1'}else{'0x000E8E4E'}
+    $expected='0x000E8E4E'
     if((Invoke-NpcPapyrus Actor GetFurnitureReference $Actor).returned.formId -ne $state.goal -or
        (Invoke-NpcPapyrus ObjectReference GetBaseObject $state.goal).returned.formId -ne $expected -or
        (Invoke-NpcPapyrus Actor GetSitState $Actor).returned -ne 3) {throw 'Kneeling variant not occupying matching native furniture'}
-    $clip=if($state.selectedKneelingVariant -eq 1) {'IdleBlessingKneel_Loop'}else{'IdleKneelIdle'}
+    $clip='IdleKneelIdle'
+    $priority=5002+$state.selectedKneelingVariant
     $deadline=(Get-Date).AddSeconds(3)
     do {
-        $evidence=@((Get-Content $animationLog -Raw).Substring($Start) -split "`n" | Where-Object {$_ -match ('AnimationLogEntry:.*'+$clip+'\.hkx')})
+        $evidence=@((Get-Content $animationLog -Raw).Substring($Start) -split "`n" | Where-Object {$_ -match ('AnimationLogEntry:.*_CustomConditions[\\/]'+$priority+'[\\/]'+$clip+'\.hkx')})
         if($evidence) {break}
         Start-Sleep -Milliseconds 50
     } while((Get-Date) -lt $deadline)
@@ -81,7 +82,7 @@ try {
            (Invoke-NpcPapyrus Actor GetSitState $actor).returned -ne 0 -or
            (Invoke-NpcPapyrus Actor GetActorValue $actor @('Health')).returned -ne $health -or
            -not (Invoke-NpcPapyrus Acheron IsPacified '' @(@{form=$actor})).returned) {throw 'On your feet lost health/pacification/time or failed to stand'}
-        $exit=if($state.selectedKneelingVariant -eq 1) {'IdleBlessingKneel_Exit'}else{'IdleKneelExit'}
+        $exit='IdleKneelExit'
         $exitLog=(Get-Content $animationLog -Raw).Substring($start)
         if($exitLog -notmatch ('AnimationLogEntry:.*'+$exit+'\.hkx')) {throw "Matching variant exit missing: $exit"}
         $summary.stand+=@{selection=$selection;before=$state;after=$standing;exit=$exit}
@@ -145,7 +146,7 @@ try {
     $summary.originalAggression=$originalAggression
     Close-PeacefulDialogue $actor $RunId
     $bindAnimations=(Get-Content $animationLog -Raw).Substring($start)
-    $exit=if($beforeBind.selectedKneelingVariant -eq 1) {'IdleBlessingKneel_Exit'}else{'IdleKneelExit'}
+    $exit='IdleKneelExit'
     $oldExit=[regex]::Match($bindAnimations,'AnimationLogEntry:.*'+$exit+'\.hkx','IgnoreCase')
     $boundIdle=[regex]::Match($bindAnimations,'AnimationLogEntry:.*AOBoundKneesIdle\.hkx','IgnoreCase')
     if(-not $oldExit.Success -or -not $boundIdle.Success -or $oldExit.Index -ge $boundIdle.Index) {throw 'Bind did not play selected family exit before bound pose'}

@@ -61,7 +61,7 @@ function Assert-Kneeling([string] $Actor, [string] $Entry, [double] $Health, [in
     if($case.sitState -ne 3 -or $case.furniture -ne $case.state.goal) {throw "Native kneeling pose not acquired: $Entry"}
     if($case.maximumTravel -gt 10) {throw "Kneeling walked away before pose: $Entry; maximumTravel=$($case.maximumTravel)"}
     $case.base=(Invoke-NpcPapyrus ObjectReference GetBaseObject $case.furniture).returned.formId
-    $expectedBase=if($case.state.selectedKneelingVariant -eq 1) {'0x000F11F1'}else{'0x000E8E4E'}
+    $expectedBase='0x000E8E4E'
     if($case.base -ne $expectedBase) {throw 'Actor using wrong furniture pose'}
     $case.state=Wait-PeacefulPhase $Actor 3
     if($case.state.commandHoldRemaining -lt 1750 -or $case.state.commandHoldRemaining -gt 1800) {throw 'Separate 30-minute command hold timer missing'}

@@ -307,7 +307,7 @@
                         "target": "Kneeling",
                         "actions": [
                             "Exit current held native pose before changing destination",
-                            "Choose explicit regular/blessing native family; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Choose explicit regular/blessing clip family on persistent regular furniture; preserve peaceful budget; restart 1800-real-second command hold"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -597,7 +597,7 @@
                         "target": "Kneeling",
                         "actions": [
                             "Exit current held native pose before changing destination",
-                            "Choose explicit regular/blessing native family; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Choose explicit regular/blessing clip family on persistent regular furniture; preserve peaceful budget; restart 1800-real-second command hold"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -817,7 +817,7 @@
                         "target": "Kneeling",
                         "actions": [
                             "Exit current held native pose before changing destination",
-                            "Choose explicit regular/blessing native family; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Choose explicit regular/blessing clip family on persistent regular furniture; preserve peaceful budget; restart 1800-real-second command hold"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -1115,7 +1115,7 @@
                         "target": "Kneeling",
                         "actions": [
                             "Exit current held native pose before changing destination",
-                            "Choose explicit regular/blessing native family; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Choose explicit regular/blessing clip family on persistent regular furniture; preserve peaceful budget; restart 1800-real-second command hold"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -1175,7 +1175,8 @@
                         "blessing"
                     ],
                     "childCompatibility": "unverified-disabled",
-                    "persistenceVersion": 3
+                    "persistenceVersion": 3,
+                    "phaseOverrides": "scripts/kneeling-animations.json"
                 },
                 "dialogueCommands": {
                     "On your feet.": "Resume; unbound only; preserve health, pacification and peaceful budget; clear command hold"
@@ -1184,11 +1185,11 @@
                 "nativeDialogue": "Scoped desktop player Talk; original Aggression preserved; no state change until action selection"
             },
             "entry": [
-                "Choose and save selectedKneelingVariant once on new entry; uniform regular/blessing selection among available native markers; child sit/kneel disabled pending qualification",
-                "Native furniture selects matching enter and idle/loop; failed blessing entry exits first then uses regular fallback once without resetting hold or peaceful budget"
+                "Choose and save selectedKneelingVariant once on new entry; uniform regular/blessing selection; both use persistent regular kneeling furniture; child sit/kneel disabled pending qualification",
+                "Owned pose faction rank selects explicit OAR enter/loop/exit overrides on persistent regular furniture; blessing uses idleblessingkneel_loop.hkx and idlekneelexit.hkx exit; failed entry uses regular fallback without timer reset"
             ],
             "exit": [
-                "Finish selected native family exit before Resume or Bind; keep epoch/generation guards",
+                "Finish configured selected family exit before Resume or Bind; retain pose faction through exit, clear on destination/cleanup; keep epoch/generation guards",
                 "Death/release/ownership loss invalidates callbacks; animation exit must not delay death or restart a stale pose"
             ]
         },
@@ -1684,7 +1685,7 @@
                         "target": "Kneeling",
                         "actions": [
                             "Exit current held native pose before changing destination",
-                            "Choose explicit regular/blessing native family; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Choose explicit regular/blessing clip family on persistent regular furniture; preserve peaceful budget; restart 1800-real-second command hold"
                         ],
                         "meta": {
                             "status": "implemented",
