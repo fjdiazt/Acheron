@@ -20,6 +20,14 @@ aggression `0`; candidate `3699f109-79b5-4267-970e-27d134d55d2b` opened none at
 original aggression `2`. Neither case entered combat. Candidate changes were
 reverted; current suppression remains. See [native dialogue](../docs/native-dialogue.md).
 
+Follow-up `f9990622-bd76-43d8-a618-11f2888aa691`: aggression `1` opened selectable
+choices in all four attempts, confirmed before/after each interaction. Fresh
+zero control `9e62e1f8-2c75-442d-9347-233f08d3de14` also opened all four choices.
+Probe summaries now include `aggressionOneAttempts` and `aggressionOneTalkPassed`;
+the latter is null when four aggression-1 observations were not made. Pacification
+remained active and combat stayed false. Gameplay policy remains unchanged;
+candidate DLL, source and config changes were restored after the experiment.
+
 Manual starting scenarios: [scripts/README.md](../scripts/README.md).
 
 All enemy fixtures now use female `EncForsworn01Melee1HBretonF01` (`00043BE1`),

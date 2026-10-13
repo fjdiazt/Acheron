@@ -7,8 +7,9 @@ Hunter Pride's combat eligibility and attack toggle remain separate.
 
 Defeated actors temporarily permit PC/bleedout dialogue and suppress aggression.
 Desktop comparison retained pacification and both dialogue flags: original
-Aggression `2` prevented native Talk choices, while suppression to `0` permitted
-them. This qualifies the female Forsworn fixture, not every actor or VR.
+Aggression `2` prevented native Talk choices, while `0` and `1` permitted them.
+Zero aggression is sufficient but not necessary on this fixture. This qualifies
+the female Forsworn fixture, not every actor or VR. Current code still uses `0`.
 Recovery restores prior dialogue flags and removes the owned aggression modifier;
 subsequent peaceful states acquire their own ownership. Defeated cosave version 2
 stores this state; version 1 still loads. Obsolete menu records are ignored.
@@ -22,6 +23,15 @@ attempts. Actors stayed pacified and out of combat; `CanTalkToPlayer()` returned
 true even when actual activation failed. Installed files and configs were restored.
 The comparison did not establish the engine's exact rejection condition; do not
 remove the override based on the dialogue flags or `CanTalkToPlayer()` alone.
+
+Aggression `1` follow-up: fresh baseline `9e62e1f8-2c75-442d-9347-233f08d3de14`
+opened all four choices at `0`. Candidate `f9990622-bd76-43d8-a618-11f2888aa691`
+lowered the original `2` to `1` using the same temporary modifier ownership.
+Native choices opened twice in Yielding and twice during peaceful movement;
+effective aggression stayed `1` before/after interaction, pacification remained,
+and the NPC never entered combat. Candidate/source changes were reverted and
+installed files/configs restored. This probe validates choice availability only;
+command execution, save/load, other actors and VR at aggression `1` remain untested.
 
 Desktop enemies hostile to the player before aggression suppression receive
 native relationship rank -3 (Enemy), enabling resentful vanilla greetings while

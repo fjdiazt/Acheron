@@ -42,7 +42,7 @@ try {
         foreach($attempt in @(1,2)) {
             Close-PeacefulDialogue $actor $RunId
             $actual=(Invoke-NpcPapyrus Actor GetActorValue $actor @('Aggression')).returned
-            if($actual -ne 0 -and $actual -ne $original) {throw 'Unexpected probe aggression'}
+            if($actual -notin @(0.0,1.0,$original)) {throw 'Unexpected probe aggression'}
             Invoke-NpcPapyrus ObjectReference MoveTo $actor @(@{form=$player},0.0,-85.0,0.0,$false) | Out-Null
             $summary.probePosition=Invoke-YieldTool inspect @{kind='refs';formId=$actor}
             foreach($pitch in @(0,15,30,45,60,75)) {
@@ -74,7 +74,10 @@ try {
     $originalCases=@($summary.aggressionProbe | Where-Object {$_.aggression -eq $original})
     $summary.originalAggressionAttempts=$originalCases.Count
     $summary.originalAggressionTalkPassed=if($originalCases.Count -eq 4) {@($originalCases | Where-Object {-not $_.choicesReady}).Count -eq 0}else{$null}
-    return @{message="PASS: native Talk observations; original-aggression attempts=$($originalCases.Count), all opened=$($summary.originalAggressionTalkPassed)";screenshot=$null}
+    $oneCases=@($summary.aggressionProbe | Where-Object {$_.aggression -eq 1})
+    $summary.aggressionOneAttempts=$oneCases.Count
+    $summary.aggressionOneTalkPassed=if($oneCases.Count -eq 4) {@($oneCases | Where-Object {-not $_.choicesReady}).Count -eq 0}else{$null}
+    return @{message="PASS: native Talk observations; original-aggression attempts=$($originalCases.Count), all opened=$($summary.originalAggressionTalkPassed); aggression-1 attempts=$($oneCases.Count), all opened=$($summary.aggressionOneTalkPassed)";screenshot=$null}
 } finally {
     Invoke-YieldTool input @{action='releaseAll';device='keyboard';owner=$RunId} | Out-Null
     if($actor) {
