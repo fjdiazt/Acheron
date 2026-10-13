@@ -293,7 +293,8 @@
                 "boundDamage": {
                     "status": "planned"
                 },
-                "adapterContract": "fsm.md#implemented-flow-contracts; live guards, acceptance-time Bind and ordered pose exits implemented"
+                "adapterContract": "fsm.md#implemented-flow-contracts; live guards, acceptance-time Bind and ordered pose exits implemented",
+                "nativeDialogue": "Scoped desktop player Talk; original Aggression preserved; no state change until action selection"
             }
         },
         "Dead": {

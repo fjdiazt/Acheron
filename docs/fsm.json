@@ -341,6 +341,9 @@
                         }
                     }
                 ]
+            },
+            "meta": {
+                "nativeDialogue": "Scoped desktop player Talk; original Aggression preserved; no state change until action selection"
             }
         },
         "Unconscious": {
@@ -641,7 +644,8 @@
                 ]
             },
             "meta": {
-                "adapterContract": "fsm.md#implemented-flow-contracts; live guards, acceptance-time Bind and ordered pose exits implemented"
+                "adapterContract": "fsm.md#implemented-flow-contracts; live guards, acceptance-time Bind and ordered pose exits implemented",
+                "nativeDialogue": "Scoped desktop player Talk; original Aggression preserved; no state change until action selection"
             }
         },
         "Wandering": {
@@ -860,7 +864,8 @@
                 ]
             },
             "meta": {
-                "adapterContract": "fsm.md#implemented-flow-contracts; live guards, acceptance-time Bind and ordered pose exits implemented"
+                "adapterContract": "fsm.md#implemented-flow-contracts; live guards, acceptance-time Bind and ordered pose exits implemented",
+                "nativeDialogue": "Scoped desktop player Talk; original Aggression preserved; no state change until action selection"
             }
         },
         "Kneeling": {
@@ -1175,7 +1180,8 @@
                 "dialogueCommands": {
                     "On your feet.": "Resume; unbound only; preserve health, pacification and peaceful budget; clear command hold"
                 },
-                "adapterContract": "fsm.md#implemented-flow-contracts; live guards, acceptance-time Bind and ordered pose exits implemented"
+                "adapterContract": "fsm.md#implemented-flow-contracts; live guards, acceptance-time Bind and ordered pose exits implemented",
+                "nativeDialogue": "Scoped desktop player Talk; original Aggression preserved; no state change until action selection"
             },
             "entry": [
                 "Choose and save selectedKneelingVariant once on new entry; uniform regular/blessing selection among available native markers; child sit/kneel disabled pending qualification",
@@ -1728,7 +1734,8 @@
                 "boundDamage": {
                     "status": "planned"
                 },
-                "adapterContract": "fsm.md#implemented-flow-contracts; live guards, acceptance-time Bind and ordered pose exits implemented"
+                "adapterContract": "fsm.md#implemented-flow-contracts; live guards, acceptance-time Bind and ordered pose exits implemented",
+                "nativeDialogue": "Scoped desktop player Talk; original Aggression preserved; no state change until action selection"
             }
         },
         "StandingBound": {
@@ -2274,6 +2281,13 @@
         "adapterContracts": {
             "status": "implemented",
             "documentation": "fsm.md#implemented-flow-contracts"
+        },
+        "nativeDialogue": {
+            "status": "implemented",
+            "scope": "Desktop player activation of living, loaded, humanoid, pacified Yielding or owned peaceful NPCs; no active scene, activation block or NPC combat",
+            "entry": "Scoped native SetDialogueWithPlayer; preserve Aggression and pacification; fall through to vanilla activation outside scope or on rejection",
+            "lifecycle": "Talk alone changes no FSM state; owned legacy aggression suppression removed on reconciliation only when modifier ownership matches",
+            "documentation": "native-dialogue.md"
         }
     }
 }

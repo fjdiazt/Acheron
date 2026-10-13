@@ -45,6 +45,7 @@ namespace Papyrus
         void ProbeCommandHold(RE::StaticFunctionTag*, RE::Actor*, float);
         void ProbePeacefulState(RE::StaticFunctionTag*, RE::Actor*);
         bool ProbeNativeDialogue(RE::StaticFunctionTag*, RE::Actor*);
+        void ProbeLegacyDialogueAggression(RE::StaticFunctionTag*, RE::Actor*);
         void ProbePeacefulLinks(RE::StaticFunctionTag*, RE::Actor*, RE::TESObjectREFR*, RE::TESObjectREFR*);
 #endif
         void DefeatActor(VM* a_vm, StackID a_stackID, RE::StaticFunctionTag*, RE::Actor* a_actor);
@@ -69,6 +70,7 @@ namespace Papyrus
             REGISTERFUNC(ProbeCommandHold, "Acheron");
             REGISTERFUNC(ProbePeacefulState, "Acheron");
             REGISTERFUNC(ProbeNativeDialogue, "Acheron");
+            REGISTERFUNC(ProbeLegacyDialogueAggression, "Acheron");
             REGISTERFUNC(ProbePeacefulLinks, "Acheron");
 #endif
             REGISTERFUNC(DefeatActor, "Acheron");

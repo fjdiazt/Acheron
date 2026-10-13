@@ -54,14 +54,14 @@ namespace Papyrus
         const auto handle = actor->GetHandle();
         SKSE::GetTaskInterface()->AddTask([handle, eligible]() {
             const auto subject = handle.get();
-            const auto manager = RE::MenuTopicManager::GetSingleton();
-            if (!eligible(subject.get()) || !manager || manager->menuOpen) return;
+            if (!eligible(subject.get())) return;
             const auto aggression = subject->AsActorValueOwner()->GetActorValue(RE::ActorValue::kAggression);
-            const auto result = subject->SetDialogueWithPlayer(true, false, nullptr);
+            const auto result = Acheron::Pacification::OpenDialogue(subject.get());
             logger::info("[NativeDialogueProbe] actor={:08X} aggression={} nativeResult={}", subject->GetFormID(), aggression, result);
         });
         return true;
     }
+    void Defeat::ProbeLegacyDialogueAggression(RE::StaticFunctionTag*, RE::Actor* actor) { Acheron::Pacification::ProbeLegacyAggression(actor); }
     void Defeat::ProbePeacefulLinks(RE::StaticFunctionTag*, RE::Actor* actor, RE::TESObjectREFR* anchor, RE::TESObjectREFR* threat)
     {
         if (!actor || !anchor || !threat || actor->IsPlayerRef()) { return; }

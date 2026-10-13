@@ -27,7 +27,7 @@ namespace Acheron::Pacification
             RE::ObjectRefHandle anchor, goal;
             Peaceful::State state;
             std::uint64_t generation{};
-            float aggression{}, aggressionModifierBefore{};
+            float aggression{}, aggressionModifierBefore{}; // Reserved legacy cosave ownership; no new suppression.
             bool hadTalk{}, talk{}, ready{}, pending{}, requested{}, combat{}, rescued{};
             std::optional<Peaceful::EventKind> exitingFor;
             std::optional<Peaceful::TestState> testTarget;
@@ -382,6 +382,15 @@ namespace Acheron::Pacification
         const auto found = mailbox.find(actor->GetFormID());
         return found != mailbox.end() && found->second.generation != 0;
     }
+    bool OpenDialogue(RE::Actor* actor)
+    {
+        const auto manager = RE::MenuTopicManager::GetSingleton();
+        if (REL::Module::IsVR() || !actor || actor->IsPlayerRef() || actor->IsDead() || !IsNPC(actor) ||
+            actor->GetCurrentScene() || actor->IsActivationBlocked() || !actor->Is3DLoaded() || actor->IsInCombat() ||
+            !actor->CanTalkToPlayer() || !Defeat::IsPacified(actor) ||
+            (!Defeat::IsDefeated(actor) && !IsActive(actor)) || !manager || manager->menuOpen) return false;
+        return actor->SetDialogueWithPlayer(true, false, nullptr);
+    }
     static bool BeginManaged(RE::Actor* actor, int seconds, bool rescued, Phase entry, std::optional<Peaceful::State> initial = {})
     {
         if (REL::Module::IsVR() || !IsEligible(actor) || !Loaded(actor) || Defeat::IsDefeated(actor) ||
@@ -434,9 +443,6 @@ namespace Acheron::Pacification
         const auto talk = actor->extraList.GetByType<RE::ExtraCanTalkToPlayer>();
         record.hadTalk = talk != nullptr; record.talk = talk && talk->talk;
         Defeat::SetEnemyRelationship(actor);
-        record.aggression = actor->AsActorValueOwner()->GetActorValue(RE::ActorValue::kAggression);
-        record.aggressionModifierBefore = actor->GetActorValueModifier(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kAggression);
-        actor->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kAggression, -record.aggression);
         actor->AllowPCDialogue(true);
         actor->extraList.SetLinkedRef(anchor.get(), GameForms::PeacefulAnchor);
         actor->extraList.SetLinkedRef(goal.get(), GameForms::PeacefulGoal);
@@ -654,7 +660,7 @@ namespace Acheron::Pacification
             }
             if (actor->GetLinkedRef(GameForms::PeacefulAnchor) == record.anchor.get().get()) actor->extraList.SetLinkedRef(nullptr, GameForms::PeacefulAnchor);
             if (actor->GetLinkedRef(GameForms::PeacefulGoal) == record.goal.get().get()) actor->extraList.SetLinkedRef(nullptr, GameForms::PeacefulGoal);
-            if (!reset) actor->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kAggression, record.aggression);
+            if (!reset) Defeat::RestoreLegacyAggression(actor.get(), record.aggression, record.aggressionModifierBefore);
             if (const auto talk = actor->extraList.GetByType<RE::ExtraCanTalkToPlayer>(); talk && talk->talk) {
                 if (record.hadTalk) talk->talk = record.talk;
                 else actor->extraList.RemoveByType(RE::ExtraDataType::kCanTalkToPlayer);
@@ -683,6 +689,25 @@ namespace Acheron::Pacification
         });
     }
 #ifdef ACHERON_YIELD_TESTS
+    void ProbeLegacyAggression(RE::Actor* actor)
+    {
+        if (!actor) return;
+        const auto handle = actor->GetHandle(); const auto world = epoch.load();
+        SKSE::GetTaskInterface()->AddTask([handle, world]() {
+            const auto subject = handle.get();
+            if (world != epoch || REL::Module::IsVR() || !subject || !subject->Is3DLoaded() || subject->IsDead()) return;
+            const auto victim = Defeat::GetVictimData(subject->GetFormID());
+            const auto found = records.find(subject->GetFormID());
+            if (!victim && found == records.end()) return;
+            auto& amount = victim ? victim->dialogueAggression : found->second.aggression;
+            auto& before = victim ? victim->dialogueAggressionModifierBefore : found->second.aggressionModifierBefore;
+            if (amount) return;
+            amount = subject->AsActorValueOwner()->GetActorValue(RE::ActorValue::kAggression);
+            before = subject->GetActorValueModifier(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kAggression);
+            subject->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kAggression, -amount);
+            logger::info("[LegacyAggressionProbe] actor={:08X} owned={} before={}", subject->GetFormID(), amount, before);
+        });
+    }
     void ProbeCommandHold(RE::Actor* actor, float seconds)
     {
         if (!actor || !std::isfinite(seconds) || seconds < 0 || seconds > Peaceful::CommandHoldDurationSeconds) return;
@@ -876,8 +901,8 @@ namespace Acheron::Pacification
                     actor->GetLinkedRef(GameForms::PeacefulGoal) != record.goal.get().get()) { invalid.push_back(id); continue; }
                 if (!Defeat::IsPacified(actor.get())) Defeat::Pacify(actor.get());
                 if (record.rescued) actor->AddToFaction(GameForms::RescuedWounded, 0);
-                if (actor->GetActorValueModifier(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kAggression) == record.aggressionModifierBefore)
-                    actor->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kAggression, -record.aggression);
+                record.aggression = Defeat::RestoreLegacyAggression(actor.get(), record.aggression, record.aggressionModifierBefore);
+                actor->AllowPCDialogue(true);
                 Observe(id, record.generation);
                 if (actor->Is3DLoaded()) {
                     record.combat = Encounter(record);

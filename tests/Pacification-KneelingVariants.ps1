@@ -57,6 +57,7 @@ try {
     $perk=(Invoke-NpcPapyrus Game GetFormFromFile '' @(0x803,'Acheron.esm')).returned.formId
     Invoke-NpcPapyrus Actor AddPerk $player @(@{form=$perk}) | Out-Null
     $actor=New-VariantActor $yieldEnemyBase 0
+    $originalAggression=(Invoke-NpcPapyrus Actor GetActorValue $actor @('Aggression')).returned
     Invoke-YieldTool menu @{action='open';name='Console'} | Out-Null
     Invoke-YieldTool console @{action='exec';capture=$true;command=('prid '+($actor -replace '^0x',''))} | Out-Null
     Invoke-YieldTool menu @{action='close';name='Console'} | Out-Null
@@ -74,6 +75,7 @@ try {
         if($unchanged.selectedKneelingVariant -ne $state.selectedKneelingVariant -or $unchanged.goal -ne $state.goal -or
            $unchanged.commandHoldRemaining -gt $state.commandHoldRemaining+0.1) {throw 'Refresh/ignored Kneel rerolled pose or reset hold'}
         $selection=Select-PeacefulDialogueChoice $actor 'On your feet.' 0x833 $RunId
+        if((Invoke-NpcPapyrus Actor GetActorValue $actor @('Aggression')).returned -ne $originalAggression) {throw 'Kneeling Talk changed original aggression'}
         $standing=Wait-PeacefulPhase $actor 2 20
         if($standing.commandHoldRemaining -ne 0 -or [math]::Abs($standing.remaining-120) -gt 5 -or
            (Invoke-NpcPapyrus Actor GetSitState $actor).returned -ne 0 -or
@@ -131,6 +133,17 @@ try {
     } finally {Invoke-YieldTool menu @{action='close';name='Console'} | Out-Null}
     $summary.bindSelection=Select-PeacefulDialogueChoice $actor 'Bind' 0x820 $RunId
     $summary.bound=Wait-PeacefulPhase $actor 4 20
+    Invoke-NpcPapyrus ObjectReference Activate $actor @(@{form=$player},$false) | Out-Null
+    $deadline=(Get-Date).AddSeconds(8)
+    do {
+        $snapshot=Read-PeacefulDialogue $actor
+        $choice=$null
+        try {$choice=Assert-PeacefulDialogueChoice $snapshot $actor 'Continue.'} catch {}
+    } while(-not $choice -and (Get-Date) -lt $deadline)
+    if(-not $choice -or (Invoke-NpcPapyrus Actor GetActorValue $actor @('Aggression')).returned -ne $originalAggression) {throw 'Bound native activation failed or changed aggression'}
+    $summary.boundDialogue=$snapshot
+    $summary.originalAggression=$originalAggression
+    Close-PeacefulDialogue $actor $RunId
     $bindAnimations=(Get-Content $animationLog -Raw).Substring($start)
     $exit=if($beforeBind.selectedKneelingVariant -eq 1) {'IdleBlessingKneel_Exit'}else{'IdleKneelExit'}
     $oldExit=[regex]::Match($bindAnimations,'AnimationLogEntry:.*'+$exit+'\.hkx','IgnoreCase')

@@ -1,8 +1,16 @@
-param([string] $RunId, [string] $RunDirectory, [switch] $Bypass)
+param([string] $RunId, [string] $RunDirectory, [switch] $Bypass, [switch] $RequireOriginalTalk)
 $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot 'Pacification-Fixture.ps1')
 $player='0x00000014'; $actor=$null
 $summary.actorCleaned=$false; $summary.aggressionProbe=@()
+function Interact-UnmanagedActor {
+    Invoke-NpcPapyrus ObjectReference MoveTo $actor @(@{form=$player},0.0,-120.0,0.0,$false) | Out-Null
+    Invoke-NpcPapyrus ObjectReference SetAngle $player @(0.0,0.0,180.0) | Out-Null
+    $deadline=(Get-Date).AddSeconds(3)
+    do {$pick=Read-PeacefulDialogue $actor} while($pick.crosshair -ne $actor -and (Get-Date) -lt $deadline)
+    if($pick.crosshair -ne $actor) {throw 'Unmanaged crosshair missed expected actor'}
+    Invoke-YieldTool input @{action='tap';device='keyboard';key='e';durationMs=50;owner=$RunId} | Out-Null
+}
 try {
     $perk=(Invoke-NpcPapyrus Game GetFormFromFile '' @(0x803,'Acheron.esm')).returned.formId
     Invoke-NpcPapyrus Actor AddPerk $player @(@{form=$perk}) | Out-Null
@@ -23,14 +31,28 @@ try {
     $original=(Invoke-NpcPapyrus Actor GetActorValue $actor @('Aggression')).returned
     if($original -le 0) {throw 'Probe needs originally aggressive enemy'}
     $summary.originalAggression=$original
-    if($Bypass) {
+    if($Bypass -or $RequireOriginalTalk) {
         $summary.unmanagedBypassRejected=(Invoke-NpcPapyrus Acheron ProbeNativeDialogue '' @(@{form=$actor})).returned -eq $false
         if(-not $summary.unmanagedBypassRejected -or (Read-PeacefulDialogue $actor).menuOpen) {throw 'Bypass accepted unmanaged enemy'}
+        if($RequireOriginalTalk) {
+            $start=(Get-Content $logPath -Raw).Length
+            Interact-UnmanagedActor
+            Start-Sleep -Milliseconds 500
+            $summary.unmanagedActivation=Read-PeacefulDialogue $actor
+            if($summary.unmanagedActivation.menuOpen -or (Get-Content $logPath -Raw).Substring($start) -match '\[NativeTalk\]') {throw 'Scoped activation intercepted unmanaged enemy'}
+        }
         Invoke-NpcPapyrus Actor AllowPCDialogue $actor @($true) | Out-Null
         Invoke-NpcPapyrus Acheron PacifyActor '' @(@{form=$actor}) | Out-Null
         if(-not (Invoke-NpcPapyrus Acheron IsPacified '' @(@{form=$actor})).returned) {throw 'Unmanaged pacified control missing'}
         $summary.unmanagedPacifiedBypassRejected=(Invoke-NpcPapyrus Acheron ProbeNativeDialogue '' @(@{form=$actor})).returned -eq $false
         if(-not $summary.unmanagedPacifiedBypassRejected -or (Read-PeacefulDialogue $actor).menuOpen) {throw 'Bypass accepted pacified NPC without defeat/controller ownership'}
+        if($RequireOriginalTalk) {
+            $start=(Get-Content $logPath -Raw).Length
+            Interact-UnmanagedActor
+            Start-Sleep -Milliseconds 500
+            $summary.unmanagedPacifiedActivation=Read-PeacefulDialogue $actor
+            if($summary.unmanagedPacifiedActivation.menuOpen -or (Get-Content $logPath -Raw).Substring($start) -match '\[NativeTalk\]') {throw 'Scoped activation intercepted unowned pacified enemy'}
+        }
         Invoke-NpcPapyrus Acheron ReleaseActor '' @(@{form=$actor}) | Out-Null
         $deadline=(Get-Date).AddSeconds(3)
         do {$pacified=(Invoke-NpcPapyrus Acheron IsPacified '' @(@{form=$actor})).returned} while($pacified -and (Get-Date) -lt $deadline)
@@ -56,6 +78,7 @@ try {
             Close-PeacefulDialogue $actor $RunId
             $actual=(Invoke-NpcPapyrus Actor GetActorValue $actor @('Aggression')).returned
             if($actual -notin @(0.0,1.0,$original)) {throw 'Unexpected probe aggression'}
+            if($RequireOriginalTalk -and $actual -ne $original) {throw 'Native Talk changed original aggression'}
             if($Bypass -and $actual -ne $original) {throw 'Bypass probe requires unsuppressed original aggression'}
             Invoke-NpcPapyrus ObjectReference MoveTo $actor @(@{form=$player},0.0,-85.0,0.0,$false) | Out-Null
             $summary.probePosition=Invoke-YieldTool inspect @{kind='refs';formId=$actor}
@@ -66,12 +89,8 @@ try {
                 if($pick.crosshair -eq $actor) {break}
             }
             if($pick.crosshair -ne $actor) {throw 'Probe crosshair missed expected actor'}
-            Invoke-YieldTool input @{action='tap';device='keyboard';key='e';durationMs=50;owner=$RunId} | Out-Null
-            $ordinary=$null; $entry=$null
+            $entry=$null
             if($Bypass) {
-                Start-Sleep -Milliseconds 1000
-                $ordinary=Read-PeacefulDialogue $actor
-                if($ordinary.menuOpen) {throw 'Ordinary activation opened dialogue; bypass comparison ambiguous'}
                 $start=(Get-Content $logPath -Raw).Length
                 if(-not (Invoke-NpcPapyrus Acheron ProbeNativeDialogue '' @(@{form=$actor})).returned) {throw 'Managed bypass rejected'}
                 $deadline=(Get-Date).AddSeconds(3)
@@ -80,8 +99,8 @@ try {
                     if($entry.Success) {break}
                     Start-Sleep -Milliseconds 25
                 } while((Get-Date) -lt $deadline)
-                if(-not $entry.Success -or [double]$entry.Groups['aggression'].Value -ne $original) {throw 'Scoped native entry execution missing or aggression changed'}
-            }
+                if(-not $entry.Success -or $entry.Groups['result'].Value -ne 'true' -or [double]$entry.Groups['aggression'].Value -ne $original) {throw 'Scoped native entry execution missing, rejected, or aggression changed'}
+            } else {Invoke-YieldTool input @{action='tap';device='keyboard';key='e';durationMs=50;owner=$RunId} | Out-Null}
             $deadline=(Get-Date).AddSeconds(8); $choice=$null
             do {
                 $dialogue=Read-PeacefulDialogue $actor
@@ -94,11 +113,13 @@ try {
                 defeated=(Invoke-NpcPapyrus Acheron IsDefeated '' @(@{form=$actor})).returned;
                 pacified=(Invoke-NpcPapyrus Acheron IsPacified '' @(@{form=$actor})).returned;
                 combat=(Invoke-NpcPapyrus Actor IsInCombat $actor).returned}
-            if($Bypass) {$case.ordinaryActivation=$ordinary; $case.nativeEntry=$entry.Value}
+            if($Bypass) {$case.nativeEntry=$entry.Value}
             $summary.aggressionProbe+=,$case
             if($case.aggressionAfter -ne $actual -or -not $case.pacified -or $case.combat -or
                $case.defeated -ne ($phase -eq 'yielding')) {throw 'Probe changed aggression or pacification during Talk'}
             if($actual -eq 0 -and -not $choice) {throw 'Zero-aggression control failed; comparison invalid'}
+            if($RequireOriginalTalk -and -not $choice) {throw 'Native E activation failed with original aggression'}
+            if($Bypass -and -not $choice) {throw 'Native bypass failed to open usable dialogue'}
         }
     }
     $originalCases=@($summary.aggressionProbe | Where-Object {$_.aggression -eq $original})

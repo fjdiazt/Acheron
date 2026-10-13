@@ -6,26 +6,31 @@
 pwsh -NoProfile -File tests/Run-YieldTests.ps1 -Test native-aggression-probe
 ```
 
-Diagnostic comparison, outside the routine suite. One disposable female Forsworn;
+Regression, outside the routine suite. One disposable female Forsworn;
 read original aggression before defeat, then drive real crosshair/E input twice
 in Yielding and twice in peaceful movement. Retain dialogue flags and pacification;
-record effective aggression, native choice readiness and combat state. Probe `PASS`
-means the observation and cleanup completed; `originalAggressionTalkPassed` reports
-whether all four original-aggression attempts actually opened selectable choices.
-The installed baseline still suppresses aggression. Comparing an unsuppressed
-candidate requires a separately built DLL and the restoring deployment wrapper:
+assert original aggression, native choice readiness and combat state. `PASS`
+requires all four real E attempts to open selectable native choices with unchanged
+original aggression and pacification. Test a built candidate with the restoring wrapper:
 `Invoke-PacificationTests.ps1 -Test native-aggression-probe`.
+
+Also rejects unmanaged enemies and merely pacified actors without controller/defeat
+ownership, using both diagnostic entry and actual E input. Save/load regression
+`peaceful-persistence` checks owned legacy aggression migration and a second clean
+reload without adding twice. `peaceful-healing` selects actual native Rescue INFO.
+Current desktop evidence and deployment backup: [native dialogue](../docs/native-dialogue.md#desktop-evidence).
 Desktop baseline `cfbc1105-e85b-4a05-9be8-44c35f229522` opened all four choices at
 aggression `0`; candidate `3699f109-79b5-4267-970e-27d134d55d2b` opened none at
 original aggression `2`. Neither case entered combat. Candidate changes were
-reverted; current suppression remains. See [native dialogue](../docs/native-dialogue.md).
+reverted. These are historical comparisons before scoped player activation.
+See [native dialogue](../docs/native-dialogue.md).
 
 Follow-up `f9990622-bd76-43d8-a618-11f2888aa691`: aggression `1` opened selectable
 choices in all four attempts, confirmed before/after each interaction. Fresh
 zero control `9e62e1f8-2c75-442d-9347-233f08d3de14` also opened all four choices.
 Probe summaries now include `aggressionOneAttempts` and `aggressionOneTalkPassed`;
 the latter is null when four aggression-1 observations were not made. Pacification
-remained active and combat stayed false. Gameplay policy remains unchanged;
+remained active and combat stayed false. These historical probes changed no gameplay policy;
 candidate DLL, source and config changes were restored after the experiment.
 
 Scoped native entry diagnostic:
@@ -34,16 +39,14 @@ Scoped native entry diagnostic:
 pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test native-dialogue-bypass-probe
 ```
 
-Requires a separately built candidate retaining original aggression at both defeat
-and peaceful entry, with `ACHERON_YIELD_TESTS` enabled. The baseline build refuses
-this comparison rather than silently testing suppressed aggression. Reuses the
-same disposable fixture and restores installed files by default; never use
-`-KeepInstalled` for this experiment. The ordinary activation path remains unchanged.
-The scoped test-only API calls native `SetDialogueWithPlayer`, then checks actual
+Requires original aggression at both defeat and peaceful entry, with
+`ACHERON_YIELD_TESTS` enabled. Reuses the same disposable fixture and restores
+installed files by default. Calls the scoped test-only API directly, independently
+of real E activation (qualified by `native-aggression-probe`), then checks actual
 choice readiness, unchanged aggression/pacification and native On your knees. INFO
 execution into the Kneeling FSM. Unmanaged and merely pacified actors must reject.
-`bypassTalkPassed` is the outcome; diagnostic `PASS` alone only confirms collection
-and cleanup. Runs `7a84c828-bc8e-4a68-a820-b9f378a81c07` and
+`bypassTalkPassed` records the native entry outcome. Historical runs
+`7a84c828-bc8e-4a68-a820-b9f378a81c07` and
 `c75061d6-e177-45c3-9d42-f9039918be01` opened 4/4 each at original aggression `2`.
 See [scope, restoration and limits](../docs/native-dialogue.md#scoped-native-entry-probe).
 
@@ -346,7 +349,7 @@ is active before either enters peaceful wandering. It verifies the crosshair
 target, presses the actual Interact key (`E`), waits for visible, selectable
 `Continue.` with greeting/voice/fade readiness, then selects through real input.
 The native INFO begin event, speaker and selected topic must match. Selection
-must preserve pacification, zero aggression, controller generation and anchor.
+must preserve pacification, original aggression, controller generation and anchor.
 Peaceful expiry defers while talking and resumes after the menu closes.
 
 Generic greetings or merely opening `Dialogue Menu` cannot pass. Scripted
@@ -357,8 +360,9 @@ Native probes are compiled only with `ACHERON_YIELD_TESTS`; no screenshots.
 
 Runs `50058c06-f33d-44d2-b190-be988842dd2e` and final-build
 `6fc330cc-eddd-4a82-af53-62af79eda978` passed both actors on 2026-10-11.
-This qualifies standing interaction, not new downed Rescue dialogue or potion
-selection. Existing downed Hunter Pride remains a separate path. The 2s refresh
+These historical runs qualify standing interaction on the older adapter. Downed
+interaction now also uses native Talk; current qualification is in
+[Native defeated dialogue](../docs/native-dialogue.md). The 2s refresh
 here checks peaceful dialogue deferral, not the unrun bleedout 2s/3s cases.
 
 Run from this checkout with PowerShell 7:

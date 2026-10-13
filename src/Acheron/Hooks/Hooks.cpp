@@ -82,6 +82,8 @@ namespace Acheron
         _UpdateCombat = char_vt.write_vfunc(REL::Relocate(0xE4, 0xE4, 0xE6), UpdateCombat);
         _UpdateCharacter = char_vt.write_vfunc(REL::Relocate(0xAD, 0xAD, 0xAF), UpdateCharacter);
         if (!REL::Module::IsVR()) {
+            REL::Relocation<std::uintptr_t> npcTable{ RE::TESNPC::VTABLE[0] };
+            _ActivateNPC = npcTable.write_vfunc(0x37, ActivateNPC);
             const auto hookHealing = [&]<unsigned Index>(REL::VariantID id) {
                 REL::Relocation<std::uintptr_t> table{ id };
                 _HealingStart[Index] = table.write_vfunc(0x14, HealingStart<Index>);
@@ -96,6 +98,15 @@ namespace Acheron
 
 #undef VAR_OFFSET
         logger::info("Hooks installed");
+    }
+
+    bool Hooks::ActivateNPC(RE::TESNPC* npc, RE::TESObjectREFR* target, RE::TESObjectREFR* activator, std::uint8_t arg3, RE::TESBoundObject* object, std::int32_t count)
+    {
+        if (activator && activator->IsPlayerRef() && target && Pacification::OpenDialogue(target->As<RE::Actor>())) {
+            logger::info("[NativeTalk] actor={:08X} player activation accepted", target->GetFormID());
+            return true;
+        }
+        return _ActivateNPC(npc, target, activator, arg3, object, count);
     }
 
     void Hooks::UpdatePlayer(RE::PlayerCharacter* a_player, float a_delta)

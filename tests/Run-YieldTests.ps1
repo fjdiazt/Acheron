@@ -297,6 +297,7 @@ try {
     $caseArguments = @{ RunId=$runId; RunDirectory=$runDirectory }
     if ($Test -eq 'peaceful-bind') { $caseArguments.BindOnly = $true }
     if ($Test -eq 'native-talk-probe') { $caseArguments.DialogueOnly = $true }
+    if ($Test -eq 'native-aggression-probe') { $caseArguments.RequireOriginalTalk = $true }
     if ($Test -eq 'native-dialogue-bypass-probe') { $caseArguments.Bypass = $true }
     if ($Test -in @('npc-pacification','npc-lethal')) { $caseArguments.AttackerFixture = 'guard' }
     if ($Test -in @('follower-defeat','npc-lethal')) { $caseArguments.DefeatByAttacker = $true }

@@ -41,6 +41,7 @@ namespace Acheron
         static RE::NiAVObject* Load3D(RE::Character& a_this, bool a_arg1);
         static void UpdateCombat(RE::Character* a_this);
         static void UpdateCharacter(RE::Character* a_this, float a_delta);
+        static bool ActivateNPC(RE::TESNPC* npc, RE::TESObjectREFR* target, RE::TESObjectREFR* activator, std::uint8_t arg3, RE::TESBoundObject* object, std::int32_t count);
         static void MagicHit(uint64_t* unk1, RE::ActiveEffect& effect, uint64_t* unk3, uint64_t* unk4, uint64_t* unk5);
         static bool DoesMagicHitApply(RE::MagicTarget* a_target, RE::MagicTarget::AddTargetData* a_data);
         template <unsigned Index>
@@ -68,6 +69,7 @@ namespace Acheron
         static inline REL::Relocation<decltype(Load3D)> _Load3D;
         static inline REL::Relocation<decltype(UpdateCombat)> _UpdateCombat;
         static inline REL::Relocation<decltype(UpdateCharacter)> _UpdateCharacter;
+        static inline REL::Relocation<decltype(ActivateNPC)> _ActivateNPC;
         static inline REL::Relocation<decltype(MagicHit)> _MagicHit;
         static inline REL::Relocation<decltype(DoesMagicHitApply)> _DoesMagicHitApply;
         static inline std::array<REL::Relocation<decltype(HealingStart<0>)>, 5> _HealingStart;

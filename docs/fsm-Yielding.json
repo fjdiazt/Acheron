@@ -310,6 +310,9 @@
                         }
                     }
                 ]
+            },
+            "meta": {
+                "nativeDialogue": "Scoped desktop player Talk; original Aggression preserved; no state change until action selection"
             }
         },
         "AvoidingCombat": {},

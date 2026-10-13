@@ -5,6 +5,7 @@
 namespace Acheron::Pacification
 {
     bool EnsureDialogue();
+    bool OpenDialogue(RE::Actor* actor);
     bool Begin(RE::Actor* actor, int seconds, bool rescued = false, Peaceful::Phase entry = Peaceful::Phase::Wandering);
     void RequestBegin(RE::Actor* actor, int seconds);
     void RequestKneel(RE::Actor* actor, bool bind = false);
@@ -15,6 +16,7 @@ namespace Acheron::Pacification
     void RequestRelease(RE::Actor* actor);
 #ifdef ACHERON_YIELD_TESTS
     void ProbeCommandHold(RE::Actor* actor, float seconds);
+    void ProbeLegacyAggression(RE::Actor* actor);
     void Trace(RE::Actor* actor);
 #endif
     bool IsActive(const RE::Actor* actor);

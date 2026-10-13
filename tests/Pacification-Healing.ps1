@@ -1,13 +1,15 @@
 param([string] $RunId, [string] $RunDirectory)
 $ErrorActionPreference='Stop'
-. (Join-Path $PSScriptRoot 'Npc-Papyrus.ps1')
+. (Join-Path $PSScriptRoot 'Pacification-Fixture.ps1')
 $player='0x00000014'; $owned=@(); $summary.actorCleaned=$false; $summary.healing=@()
 $logPath=Join-Path (Split-Path -Parent $PrefsPath) 'SKSE\Acheron.log'
 try {
     foreach($kind in @('potion','spell','hunter-potion','civilian-potion')) {
         $base=if($kind -eq 'civilian-potion') {'0x00013BBF'}else{$yieldEnemyBase}
-        $actor=(Invoke-NpcPapyrus ObjectReference PlaceAtMe $player @(@{form=$base},1,$true,$false)).returned.formId
-        if($actor -notmatch '^0xFF[0-9a-fA-F]{6}$') { throw 'Healing fixture actor missing' }
+        $refsBefore=Invoke-YieldTool inspect @{kind='refs';formType='Actor';limit=100}
+        $spawn=(Invoke-NpcPapyrus ObjectReference PlaceAtMe $player @(@{form=$base},1,$true,$false)).returned
+        $refsAfter=Invoke-YieldTool inspect @{kind='refs';formType='Actor';limit=100}
+        $actor=Resolve-NpcSpawn $refsBefore $refsAfter $base $spawn.formId
         $owned+=$actor
         Invoke-NpcPapyrus Actor EnableAI $actor @($false) | Out-Null
         if($base -eq $yieldEnemyBase) {Set-NpcEnemyEquipment $actor | Out-Null}
@@ -30,9 +32,8 @@ try {
             if($kind -eq 'hunter-potion') {
                 Invoke-NpcPapyrus ObjectReference AddItem $player @(@{form=$potion.formId},1,$true) | Out-Null
                 $inventoryBefore=(Invoke-NpcPapyrus ObjectReference GetItemCount $player @(@{form=$potion.formId})).returned
-                $ability=(Invoke-NpcPapyrus Game GetFormFromFile '' @(0x807,'Acheron.esm')).returned.formId
-                if($ability -notmatch '807$') {throw 'Unexpected Hunter Pride mapping'}
-                Invoke-NpcPapyrus AcheronHunterPride PerformAction ($ability -replace '807$','800') @(0,@{form=$actor}) | Out-Null
+                Invoke-NpcPapyrus Actor EnableAI $actor @($true) | Out-Null
+                $summary.rescueSelection=Select-PeacefulDialogueChoice $actor 'Rescue' 0x826 $RunId
             } else {
                 Invoke-NpcPapyrus ObjectReference AddItem $actor @(@{form=$potion.formId},1,$true) | Out-Null
                 Invoke-NpcPapyrus Actor EquipItem $actor @(@{form=$potion.formId},$false,$true) | Out-Null

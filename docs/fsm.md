@@ -41,6 +41,22 @@ retains temporary flight effects without prisoner
 ownership. Normal means no peaceful-controller ownership; ordinary Skyrim AI resumes
 as part of cleanup, without needing another event.
 
+## Native Talk adapter
+
+Desktop player activation of a living, loaded humanoid enters native Talk when
+the actor is pacified and either Yielding or owned by our peaceful controller.
+This includes AvoidingCombat, Wandering, Kneeling and KneelingBound. Active scenes,
+activation blocks, NPC combat, missing dialogue permission and an already-open dialogue reject the
+scoped entry; ordinary activation handles everything outside scope and any native
+entry rejection. VR activation is unchanged.
+
+Aggression stays at its original value. Dialogue permission and Acheron combat
+protection remain independent; Talk changes no FSM state until an action is chosen.
+Old owned aggression suppression is removed once during load reconciliation when
+the temporary modifier matches recorded ownership. Ambiguous external edits are
+preserved and logged. Greeting selection remains Skyrim's normal behavior.
+See [native dialogue](native-dialogue.md) for runtime evidence and compatibility.
+
 ## States, events, guards, actions
 
 | Element | Meaning | Example |

@@ -4,6 +4,7 @@ $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot 'Npc-Defeat-Evidence.ps1')
 $player='0x00000014'; $owned=[Collections.Generic.List[string]]::new()
 $summary.actorCleaned=$false; $summary.kneeling=@()
+$aggressionByActor=@{}
 $worldStart=(Get-Content $logPath -Raw).Length
 function New-KneelingActor([string] $Base, [double] $X) {
     $before=Invoke-YieldTool inspect @{kind='refs';formType='Actor';limit=100}
@@ -18,6 +19,7 @@ function New-KneelingActor([string] $Base, [double] $X) {
     do {$loaded=(Invoke-NpcPapyrus ObjectReference Is3DLoaded $id).returned} while(-not $loaded -and (Get-Date) -lt $deadline)
     if(-not $loaded) {throw 'Kneeling fixture did not load'}
     if($Base -eq $yieldEnemyBase) {Set-NpcEnemyEquipment $id | Out-Null}
+    $aggressionByActor[$id]=(Invoke-NpcPapyrus Actor GetActorValue $id @('Aggression')).returned
     Invoke-NpcPapyrus Actor SetActorValue $id @('Health',10000.0) | Out-Null
     Invoke-NpcPapyrus Actor SetActorValue $id @('HealRate',0.0) | Out-Null
     Invoke-NpcPapyrus Actor SetActorValue $id @('HealRateMult',0.0) | Out-Null
@@ -77,7 +79,14 @@ function Read-KneelingChoice([string] $Actor, [string] $Text) {
     $deadline=(Get-Date).AddSeconds(8)
     do {
         $snapshot=Read-PeacefulDialogue $Actor
-        try {$choice=Assert-PeacefulDialogueChoice $snapshot $Actor $Text; return @{snapshot=$snapshot;choice=$choice}} catch {}
+        $choice=$null
+        try {$choice=Assert-PeacefulDialogueChoice $snapshot $Actor $Text} catch {}
+        if($choice) {
+            $aggression=(Invoke-NpcPapyrus Actor GetActorValue $Actor @('Aggression')).returned
+            if($aggression -ne $aggressionByActor[$Actor]) {throw 'Native dialogue changed original aggression'}
+            $snapshot | Add-Member -NotePropertyName aggression -NotePropertyValue $aggression -Force
+            return @{snapshot=$snapshot;choice=$choice}
+        }
         Start-Sleep -Milliseconds 100
     } while((Get-Date) -lt $deadline)
     throw "Talk choice unavailable: $Text"
@@ -264,7 +273,7 @@ try {
        (Invoke-NpcPapyrus Acheron IsDefeated '' @(@{form=$rescued})).returned -or
        (Invoke-NpcPapyrus Actor IsDead $rescued).returned -or
        -not (Invoke-NpcPapyrus Acheron IsPacified '' @(@{form=$rescued})).returned) {throw 'Native Rescue failed potion healing or peaceful ownership'}
-    return @{message='PASS: real player defeat, downed Interact/dialogue Kneel and Rescue, native Bind, held poses, restarted hold timer, health and aggression restoration';screenshot=$null}
+    return @{message='PASS: real player defeat, native Interact/Kneel/Rescue/Bind, held poses, restarted hold timer, unchanged health and original aggression';screenshot=$null}
 } finally {
     Invoke-YieldTool input @{action='releaseAll';device='keyboard';owner=$RunId} | Out-Null
     Invoke-YieldTool menu @{action='close';name='Dialogue Menu'} | Out-Null

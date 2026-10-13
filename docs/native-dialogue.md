@@ -1,18 +1,32 @@
 # Native defeated dialogue
 
 Desktop replaces Hunter Pride's custom menu with normal Skyrim Talk dialogue.
-The interaction perk only supplies the Talk label; no activation replacement,
-menu SWFs, option-registration APIs or custom selection events remain.
-Hunter Pride's combat eligibility and attack toggle remain separate.
+The interaction perk supplies the Talk label. Desktop player activation uses a
+scoped `TESNPC::Activate` vtable adapter (slot `0x37`) and the actor's native
+`SetDialogueWithPlayer(true, false, nullptr)` entry. No custom menu SWFs,
+option-registration APIs or custom selection events remain. Hunter Pride's combat
+eligibility and attack toggle remain separate.
 
-Defeated actors temporarily permit PC/bleedout dialogue and suppress aggression.
-Desktop comparison retained pacification and both dialogue flags: original
-Aggression `2` prevented native Talk choices, while `0` and `1` permitted them.
-Zero aggression is sufficient but not necessary on this fixture. This qualifies
-the female Forsworn fixture, not every actor or VR. Current code still uses `0`.
-Recovery restores prior dialogue flags and removes the owned aggression modifier;
-subsequent peaceful states acquire their own ownership. Defeated cosave version 2
-stores this state; version 1 still loads. Obsolete menu records are ignored.
+Entry requires a living, loaded humanoid NPC, permitted PC dialogue, no active
+scene, activation block or NPC combat, Acheron pacification, and either defeat or
+peaceful-controller ownership. An already-open dialogue rejects entry. Non-player activation, unmanaged
+actors, corpses, quest scenes, VR and native entry failure use original activation.
+Talk changes no FSM state; choices still dispatch the existing native INFO actions.
+
+New defeated and peaceful actors keep their original Aggression. PC/bleedout dialogue
+permissions remain temporary; Acheron combat and damage protection remains intact.
+No Aggression `0` or `1` fallback is applied. This preserves actor values; it does
+not guarantee antagonistic spoken greetings. Greeting selection stays native.
+
+Defeated cosave version 2 and peaceful records keep their existing serialized
+ownership fields for compatibility; new records write zero aggression debt. Load
+reconciliation removes an old owned temporary suppression only when the modifier
+matches `before - ownedAmount`; an already-restored modifier clears debt without
+adding again. Ambiguous external modifiers remain untouched and logged. Version 1
+records without aggression ownership cannot safely identify an old suppression.
+Dialogue flags restore on release; relationship rank still intentionally remains.
+
+### Historical aggression comparisons
 
 Controlled runs on 2026-10-12: baseline `cfbc1105-e85b-4a05-9be8-44c35f229522`
 opened selectable native choices twice while Yielding and twice while peacefully
@@ -21,8 +35,9 @@ suppression at defeat and peaceful entry; effective aggression remained `2` befo
 and after each attempt. Real crosshair/E input opened no dialogue in all four
 attempts. Actors stayed pacified and out of combat; `CanTalkToPlayer()` returned
 true even when actual activation failed. Installed files and configs were restored.
-The comparison did not establish the engine's exact rejection condition; do not
-remove the override based on the dialogue flags or `CanTalkToPlayer()` alone.
+The comparison did not establish the engine's exact rejection condition. Dialogue
+flags or `CanTalkToPlayer()` alone did not qualify removing suppression; the scoped
+native entry below supplies the independently tested route.
 
 Aggression `1` follow-up: fresh baseline `9e62e1f8-2c75-442d-9347-233f08d3de14`
 opened all four choices at `0`. Candidate `f9990622-bd76-43d8-a618-11f2888aa691`
@@ -48,8 +63,8 @@ combat, permitted PC dialogue, Acheron pacification, and either defeat or an own
 peaceful controller. Execution also rejects an already-open dialogue menu. Its
 return value means queued; `[NativeDialogueProbe]` logs the actual native return,
 and the harness separately verifies selectable native choices and selected INFO.
-This API is registered only under `ACHERON_YIELD_TESTS`; ordinary activation is
-unchanged. It is a probe, not a deployed replacement for the aggression override.
+This API is registered only under `ACHERON_YIELD_TESTS`. It now reuses the same
+scoped entry as the production player-activation adapter; real E is tested separately.
 
 Temporary unsuppressed candidates:
 
@@ -68,11 +83,10 @@ command. Kneeling animation playback was not separately asserted in this probe.
 Candidates were restored by the deployment wrapper; all installed original hashes
 matched. Disposable actors were deleted, games closed, configs restored, and
 source aggression suppression restored and rebuilt. No saves written; VR untouched.
-Next implementation can route player activation only for eligible managed actors
-through this entry, leaving other actors' native activation intact. That routing,
-all other actions, save/load, additional actor types and VR remain unqualified.
+These are historical direct-entry probes. Production routing and its regression
+evidence are separate from this earlier experiment.
 
-Desktop enemies hostile to the player before aggression suppression receive
+Desktop enemies hostile to the player before managed entry receive
 native relationship rank -3 (Enemy), enabling resentful vanilla greetings while
 combat remains blocked. Defeat and direct peaceful entry share this policy;
 player teammates, commanded actors and non-hostile civilians are excluded.
@@ -97,6 +111,43 @@ implementation or playback qualification exists yet; see [FSM policy](fsm.md#com
 
 ## Desktop evidence
 
+Current real E regression `82ea4472-b1f1-42ac-a587-8e2b990b571d`: 4/4 selectable
+native choices (two Yielding, two Wandering), original Aggression `2` before/after
+each interaction, pacification retained and no combat. Unmanaged hostile and merely
+pacified actors reject diagnostic entry; actual E retains vanilla activation without
+opening dialogue or logging adapter acceptance. Candidate kept installed on PASS.
+Enemy/civilian standing Talk also passed `eb326102-1b31-405a-885c-02175374d086`.
+Direct-entry diagnostic repeat `8edb86d3-1bd1-4689-af82-385b40820ee7` passes
+4/4 choices, native On your knees. selection, ownership controls, and unchanged
+aggression/pacification. Its wrapper restores the already-qualified installed build.
+
+Native healing regression `1c753254-1387-454f-b84d-91198338a712`: potion, healing
+spell, actual Rescue INFO selection, and civilian potion all enter shared peaceful
+behavior. Rescue consumes one player potion and adds exactly its 25-point effect.
+The fixture now selects native Rescue instead of calling the retired menu script;
+civilian spawn ownership uses the existing actor-inventory resolver.
+
+Current save/load regression `db4547c8-626e-4445-9941-0ba4a192496c`: real ESS/cosave
+with diagnostic fixtures emulating owned old suppression on one defeated and one
+peaceful enemy. Both restore Aggression `2`, retain their original ownership, and
+remain at `2` through a second clean save/load. Paused/unloaded wandering time and
+marker ownership also pass. These fixtures qualify known owned migration, not
+arbitrary external actor-value edits or every historical user save.
+
+Held-state activation regression `ca514f76-d134-45c4-9cb6-791e864e4531`: native
+`ObjectReference.Activate` passes through the production adapter; actual native
+On your feet./Bind selections, both native pose families, matching exits, bound
+Continue. choices, hold restart/expiry and pose persistence pass at original
+Aggression `2`. Seated real E aiming remains unqualified; the attempted camera
+fixture failed against the unchanged installed baseline too and was removed.
+
+Strict in-place kneeling remains a separate existing failure (`skyrim-zc9`):
+candidate `e36d4430-1004-4972-ba75-15c5450f28cb` measured 77.12 units travel;
+unchanged installed aggression-0 baseline `96cf66b7-9506-4f75-9073-2444d25af914`
+measured 79.31. No pose code or travel assertion was relaxed for this change.
+
+Historical action/animation evidence before this adapter:
+
 - `build/test-results/9f5f0f07-84e1-4070-b142-82df55c1b121/summary.json`:
   real player lethal hit; downed crosshair acquired; E opened native dialogue;
   selected On your knees. INFO; native kneeling occupancy, held pose and Talk;
@@ -111,14 +162,16 @@ implementation or playback qualification exists yet; see [FSM policy](fsm.md#com
 ## Deployment and rollback
 
 Qualified desktop candidate installed by `tests/Invoke-PacificationTests.ps1`.
-Backup: `build/pacification-backups/ab2c62da-2017-40bf-a101-4674dcae75fc`.
+Backup: `build/pacification-backups/b3cf3bbf-6f88-4f65-a64e-225ddde12763`.
 Its `manifest.json` lists original/candidate hashes and all original files,
-including retired SWFs and the interaction perk fragment PEX. With desktop
-closed, restore exactly those files from backup through Desktop-Isolation guards.
+including translations and scripts. Installed candidate hashes verified against
+the manifest. With desktop closed, restore exactly those files from backup through
+Desktop-Isolation guards. Earlier custom-menu retirement backup:
+`build/pacification-backups/ab2c62da-2017-40bf-a101-4674dcae75fc`.
 Restore an older test save/cosave when reverting to a build predating version 2.
 Source deletions backed up under `build/retired-hunter-menu-20261012-030934`.
 
-VR production untouched. VR, creature/custom-voice dialogue, old-save migration,
+VR production untouched. VR, creature/custom-voice dialogue, ambiguous legacy modifiers,
 and native Plunder/Execute/Drain selection remain unchecked. Third-party custom
 Hunter Pride menu add-ons need conversion to dialogue; removed menu APIs are
 intentionally incompatible. Newly added topics currently use English labels.
@@ -151,6 +204,6 @@ Desktop qualification: `build/test-results/9862c8ae-b917-44b1-b3fe-1ab477a7f455/
 passed all nine native selections. Regular/blessing/bound clips, bound-to-regular,
 health/pacification, hold restart, Test visibility from all five managed source states,
 Normal/Combat/Yielding/Dead outcomes and avoidance-to-wandering were checked.
-Installed DLL B2D0A6F192FE6A3E70A8E78BC75950E5C5739C7860874AA14870BD4510793BC1;
+Historical qualified DLL B2D0A6F192FE6A3E70A8E78BC75950E5C5739C7860874AA14870BD4510793BC1;
 ESM B3C4E35E94E0D4C75A90F4EE3307773C37471F0E47D7F03D9CDA39A1C6A59ADC.
 Desktop settings restored and game closed; VR remains unqualified.

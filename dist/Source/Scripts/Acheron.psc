@@ -16,6 +16,8 @@ bool Function SupportsPeacefulRescue(Actor akActor) native global
 Function ProbePeacefulState(Actor akActor) native global
 ; Test build only; scoped native entry, true means queued. Does not change aggression.
 bool Function ProbeNativeDialogue(Actor akActor) native global
+; Test build only; emulate pre-bypass owned suppression on a disposable managed actor.
+Function ProbeLegacyDialogueAggression(Actor akActor) native global
 ; Test build only; shorten an owned command hold without changing its phase.
 Function ProbeCommandHold(Actor akActor, float afSeconds) native global
 { Global API for Acheron }

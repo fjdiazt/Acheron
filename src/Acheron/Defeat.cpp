@@ -12,7 +12,7 @@ namespace Acheron
     {
         if (REL::Module::IsVR() || !actor || actor->IsPlayerRef() || actor->IsPlayerTeammate() ||
             actor->IsCommandedActor() || !IsNPC(actor) || !actor->IsHostileToActor(RE::PlayerCharacter::GetSingleton())) return;
-        // Capture hostility before aggression suppression; release deliberately retains personal resentment.
+        // Release deliberately retains personal resentment.
         const auto script = Script::GetScriptObject(actor, "Actor", true);
         if (!script || !Script::DispatchMethodCall(script, "SetRelationshipRank", nullptr,
                 RE::PlayerCharacter::GetSingleton(), std::int32_t{ -3 }))
@@ -25,11 +25,22 @@ namespace Acheron
         return static_cast<std::uint8_t>((talk ? 1 : 0) | (talk && talk->talk ? 2 : 0) |
             (actor->GetActorRuntimeData().boolFlags.any(RE::Actor::BOOL_FLAGS::kCanSpeakToEssentialDown) ? 4 : 0));
     }
+    float Defeat::RestoreLegacyAggression(RE::Actor* actor, float amount, float before)
+    {
+        if (!amount || REL::Module::IsVR()) return 0.0f;
+        const auto current = actor->GetActorValueModifier(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kAggression);
+        if (current == before - amount) {
+            actor->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kAggression, amount);
+        } else if (current != before) {
+            logger::warn("Ambiguous legacy aggression ownership for {:08X}; preserving modifier {}", actor->GetFormID(), current);
+            return amount;
+        }
+        return 0.0f;
+    }
     void Defeat::RestoreDialogue(RE::Actor* actor, const VictimData& data)
     {
         const auto flags = data.dialogueFlags;
-        if (actor->GetActorValueModifier(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kAggression) != data.dialogueAggressionModifierBefore)
-            actor->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kAggression, data.dialogueAggression);
+        RestoreLegacyAggression(actor, data.dialogueAggression, data.dialogueAggressionModifierBefore);
         actor->AllowBleedoutDialogue((flags & 4) != 0);
         if (const auto talk = actor->extraList.GetByType<RE::ExtraCanTalkToPlayer>(); talk && talk->talk) {
             if (flags & 1) talk->talk = (flags & 2) != 0;
@@ -82,10 +93,6 @@ namespace Acheron
         SetEnemyRelationship(a_victim);
         data->dialogueFlags = CaptureDialogue(a_victim);
         if (!REL::Module::IsVR()) {
-            // Native dialogue refuses aggressive enemies even after combat is stopped.
-            data->dialogueAggression = a_victim->AsActorValueOwner()->GetActorValue(RE::ActorValue::kAggression);
-            data->dialogueAggressionModifierBefore = a_victim->GetActorValueModifier(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kAggression);
-            a_victim->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kAggression, -data->dialogueAggression);
             a_victim->AllowPCDialogue(true);
             a_victim->AllowBleedoutDialogue(true);
             if (!Pacification::EnsureDialogue()) logger::error("Unable to start defeated dialogue quest");
@@ -417,14 +424,14 @@ namespace Acheron
                     data->dialogueAggression = aggression;
                     data->dialogueAggressionModifierBefore = aggressionBefore;
                     if (victim && !REL::Module::IsVR()) {
-                        if (version == 1) {
-                            data->dialogueAggression = victim->AsActorValueOwner()->GetActorValue(RE::ActorValue::kAggression);
-                            data->dialogueAggressionModifierBefore = victim->GetActorValueModifier(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kAggression);
-                        }
-                        if (victim->GetActorValueModifier(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kAggression) == data->dialogueAggressionModifierBefore)
-                            victim->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kAggression, -data->dialogueAggression);
-                        victim->AllowPCDialogue(true); victim->AllowBleedoutDialogue(true);
-                        Pacification::EnsureDialogue();
+                        const auto handle = victim->GetHandle();
+                        SKSE::GetTaskInterface()->AddTask([handle, data]() {
+                            const auto actor = handle.get();
+                            if (!actor || GetVictimData(actor->GetFormID()) != data) return;
+                            data->dialogueAggression = RestoreLegacyAggression(actor.get(), data->dialogueAggression, data->dialogueAggressionModifierBefore);
+                            actor->AllowPCDialogue(true); actor->AllowBleedoutDialogue(true);
+                            Pacification::EnsureDialogue();
+                        });
                     }
                     data->state.store(VictimState::Defeated);
                     Victims.emplace(formID, data);

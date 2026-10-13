@@ -32,7 +32,7 @@ namespace Acheron
             bool allow_recovery{ true };      // if this actor may passively recover
             bool mark_for_recovery{ false };  // Rescue this actor the next time they load in?
             std::uint8_t dialogueFlags{};     // Prior extra-talk presence/value and bleedout dialogue flag.
-            float dialogueAggression{}, dialogueAggressionModifierBefore{};
+            float dialogueAggression{}, dialogueAggressionModifierBefore{}; // Legacy cosave ownership; new actors never suppress aggression.
             std::atomic<VictimState> state{ VictimState::Defeating };
         };
 
@@ -54,6 +54,7 @@ namespace Acheron
         static void UndoPacify(RE::Actor* a_victim);
         static bool IsPacified(const RE::Actor* a_victim);
         static void SetEnemyRelationship(RE::Actor* actor);
+        static float RestoreLegacyAggression(RE::Actor* actor, float amount, float before);
 
       public:
         static void Load(SKSE::SerializationInterface* a_intfc, uint32_t a_type, uint32_t version = 1);

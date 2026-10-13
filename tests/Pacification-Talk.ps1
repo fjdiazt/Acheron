@@ -24,6 +24,7 @@ try {
         Invoke-NpcPapyrus ObjectReference MoveTo $actor @(@{form=$player},0.0,-85.0,0.0,$false) | Out-Null
         Invoke-NpcPapyrus Actor StopCombat $player | Out-Null
         $case.originalRank=(Invoke-NpcPapyrus Actor GetRelationshipRank $actor @(@{form=$player})).returned
+        $case.originalAggression=(Invoke-NpcPapyrus Actor GetActorValue $actor @('Aggression')).returned
         $expectedRank=if($fixture.kind -eq 'enemy') {-3}else{$case.originalRank}
         Invoke-NpcPapyrus Acheron BeginPeacefulState '' @(@{form=$actor},30) | Out-Null
         Invoke-NpcPapyrus Actor EnableAI $actor @($true) | Out-Null
@@ -79,7 +80,7 @@ try {
         if((Invoke-NpcPapyrus Actor IsInDialogueWithPlayer $actor).returned -ne $true -or
            (Invoke-NpcPapyrus Acheron IsPeacefulState '' @(@{form=$actor})).returned -ne $true -or
            (Invoke-NpcPapyrus Acheron IsPacified '' @(@{form=$actor})).returned -ne $true -or
-           (Invoke-NpcPapyrus Actor GetActorValue $actor @('Aggression')).returned -ne 0.0) {throw 'Continue. damaged peaceful state or speaker'}
+           (Invoke-NpcPapyrus Actor GetActorValue $actor @('Aggression')).returned -ne $case.originalAggression) {throw 'Continue. damaged peaceful state, speaker or original aggression'}
         $case.stateAfterSelection=Read-PeacefulState $actor
         if($case.stateAfterSelection.generation -ne $case.state.generation -or $case.stateAfterSelection.anchor -ne $case.state.anchor) {throw 'Continue. replaced controller ownership'}
         Invoke-NpcPapyrus Acheron BeginPeacefulState '' @(@{form=$actor},2) | Out-Null
