@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('peaceful-suite','god-preset','peaceful-state','peaceful-healing','peaceful-movement','peaceful-lifecycle','peaceful-persistence','peaceful-talk','peaceful-reset','peaceful-kneeling','peaceful-kneeling-variants','peaceful-test-dialogue','peaceful-bind','npc-defeat','player-finish-physical','rescue-locomotion','native-aggression-probe','native-dialogue-bypass-probe')]
+    [ValidateSet('peaceful-suite','god-preset','peaceful-state','peaceful-healing','peaceful-movement','peaceful-lifecycle','peaceful-persistence','peaceful-talk','peaceful-reset','peaceful-kneeling','peaceful-kneeling-variants','peaceful-test-dialogue','peaceful-bind','npc-defeat','player-finish-physical','rescue-locomotion','native-aggression-probe','greeting-probe','native-dialogue-bypass-probe')]
     [string] $Test='peaceful-suite',
     [string] $GameRoot='S:\games\The Elder Scrolls V - Skyrim Special Edition',
     [switch] $KeepInstalled

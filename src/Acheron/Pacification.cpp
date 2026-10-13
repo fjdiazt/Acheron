@@ -737,10 +737,16 @@ namespace Acheron::Pacification
             const auto crosshair = RE::CrosshairPickData::GetSingleton();
             const auto pick = crosshair ? crosshair->GetActiveTarget().get() : nullptr;
             const auto selected = manager ? manager->lastSelectedDialogue : nullptr;
+            json spoken = json::array();
+            if (selected) for (const auto response : selected->responses) {
+                if (response) spoken.push_back({ { "text", response->text.c_str() }, { "voice", response->voice.c_str() } });
+            }
             const auto data = RE::TESDataHandler::GetSingleton();
             const auto topic = data->LookupForm<RE::TESTopic>(0x816, "Acheron.esm");
             const auto info = data->LookupForm<RE::TESTopicInfo>(0x817, "Acheron.esm");
             json dialogue{
+                { "spoken", spoken },
+                { "currentInfo", std::format("0x{:08X}", manager && manager->currentTopicInfo ? manager->currentTopicInfo->GetFormID() : 0) },
                 { "actor", std::format("0x{:08X}", subject->GetFormID()) },
                 { "speaker", std::format("0x{:08X}", speaker ? speaker->GetFormID() : 0) },
                 { "crosshair", std::format("0x{:08X}", pick ? pick->GetFormID() : 0) },

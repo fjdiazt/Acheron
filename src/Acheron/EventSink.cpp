@@ -41,6 +41,14 @@ namespace Acheron
             }
         }
 #ifdef ACHERON_YIELD_TESTS
+        const auto subject = event->speakerRef->As<RE::Actor>();
+        if (subject && (Pacification::IsActive(subject) || Defeat::IsDefeated(subject))) {
+            const auto spoken = RE::TESForm::LookupByID<RE::TESTopicInfo>(event->topicInfoFormID);
+            const auto topic = spoken ? spoken->parentTopic : nullptr;
+            logger::info("[ManagedSpeech] actor={:08X} info={:08X} topic={:08X} subtype={} begin={}",
+                subject->GetFormID(), event->topicInfoFormID, topic ? topic->GetFormID() : 0,
+                topic ? topic->data.subtype.underlying() : 0, event->type.underlying() == 0);
+        }
         const auto info = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESTopicInfo>(0x817, "Acheron.esm");
         if ((info && event->topicInfoFormID == info->GetFormID()) || (GameForms::KneelDialogueInfoID && event->topicInfoFormID == GameForms::KneelDialogueInfoID) ||
             (GameForms::YieldKneelDialogueInfoID && event->topicInfoFormID == GameForms::YieldKneelDialogueInfoID) ||

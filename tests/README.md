@@ -1,5 +1,10 @@
 # Desktop test harness
 
+`Invoke-PacificationTests.ps1 -Test greeting-probe` records repeated native spoken
+greetings while kneeling at disposable relationship controls -3/0. It checks
+native choices/actions and actor invariants; PASS does not mean the lines are
+antagonistic. See [greeting evidence](../docs/greeting-probes.md).
+
 ### Original aggression/native Talk probe
 
 ```powershell

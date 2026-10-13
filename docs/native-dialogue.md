@@ -17,6 +17,7 @@ New defeated and peaceful actors keep their original Aggression. PC/bleedout dia
 permissions remain temporary; Acheron combat and damage protection remains intact.
 No Aggression `0` or `1` fallback is applied. This preserves actor values; it does
 not guarantee antagonistic spoken greetings. Greeting selection stays native.
+Repeated kneeling greeting evidence and scoped alternatives: [greeting probes](greeting-probes.md).
 
 Defeated cosave version 2 and peaceful records keep their existing serialized
 ownership fields for compatibility; new records write zero aggression debt. Load
