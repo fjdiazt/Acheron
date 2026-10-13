@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('suite','god-preset','npc-defeat','follower-pacification','npc-pacification','follower-defeat','npc-lethal','player-finish-physical','player-finish-magic','essential-protection','npc-recovery-2s','npc-recovery-3s','native-peaceful-probe','native-talk-probe','native-aggression-probe','greeting-probe','native-dialogue-bypass-probe','peaceful-state','peaceful-healing','peaceful-movement','peaceful-lifecycle','peaceful-persistence','peaceful-talk','peaceful-reset','peaceful-kneeling','peaceful-kneeling-variants','peaceful-test-dialogue','peaceful-bind','injured-locomotion','rescue-locomotion','setup-enemy','setup-enemy-follower')]
+    [ValidateSet('suite','god-preset','npc-defeat','follower-pacification','npc-pacification','follower-defeat','npc-lethal','player-finish-physical','player-finish-magic','essential-protection','npc-recovery-2s','npc-recovery-3s','native-peaceful-probe','native-talk-probe','native-aggression-probe','greeting-probe','silent-greeting-probe','native-dialogue-bypass-probe','peaceful-state','peaceful-healing','peaceful-movement','peaceful-lifecycle','peaceful-persistence','peaceful-talk','peaceful-reset','peaceful-kneeling','peaceful-kneeling-variants','peaceful-test-dialogue','peaceful-bind','injured-locomotion','rescue-locomotion','setup-enemy','setup-enemy-follower')]
     [string] $Test = 'suite',
     [string] $GameRoot = 'S:\games\The Elder Scrolls V - Skyrim Special Edition',
     [string] $PrefsPath = (Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'My Games\Skyrim Special Edition\SkyrimPrefs.ini'),
@@ -278,6 +278,7 @@ try {
         'native-talk-probe' { 'Native-Peaceful-Probe.ps1' }
         'native-aggression-probe' { 'Native-Aggression-Probe.ps1' }
         'greeting-probe' { 'Greeting-Probe.ps1' }
+        'silent-greeting-probe' { 'Greeting-Probe.ps1' }
         'native-dialogue-bypass-probe' { 'Native-Aggression-Probe.ps1' }
         'peaceful-state' { 'Pacification-State.ps1' }
         'peaceful-healing' { 'Pacification-Healing.ps1' }
@@ -299,6 +300,7 @@ try {
     if ($Test -eq 'peaceful-bind') { $caseArguments.BindOnly = $true }
     if ($Test -eq 'native-talk-probe') { $caseArguments.DialogueOnly = $true }
     if ($Test -eq 'native-aggression-probe') { $caseArguments.RequireOriginalTalk = $true }
+    if ($Test -eq 'silent-greeting-probe') { $caseArguments.Silent = $true }
     if ($Test -eq 'native-dialogue-bypass-probe') { $caseArguments.Bypass = $true }
     if ($Test -in @('npc-pacification','npc-lethal')) { $caseArguments.AttackerFixture = 'guard' }
     if ($Test -in @('follower-defeat','npc-lethal')) { $caseArguments.DefeatByAttacker = $true }

@@ -1,0 +1,8 @@
+FormKey: 00084A:Acheron.esm
+EditorID: AcheronSilentGreetingProbe
+Name:
+  TargetLanguage: English
+  Value: ' '
+Branch: 00084C:Acheron.esm
+Quest: 000818:Acheron.esm
+SubtypeName: CUST

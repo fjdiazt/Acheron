@@ -1,0 +1,20 @@
+FormKey: 00084B:Acheron.esm
+Flags:
+  Flags:
+  - NoLipFile
+  - CanMoveWhileGreeting
+PreviousDialog: Null
+FavorLevel: None
+Responses:
+- Emotion: Neutral
+  EmotionValue: 50
+  ResponseNumber: 1
+  Text:
+    TargetLanguage: English
+    Value: ' '
+  ScriptNotes: ''
+  Edits: ''
+Conditions:
+- MutagenObjectType: ConditionFloat
+  Data:
+    MutagenObjectType: GetDeadConditionData

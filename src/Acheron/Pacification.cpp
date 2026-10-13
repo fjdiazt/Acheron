@@ -745,6 +745,7 @@ namespace Acheron::Pacification
             const auto topic = data->LookupForm<RE::TESTopic>(0x816, "Acheron.esm");
             const auto info = data->LookupForm<RE::TESTopicInfo>(0x817, "Acheron.esm");
             json dialogue{
+                { "subtitles", json::array() },
                 { "spoken", spoken },
                 { "currentInfo", std::format("0x{:08X}", manager && manager->currentTopicInfo ? manager->currentTopicInfo->GetFormID() : 0) },
                 { "actor", std::format("0x{:08X}", subject->GetFormID()) },
@@ -778,6 +779,15 @@ namespace Acheron::Pacification
                         else if (value.IsNumber()) dialogue[key] = value.GetNumber();
                     }
                 }
+                for (const auto& [key, path] : std::initializer_list<std::pair<const char*, const char*>>{
+                    { "subtitleText", "_root.DialogueMenu_mc.SubtitleText.text" },
+                    { "subtitleVisible", "_root.DialogueMenu_mc.SubtitleText._visible" } }) {
+                    RE::GFxValue value;
+                    if (menu->uiMovie->GetVariable(&value, path)) {
+                        if (value.IsString()) dialogue[key] = value.GetString();
+                        else if (value.IsBool()) dialogue[key] = value.GetBool();
+                    }
+                }
                 RE::GFxValue choices;
                 if (menu->uiMovie->GetVariable(&choices, "_root.DialogueMenu_mc.TopicListHolder.List_mc.entryList") && choices.IsArray() && choices.GetArraySize() <= 256) {
                     for (std::uint32_t row = 0; row < choices.GetArraySize(); ++row) {
@@ -787,6 +797,12 @@ namespace Acheron::Pacification
                             dialogue["choices"].push_back({ { "row", row }, { "topicIndex", index.GetNumber() }, { "text", text.GetString() } });
                         }
                     }
+                }
+            }
+            if (const auto subtitles = RE::SubtitleManager::GetSingleton()) {
+                const RE::BSSpinLockGuard lock(subtitles->lock);
+                for (const auto& subtitle : subtitles->subtitles) {
+                    if (subtitle.speaker == handle) dialogue["subtitles"].push_back(subtitle.subtitle.c_str());
                 }
             }
             logger::info("[PeacefulDialogue] {}", dialogue.dump());

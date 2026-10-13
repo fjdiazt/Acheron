@@ -90,7 +90,7 @@ responses, selected through the existing scoped Talk adapter. Scope antagonistic
 greetings to enemies captured before pacification; preserve civilian/quest dialogue.
 Use dedicated INFO IDs without action handlers, so opening Talk cannot execute a
 command. Validate supported voices and action/pose controls. A silent greeting is
-another policy option, but was not qualified in these probes. Keep relationship
+another policy option; follow-up probe evidence below. Keep relationship
 policy unchanged until that production route is implemented and tested.
 
 ## Reproduction and evidence
@@ -105,3 +105,68 @@ native controls passed, not that greetings are appropriately antagonistic.
 raw responses, voice paths, INFO events, actions and cleanup evidence. Temporary
 candidate code is excluded from committed production behavior. No FSM transitions
 changed; master/generated views remain synchronized.
+
+## Silent opening and captions: follow-up
+
+Probe records live only in `tests/fixtures/silent-greeting`; they are not production
+`res` records. Private normal Player branch 0x84C registers custom topic 0x84A and
+INFO 0x84B. Response is one ASCII space, NoLipFile/CanMoveWhileGreeting flags,
+no shared response, sound or script. Topic is not TopLevel/Blocking or a global
+Hello topic. Existing scoped native entry temporarily calls
+`SetDialogueWithPlayer(true, true, privateInfo)`; original guards remain intact.
+No voice mapping, audio replacement, global muting or subtitle hiding.
+
+Normal-caption control `cc6e81ca-8e8a-4e5a-a077-a3c6371a0115` passed: native
+Good morning. appeared in the visible dialogue caption and actor-owned subtitle
+queue. Subtitle settings enabled in memory; original INI files restored.
+
+Initial candidates `4fdfd21f-31c0-495f-9489-bd0607249208`,
+`dff1e171-8f09-4f3b-9068-c0cbc7a4a6cc`, and
+`31145eb2-8618-4ac2-9b37-c52cced8e84b` failed before playback. Compiled TIFC
+was one, but unlinked custom topic had zero runtime children; INFO lookup failed.
+Adding normal branch registration produced a runtime INFO. Those failures do not
+establish that the engine rejects empty-string responses.
+
+`77b1684e-c84f-4194-b462-60527d7b8bf8`: silent INFO selected; spoken/caption text
+blank and actor subtitle queue empty. Strict pose check failed because blessing
+kneeling temporarily unseated on repeated Talk, also observed in earlier ordinary
+greeting probes. Failure retained; no pose assertion relaxed.
+
+Regular-family control `fbab0141-56e7-40a8-8092-65f329ea20ae` passed eight rank-0
+openings: blank spoken text, no visible caption content, empty actor subtitle queue,
+native sit state 3, preserved rank/health/aggression/pacification. Actual native
+On your feet., Bind and bound Continue. INFO selections passed. Regular pose was
+selected through the existing native Test submenu; this does not qualify blessing.
+
+Expanded repeat `faaa7bfd-2ef2-43b7-8b68-561b3ea49fdc` passed the same eight
+silent rank-0 openings and command controls. Unmanaged civilian retained native
+Hello INFO `000A8643` and its nonempty HUD caption; no scoped adapter acceptance
+logged for that actor. Vanilla can say a greeting without opening choice UI.
+Earlier `98e1ab84-b806-4a9a-a74c-d8e63b5b53fd` had incorrectly required that
+window; its log already contained the ordinary civilian caption. Corrected control
+requires actual unmanaged speech event and actor-owned caption, retaining failure
+evidence rather than calling it a gameplay regression.
+
+Actual E control `b834e984-79d8-46b3-9f96-903610cef1d4` passed four choices
+across Yielding/Wandering at original Aggression 2, including unmanaged hostile
+and merely pacified actor rejection. Snapshots/events select the private blank
+INFO. This qualifies E input in those sources; seated E aiming remains separate.
+
+All game candidates restored; installed qualified baseline hashes and original
+staging ESM verified. Source returned to ordinary native entry and rebuilt. Only
+diagnostic caption/speech capture, candidate-only checks and fixture records remain
+in Git. No silent opening or relationship policy is deployed permanently.
+
+Probe commands, requiring the temporary private-record/native-entry candidate:
+
+```powershell
+python tests/Test-SilentGreetingRecord.py build/silent-greeting-probe/Acheron.esm
+pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test silent-greeting-probe
+```
+
+Merge fixture files into a disposable copy of `res`, deserialize with existing
+Spriggit, and use the restoring candidate wrapper. Production staging/source are
+restored afterward. Silent mode verifies text/actual caption fields and rank 0;
+ordinary greeting mode remains observational. Replies and goodbyes remain native.
+Other managed voices, blessing pose, VR and third-party speech hooks need separate
+qualification before promotion. No FSM behavior change is retained by this probe.

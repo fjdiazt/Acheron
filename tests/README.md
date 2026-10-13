@@ -5,6 +5,12 @@ greetings while kneeling at disposable relationship controls -3/0. It checks
 native choices/actions and actor invariants; PASS does not mean the lines are
 antagonistic. See [greeting evidence](../docs/greeting-probes.md).
 
+`silent-greeting-probe` is a candidate-only discovery mode, outside routine suites.
+Requires private fixture records in `tests/fixtures/silent-greeting` and temporary
+scoped native entry. Verifies blank opening text and rendered captions, original
+rank/aggression/health, regular kneeling, native commands and unmanaged speech.
+`Test-SilentGreetingRecord.py` checks compiled candidate data without game launch.
+
 ### Original aggression/native Talk probe
 
 ```powershell
