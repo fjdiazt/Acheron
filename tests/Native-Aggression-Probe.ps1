@@ -1,4 +1,4 @@
-param([string] $RunId, [string] $RunDirectory)
+param([string] $RunId, [string] $RunDirectory, [switch] $Bypass)
 $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot 'Pacification-Fixture.ps1')
 $player='0x00000014'; $actor=$null
@@ -23,6 +23,19 @@ try {
     $original=(Invoke-NpcPapyrus Actor GetActorValue $actor @('Aggression')).returned
     if($original -le 0) {throw 'Probe needs originally aggressive enemy'}
     $summary.originalAggression=$original
+    if($Bypass) {
+        $summary.unmanagedBypassRejected=(Invoke-NpcPapyrus Acheron ProbeNativeDialogue '' @(@{form=$actor})).returned -eq $false
+        if(-not $summary.unmanagedBypassRejected -or (Read-PeacefulDialogue $actor).menuOpen) {throw 'Bypass accepted unmanaged enemy'}
+        Invoke-NpcPapyrus Actor AllowPCDialogue $actor @($true) | Out-Null
+        Invoke-NpcPapyrus Acheron PacifyActor '' @(@{form=$actor}) | Out-Null
+        if(-not (Invoke-NpcPapyrus Acheron IsPacified '' @(@{form=$actor})).returned) {throw 'Unmanaged pacified control missing'}
+        $summary.unmanagedPacifiedBypassRejected=(Invoke-NpcPapyrus Acheron ProbeNativeDialogue '' @(@{form=$actor})).returned -eq $false
+        if(-not $summary.unmanagedPacifiedBypassRejected -or (Read-PeacefulDialogue $actor).menuOpen) {throw 'Bypass accepted pacified NPC without defeat/controller ownership'}
+        Invoke-NpcPapyrus Acheron ReleaseActor '' @(@{form=$actor}) | Out-Null
+        $deadline=(Get-Date).AddSeconds(3)
+        do {$pacified=(Invoke-NpcPapyrus Acheron IsPacified '' @(@{form=$actor})).returned} while($pacified -and (Get-Date) -lt $deadline)
+        if($pacified) {throw 'Unmanaged control did not release'}
+    }
     Invoke-NpcPapyrus Acheron DefeatActor '' @(@{form=$actor}) | Out-Null
     Invoke-NpcPapyrus Actor SetDontMove $actor @($true) | Out-Null
     Invoke-NpcPapyrus Actor EnableAI $actor @($true) | Out-Null
@@ -43,6 +56,7 @@ try {
             Close-PeacefulDialogue $actor $RunId
             $actual=(Invoke-NpcPapyrus Actor GetActorValue $actor @('Aggression')).returned
             if($actual -notin @(0.0,1.0,$original)) {throw 'Unexpected probe aggression'}
+            if($Bypass -and $actual -ne $original) {throw 'Bypass probe requires unsuppressed original aggression'}
             Invoke-NpcPapyrus ObjectReference MoveTo $actor @(@{form=$player},0.0,-85.0,0.0,$false) | Out-Null
             $summary.probePosition=Invoke-YieldTool inspect @{kind='refs';formId=$actor}
             foreach($pitch in @(0,15,30,45,60,75)) {
@@ -53,6 +67,21 @@ try {
             }
             if($pick.crosshair -ne $actor) {throw 'Probe crosshair missed expected actor'}
             Invoke-YieldTool input @{action='tap';device='keyboard';key='e';durationMs=50;owner=$RunId} | Out-Null
+            $ordinary=$null; $entry=$null
+            if($Bypass) {
+                Start-Sleep -Milliseconds 1000
+                $ordinary=Read-PeacefulDialogue $actor
+                if($ordinary.menuOpen) {throw 'Ordinary activation opened dialogue; bypass comparison ambiguous'}
+                $start=(Get-Content $logPath -Raw).Length
+                if(-not (Invoke-NpcPapyrus Acheron ProbeNativeDialogue '' @(@{form=$actor})).returned) {throw 'Managed bypass rejected'}
+                $deadline=(Get-Date).AddSeconds(3)
+                do {
+                    $entry=[regex]::Match((Get-Content $logPath -Raw).Substring($start),'\[NativeDialogueProbe\] actor='+($actor -replace '^0x','')+' aggression=(?<aggression>[0-9.]+) nativeResult=(?<result>true|false)')
+                    if($entry.Success) {break}
+                    Start-Sleep -Milliseconds 25
+                } while((Get-Date) -lt $deadline)
+                if(-not $entry.Success -or [double]$entry.Groups['aggression'].Value -ne $original) {throw 'Scoped native entry execution missing or aggression changed'}
+            }
             $deadline=(Get-Date).AddSeconds(8); $choice=$null
             do {
                 $dialogue=Read-PeacefulDialogue $actor
@@ -65,6 +94,7 @@ try {
                 defeated=(Invoke-NpcPapyrus Acheron IsDefeated '' @(@{form=$actor})).returned;
                 pacified=(Invoke-NpcPapyrus Acheron IsPacified '' @(@{form=$actor})).returned;
                 combat=(Invoke-NpcPapyrus Actor IsInCombat $actor).returned}
+            if($Bypass) {$case.ordinaryActivation=$ordinary; $case.nativeEntry=$entry.Value}
             $summary.aggressionProbe+=,$case
             if($case.aggressionAfter -ne $actual -or -not $case.pacified -or $case.combat -or
                $case.defeated -ne ($phase -eq 'yielding')) {throw 'Probe changed aggression or pacification during Talk'}
@@ -77,7 +107,18 @@ try {
     $oneCases=@($summary.aggressionProbe | Where-Object {$_.aggression -eq 1})
     $summary.aggressionOneAttempts=$oneCases.Count
     $summary.aggressionOneTalkPassed=if($oneCases.Count -eq 4) {@($oneCases | Where-Object {-not $_.choicesReady}).Count -eq 0}else{$null}
-    return @{message="PASS: native Talk observations; original-aggression attempts=$($originalCases.Count), all opened=$($summary.originalAggressionTalkPassed); aggression-1 attempts=$($oneCases.Count), all opened=$($summary.aggressionOneTalkPassed)";screenshot=$null}
+    if($Bypass) {
+        $summary.bypassTalkPassed=$summary.originalAggressionTalkPassed
+        if($summary.bypassTalkPassed) {
+            $summary.bypassSelection=Select-PeacefulDialogueChoice $actor 'On your knees.' 0x81C $RunId -AlreadyOpen
+            Invoke-NpcPapyrus Actor SetDontMove $actor @($false) | Out-Null
+            $summary.bypassKneeling=Wait-PeacefulPhase $actor 3
+            if((Invoke-NpcPapyrus Actor GetActorValue $actor @('Aggression')).returned -ne $original -or
+               -not (Invoke-NpcPapyrus Acheron IsPacified '' @(@{form=$actor})).returned -or
+               (Invoke-NpcPapyrus Actor IsInCombat $actor).returned) {throw 'Bypass action changed aggression or pacification'}
+        }
+    }
+    return @{message="PASS: native Talk observations; bypass=$Bypass; original-aggression attempts=$($originalCases.Count), all opened=$($summary.originalAggressionTalkPassed); aggression-1 attempts=$($oneCases.Count), all opened=$($summary.aggressionOneTalkPassed)";screenshot=$null}
 } finally {
     Invoke-YieldTool input @{action='releaseAll';device='keyboard';owner=$RunId} | Out-Null
     if($actor) {

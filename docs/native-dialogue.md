@@ -33,6 +33,45 @@ and the NPC never entered combat. Candidate/source changes were reverted and
 installed files/configs restored. This probe validates choice availability only;
 command execution, save/load, other actors and VR at aggression `1` remain untested.
 
+### Scoped native entry probe
+
+Desktop `1.6.1170` inspection located the normal activation call to the actor's
+native `SetDialogueWithPlayer(true, false, nullptr)` virtual method (slot `0x41`).
+The native `TESNPC::Activate` implementation calls it after preceding eligibility
+checks. Calling this same entry directly opened native dialogue without changing
+aggression. No engine bytes, faction relationships or UI flags were patched.
+The exact earlier aggression-dependent rejection instruction remains unidentified.
+
+Diagnostic-only `Acheron.ProbeNativeDialogue` queues that call on the game thread.
+Both request and execution require a living, loaded, non-player actor outside
+combat, permitted PC dialogue, Acheron pacification, and either defeat or an owned
+peaceful controller. Execution also rejects an already-open dialogue menu. Its
+return value means queued; `[NativeDialogueProbe]` logs the actual native return,
+and the harness separately verifies selectable native choices and selected INFO.
+This API is registered only under `ACHERON_YIELD_TESTS`; ordinary activation is
+unchanged. It is a probe, not a deployed replacement for the aggression override.
+
+Temporary unsuppressed candidates:
+
+| Run | Choices | Action | Controls |
+| --- | --- | --- | --- |
+| `7a84c828-bc8e-4a68-a820-b9f378a81c07` | 4/4, two Yielding and two Wandering | Native On your knees. INFO; FSM entered ready Kneeling | Unmanaged enemy rejected |
+| `c75061d6-e177-45c3-9d42-f9039918be01` | 4/4, two Yielding and two Wandering | Same native action and FSM result | Unmanaged enemy and merely pacified enemy without controller/defeat ownership rejected |
+
+Evidence: `build/test-results/<run>/summary.json`, `Acheron.log`, `tools.jsonl`.
+Aggression stayed `2` before/after every interaction; pacification stayed active and
+combat stayed false. The repeat records ordinary E activation leaving the menu
+closed before each direct entry, then the native call returning true and choices
+becoming selectable. Action selection used real keyboard input, not a direct FSM
+command. Kneeling animation playback was not separately asserted in this probe.
+
+Candidates were restored by the deployment wrapper; all installed original hashes
+matched. Disposable actors were deleted, games closed, configs restored, and
+source aggression suppression restored and rebuilt. No saves written; VR untouched.
+Next implementation can route player activation only for eligible managed actors
+through this entry, leaving other actors' native activation intact. That routing,
+all other actions, save/load, additional actor types and VR remain unqualified.
+
 Desktop enemies hostile to the player before aggression suppression receive
 native relationship rank -3 (Enemy), enabling resentful vanilla greetings while
 combat remains blocked. Defeat and direct peaceful entry share this policy;

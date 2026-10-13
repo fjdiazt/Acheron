@@ -28,6 +28,25 @@ the latter is null when four aggression-1 observations were not made. Pacificati
 remained active and combat stayed false. Gameplay policy remains unchanged;
 candidate DLL, source and config changes were restored after the experiment.
 
+Scoped native entry diagnostic:
+
+```powershell
+pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test native-dialogue-bypass-probe
+```
+
+Requires a separately built candidate retaining original aggression at both defeat
+and peaceful entry, with `ACHERON_YIELD_TESTS` enabled. The baseline build refuses
+this comparison rather than silently testing suppressed aggression. Reuses the
+same disposable fixture and restores installed files by default; never use
+`-KeepInstalled` for this experiment. The ordinary activation path remains unchanged.
+The scoped test-only API calls native `SetDialogueWithPlayer`, then checks actual
+choice readiness, unchanged aggression/pacification and native On your knees. INFO
+execution into the Kneeling FSM. Unmanaged and merely pacified actors must reject.
+`bypassTalkPassed` is the outcome; diagnostic `PASS` alone only confirms collection
+and cleanup. Runs `7a84c828-bc8e-4a68-a820-b9f378a81c07` and
+`c75061d6-e177-45c3-9d42-f9039918be01` opened 4/4 each at original aggression `2`.
+See [scope, restoration and limits](../docs/native-dialogue.md#scoped-native-entry-probe).
+
 Manual starting scenarios: [scripts/README.md](../scripts/README.md).
 
 All enemy fixtures now use female `EncForsworn01Melee1HBretonF01` (`00043BE1`),

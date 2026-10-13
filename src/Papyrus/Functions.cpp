@@ -42,6 +42,26 @@ namespace Papyrus
 #ifdef ACHERON_YIELD_TESTS
     void Defeat::ProbeCommandHold(RE::StaticFunctionTag*, RE::Actor* actor, float seconds) { Acheron::Pacification::ProbeCommandHold(actor, seconds); }
     void Defeat::ProbePeacefulState(RE::StaticFunctionTag*, RE::Actor* actor) { Acheron::Pacification::Trace(actor); }
+    bool Defeat::ProbeNativeDialogue(RE::StaticFunctionTag*, RE::Actor* actor)
+    {
+        const auto eligible = [](RE::Actor* subject) {
+            return !REL::Module::IsVR() && subject && !subject->IsPlayerRef() && !subject->IsDead() &&
+                subject->Is3DLoaded() && !subject->IsInCombat() && subject->CanTalkToPlayer() &&
+                Acheron::Defeat::IsPacified(subject) &&
+                (Acheron::Defeat::IsDefeated(subject) || Acheron::Pacification::IsActive(subject));
+        };
+        if (!eligible(actor)) return false;
+        const auto handle = actor->GetHandle();
+        SKSE::GetTaskInterface()->AddTask([handle, eligible]() {
+            const auto subject = handle.get();
+            const auto manager = RE::MenuTopicManager::GetSingleton();
+            if (!eligible(subject.get()) || !manager || manager->menuOpen) return;
+            const auto aggression = subject->AsActorValueOwner()->GetActorValue(RE::ActorValue::kAggression);
+            const auto result = subject->SetDialogueWithPlayer(true, false, nullptr);
+            logger::info("[NativeDialogueProbe] actor={:08X} aggression={} nativeResult={}", subject->GetFormID(), aggression, result);
+        });
+        return true;
+    }
     void Defeat::ProbePeacefulLinks(RE::StaticFunctionTag*, RE::Actor* actor, RE::TESObjectREFR* anchor, RE::TESObjectREFR* threat)
     {
         if (!actor || !anchor || !threat || actor->IsPlayerRef()) { return; }
