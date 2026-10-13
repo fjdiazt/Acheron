@@ -1,0 +1,13 @@
+{
+    "id": "SkyrimCombat-Dead",
+    "initial": "Dead",
+    "states": {
+        "Dead": {
+            "type": "final"
+        }
+    },
+    "meta": {
+        "generatedFrom": "fsm.json",
+        "focus": "Dead"
+    }
+}

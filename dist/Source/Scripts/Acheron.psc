@@ -14,6 +14,8 @@ bool Function IsPeacefulState(Actor akActor) native global
 bool Function SupportsPeacefulRescue(Actor akActor) native global
 ; Test build only; logs the controller's current state without changing it.
 Function ProbePeacefulState(Actor akActor) native global
+; Test build only; shorten an owned command hold without changing its phase.
+Function ProbeCommandHold(Actor akActor, float afSeconds) native global
 { Global API for Acheron }
 
 ; Disable/Enable hit processing

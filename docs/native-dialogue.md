@@ -27,6 +27,13 @@ from unbound Kneeling and resumes avoidance/wandering after the matching pose
 exit, without healing or resetting either timer. Desktop qualification passed in
 run `186bdc37-d88e-46cf-a7c1-37150419d1f1`; bound posture commands remain planned.
 
+Planned **On the ground.** adds commanded unbound Sitting from the same sources as
+Kneeling and from Kneeling itself. Sitting offers On your knees. -> Kneeling,
+On your feet. -> peaceful movement, and Bind -> KneelingBound through sitting exit,
+kneeling entry and bound pose. No SittingBound state. It shares Kneeling's commanded
+hold and cleanup; automatic Surrender Resting remains separate. No Sitting/Sit/topic
+implementation or playback qualification exists yet; see [FSM policy](fsm.md#commanded-sitting).
+
 ## Desktop evidence
 
 - `build/test-results/9f5f0f07-84e1-4070-b142-82df55c1b121/summary.json`:

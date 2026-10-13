@@ -49,6 +49,11 @@ namespace Acheron::Peaceful
                (state.selectedKneelingVariant == KneelingVariant::Regular || state.selectedKneelingVariant == KneelingVariant::Blessing);
     }
     inline bool CanRemainManaged(const Facts& facts) { return facts.alive && facts.eligible && !facts.defeated; }
+    inline void AdvanceCommandHold(State& state, float seconds)
+    {
+        if (IsCommandHold(state.phase) && std::isfinite(seconds) && seconds >= 0)
+            state.commandHoldRemaining = std::max(0.0f, state.commandHoldRemaining - seconds);
+    }
 
     inline std::optional<State> Decide(State state, Event event, const Facts& facts)
     {
@@ -57,8 +62,7 @@ namespace Acheron::Peaceful
             if (!ValidDuration(event.duration)) return state;
             state.remaining = event.duration;
         }
-        if (IsCommandHold(state.phase) && event.kind == EventKind::Observe && std::isfinite(facts.realDelta) && facts.realDelta >= 0)
-            state.commandHoldRemaining = std::max(0.0f, state.commandHoldRemaining - facts.realDelta);
+        if (event.kind == EventKind::Observe) AdvanceCommandHold(state, facts.realDelta);
         if (!facts.loaded || facts.paused) return state;
         const auto previous = state.phase;
         if (event.kind == EventKind::Bind) {

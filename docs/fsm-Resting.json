@@ -1,0 +1,172 @@
+{
+    "id": "SkyrimCombat-Resting",
+    "initial": "Resting",
+    "states": {
+        "Resting": {
+            "on": {
+                "Death": [
+                    {
+                        "target": "Dead",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides",
+                            "Clear surrender resting data and cancel pending pose callbacks"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Observe [renewed defeat]": [
+                    {
+                        "target": "Yielding",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides",
+                            "Preserve new defeat ownership and protection",
+                            "Clear surrender resting data and cancel pending pose callbacks"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Observe [ineligible or invalid peaceful state]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides",
+                            "Clear surrender resting data and cancel pending pose callbacks"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Release": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides",
+                            "Clear surrender resting data and cancel pending pose callbacks"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Nearby combat starts [loaded, unpaused]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Exit selected rest pose; retain peacefulChoice and selectedPose",
+                            "Freeze shared peaceful budget; retain pacification"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Kneel [loaded, unpaused]": [
+                    {
+                        "target": "Kneeling",
+                        "actions": [
+                            "Exit selected automatic rest pose; set peacefulChoice to wander and clear selectedPose because explicit command supersedes automatic rest",
+                            "Set CommandHoldDurationSeconds to 1800 real seconds; preserve remaining shared peaceful budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Refresh [valid duration, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Reset shared peaceful budget to valid requested duration (1-600 seconds)",
+                            "Exit selected rest pose; retain peacefulChoice and selectedPose; avoid nearby combat"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Refresh [valid duration, no nearby combat]": [
+                    {
+                        "target": "Resting",
+                        "actions": [
+                            "Reset shared peaceful budget to valid requested duration (1-600 seconds)",
+                            "Retain selectedPose and recorded peacefulChoice; no reroll or loop restart"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Peaceful timer expires [loaded, unpaused, no nearby combat, dialogue closed]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Pose unavailable or entry failed/timed out": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Cancel rest animation callbacks; clear selectedPose and record peacefulChoice = wander",
+                            "Preserve remaining shared peaceful budget and pacification; no repeated pose retry this episode"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Sit [loaded, unpaused]": [
+                    {
+                        "target": "Sitting",
+                        "actions": [
+                            "Exit selected automatic rest pose",
+                            "Supersede automatic rest: set peacefulChoice to wander and clear selectedPose",
+                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ]
+            },
+            "meta": {
+                "status": "planned",
+                "catalog": "animations-bookmarks.md#resting-variants"
+            },
+            "entry": [
+                "Select and persist one eligible verified pose family only if selectedPose is unset; otherwise reuse saved family",
+                "Play selected entry then idle/loop; do not restart an already-settled loop on ticks or load"
+            ],
+            "exit": [
+                "Exit selected pose when actor can animate; cancel pending entry/loop callbacks before ownership or behavior changes",
+                "Death/urgent interruption takes priority over waiting for cosmetic exit; late callbacks cannot restart stale poses"
+            ]
+        },
+        "Dead": {
+            "type": "final"
+        },
+        "Yielding": {},
+        "Normal": {},
+        "AvoidingCombat": {},
+        "Kneeling": {},
+        "Wandering": {},
+        "Sitting": {
+            "meta": {
+                "status": "planned"
+            }
+        }
+    },
+    "meta": {
+        "generatedFrom": "fsm.json",
+        "focus": "Resting"
+    }
+}

@@ -119,6 +119,30 @@ int main()
     Remaining(bound, Phase::KneelingBound, 37.0f);
     Require(bound->commandHoldRemaining == CommandHoldDurationSeconds, "Binding did not restart command hold timer");
     Require(ValidState(*bound), "Bound state rejected by persistence validation");
+    auto enteringBound = *bound;
+    enteringBound.phase = Phase::Kneeling;
+    AdvanceCommandHold(enteringBound, 7.0f);
+    enteringBound.phase = Phase::KneelingBound;
+    Require(enteringBound.commandHoldRemaining == 1793.0f && enteringBound.remaining == 37,
+        "Bind exit/entry time restarted hold or consumed peaceful budget");
+    for (float invalid : { -1.0f, std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::infinity() }) {
+        AdvanceCommandHold(enteringBound, invalid);
+        Require(enteringBound.commandHoldRemaining == 1793.0f, "Invalid elapsed hold time applied");
+    }
+    for (const auto event : { EventKind::Kneel, EventKind::Bind, EventKind::Resume }) {
+        for (bool blockedPause : { false, true }) {
+            Facts blocked{}; blocked.paused = blockedPause; blocked.loaded = blockedPause;
+            const auto rejected = Decide(state, { event }, blocked);
+            Require(rejected && rejected->phase == state.phase && rejected->commandHoldRemaining == state.commandHoldRemaining,
+                "Paused/unloaded command changed phase or restarted hold");
+        }
+    }
+    Facts chatting{}; chatting.dialogue = true;
+    const auto talkingResume = Decide({ Phase::Kneeling, 0, 50 }, { EventKind::Resume }, chatting);
+    Require(talkingResume && talkingResume->phase == Phase::Wandering, "Resume lost live zero-budget dialogue guard");
+    Require(!Decide(*talkingResume, {}, {}), "Zero-budget dialogue owner remained after close");
+    const auto refreshed = Decide({ Phase::Kneeling, 0, 0 }, { EventKind::Refresh, 60 }, chatting);
+    Require(refreshed && refreshed->phase == Phase::Kneeling && refreshed->remaining == 60, "Refresh interrupted expired held dialogue");
     facts.nearbyCombat = true; facts.realDelta = 3.0f;
     const auto held = Decide(*bound, {}, facts);
     Remaining(held, Phase::KneelingBound, 37.0f);

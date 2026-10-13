@@ -1,0 +1,176 @@
+{
+    "id": "SkyrimCombat-FollowingBound",
+    "initial": "FollowingBound",
+    "states": {
+        "FollowingBound": {
+            "on": {
+                "Death": [
+                    {
+                        "target": "Dead",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Observe [renewed defeat]": [
+                    {
+                        "target": "Yielding",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides",
+                            "Preserve new defeat ownership and protection"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Observe [ineligible or invalid peaceful state]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Release": [
+                    {
+                        "target": "Fleeing",
+                        "actions": [
+                            "Remove binding, bound pose, follow/stay orders, prisoner ownership and hold timer without healing",
+                            "Start temporary fleeing from the player; retain only flee AI/pacification until safe-distance or finite-time end condition"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Refresh [valid duration, hold remaining > 0]": [
+                    {
+                        "target": "FollowingBound",
+                        "actions": [
+                            "Reset wander budget to valid requested duration (1-600 seconds)"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Hit [post-damage health > 0]": [
+                    {
+                        "target": "FollowingBound",
+                        "actions": [
+                            "Apply ordinary hit damage; retain binding, pacification and bound following behavior",
+                            "Restart CommandHoldDurationSeconds at 1800 real seconds; preserve frozen wander budget; do not roll an outcome"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Hit [post-damage health <= 0, eligible to die]": [
+                    {
+                        "target": "FollowingBound",
+                        "actions": [
+                            "Allow engine fatal damage instead of defeat or knockout interception",
+                            "Wait for Skyrim Death notification; retain binding until death cleanup"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Let go": [
+                    {
+                        "target": "Fleeing",
+                        "actions": [
+                            "Remove binding, bound pose, follow/stay orders, prisoner ownership and hold timer without healing",
+                            "Start temporary fleeing from the player; retain only flee AI/pacification until safe-distance or finite-time end condition"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Resume [loaded, unpaused]": [
+                    {
+                        "target": "Fleeing",
+                        "actions": [
+                            "Remove binding, bound pose, follow/stay orders, prisoner ownership and hold timer without healing",
+                            "Start temporary fleeing from the player; retain only flee AI/pacification until safe-distance or finite-time end condition"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Refresh [valid duration, hold expired, loaded, unpaused, dialogue closed]": [
+                    {
+                        "target": "Fleeing",
+                        "actions": [
+                            "Remove binding, bound pose, follow/stay orders, prisoner ownership and hold timer without healing",
+                            "Start temporary fleeing from the player; retain only flee AI/pacification until safe-distance or finite-time end condition"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Stay [loaded, unpaused]": [
+                    {
+                        "target": "StandingBound",
+                        "actions": [
+                            "Stop temporary following; enter standing bound waiting pose",
+                            "Preserve remaining CommandHoldDurationSeconds and frozen wander budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Hold Timer Expires [dialogue closed]": [
+                    {
+                        "target": "Fleeing",
+                        "actions": [
+                            "Remove binding, bound pose, follow/stay orders, prisoner ownership and hold timer without healing",
+                            "Start temporary fleeing from the player; retain only flee AI/pacification until safe-distance or finite-time end condition"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ]
+            },
+            "meta": {
+                "boundDamage": {
+                    "status": "planned"
+                },
+                "status": "planned"
+            }
+        },
+        "Dead": {
+            "type": "final"
+        },
+        "Yielding": {},
+        "Normal": {},
+        "Fleeing": {
+            "meta": {
+                "status": "planned"
+            }
+        },
+        "StandingBound": {
+            "meta": {
+                "status": "planned"
+            }
+        }
+    },
+    "meta": {
+        "generatedFrom": "fsm.json",
+        "focus": "FollowingBound"
+    }
+}

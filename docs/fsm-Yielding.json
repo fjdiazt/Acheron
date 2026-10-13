@@ -1,0 +1,349 @@
+{
+    "id": "SkyrimCombat-Yielding",
+    "initial": "Yielding",
+    "states": {
+        "Yielding": {
+            "on": {
+                "Rescue/healing [succeeded, eligible desktop NPC, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "End defeat and damage immunity; retain actual healing; begin rescued pacification",
+                            "Reset wander budget to valid requested duration (1-600 seconds)"
+                        ]
+                    }
+                ],
+                "Rescue/healing [succeeded, eligible desktop NPC, no nearby combat]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "End defeat and damage immunity; retain actual healing; begin rescued pacification",
+                            "Reset wander budget to valid requested duration (1-600 seconds)"
+                        ]
+                    }
+                ],
+                "Kneel [eligible loaded desktop NPC]": [
+                    {
+                        "target": "Kneeling",
+                        "actions": [
+                            "End defeat and damage immunity without healing; begin pacification",
+                            "Set CommandHoldDurationSeconds to 1800 real seconds; preserve wander budget"
+                        ]
+                    }
+                ],
+                "Yield recovery timer expires [allow_recovery]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "RescueActor(actor, true): remove defeat and pacification; restore ordinary AI"
+                        ],
+                        "meta": {
+                            "status": "current"
+                        }
+                    }
+                ],
+                "Death": [
+                    {
+                        "target": "Dead",
+                        "actions": [
+                            "Remove defeat and pacification"
+                        ]
+                    }
+                ],
+                "Yield timer expires [allow_recovery, same eligible yield episode, unresolved]": [
+                    {
+                        "target": "Yielding",
+                        "actions": [
+                            "Snapshot meaningful injury health including healing and actor Confidence",
+                            "Compute death/unconscious probabilities; split conscious survival into Confidence-weighted fight, flee and peaceful probabilities",
+                            "Apply agreed Confidence weights and survivor injury adjustment from fsm.md",
+                            "Draw one r in [0, 1); select one outcome using cumulative thresholds",
+                            "Persist episode resolution and chosen outcome before applying effects"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Yield resolution [recorded outcome = death, death not requested]": [
+                    {
+                        "target": "Yielding",
+                        "actions": [
+                            "Request eligible engine death once; record death request",
+                            "Wait for Skyrim Death notification"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Yield resolution [recorded outcome = unconscious, not applied]": [
+                    {
+                        "target": "Unconscious",
+                        "actions": [
+                            "End yield episode without healing; apply living unconscious behavior once"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Yield resolution [recorded outcome = fight, not applied]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "End yield episode; release defeat and pacification without healing; return control to vanilla AI"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Yield resolution [recorded outcome = flee, not applied]": [
+                    {
+                        "target": "Fleeing",
+                        "actions": [
+                            "End yield episode and defeat protection without healing",
+                            "Begin temporary unbound flight; use safe-distance completion or finite timeout"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Yield resolution [recorded outcome = peaceful, not applied, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "End yield episode and defeat protection without healing; begin unbound, talkable pacification",
+                            "Set shared peaceful budget to configured duration (1-600 seconds, default 60); no commanded hold",
+                            "Record automatic recovery origin and standing-wander choice; do not enter Surrender resting selection"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Yield resolution [recorded outcome = peaceful, not applied, no nearby combat]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "End yield episode and defeat protection without healing; begin unbound, talkable pacification",
+                            "Set shared peaceful budget to configured duration (1-600 seconds, default 60); no commanded hold",
+                            "Record automatic recovery origin and standing-wander choice; do not enter Surrender resting selection"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Ally healing [actual health restored, same eligible Yielding episode, confirmed distinct allied NPC caster]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Cancel pending yield-expiry deadline and recorded outcome; do not roll probabilities",
+                            "End defeat and damage protection; retain actual received healing",
+                            "Remove pacification and return control to vanilla AI; skip peaceful movement"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Surrender [eligible loaded desktop NPC, unpaused, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "End yield episode and defeat/bleedout damage protection without potion consumption or added healing",
+                            "Cancel pending yield-expiry resolution and deadline; do not roll a wound outcome",
+                            "Begin unbound, talkable pacification; set shared peaceful budget to configured rescued duration (1-600 seconds, default 60); no commanded hold",
+                            "Record surrender origin; leave peacefulChoice pending until first eligible no-combat routing"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Surrender [eligible loaded desktop NPC, unpaused, no nearby combat, peaceful choice = rest]": [
+                    {
+                        "target": "Resting",
+                        "actions": [
+                            "End yield episode and defeat/bleedout damage protection without potion consumption or added healing",
+                            "Cancel pending yield-expiry resolution and deadline; do not roll a wound outcome",
+                            "Begin unbound, talkable pacification; set shared peaceful budget to configured rescued duration (1-600 seconds, default 60); no commanded hold",
+                            "Use one resolved and persisted peacefulChoice; do not draw another value in this edge"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Surrender [eligible loaded desktop NPC, unpaused, no nearby combat, peaceful choice = wander]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "End yield episode and defeat/bleedout damage protection without potion consumption or added healing",
+                            "Cancel pending yield-expiry resolution and deadline; do not roll a wound outcome",
+                            "Begin unbound, talkable pacification; set shared peaceful budget to configured rescued duration (1-600 seconds, default 60); no commanded hold",
+                            "Use one resolved and persisted peacefulChoice; do not draw another value in this edge"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Sit [eligible loaded desktop NPC, unpaused]": [
+                    {
+                        "target": "Sitting",
+                        "actions": [
+                            "End defeat and damage immunity without healing; begin pacification",
+                            "Cancel pending yield-expiry deadline and resolution",
+                            "Supersede automatic rest: set peacefulChoice to wander and clear selectedPose",
+                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Test Normal [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Restore ordinary AI; remove owned timers, packages and pacification"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test Combat [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "Combat",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Release ownership/defeat then native StartCombat(player)"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test Yielding [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "Yielding",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "End peaceful ownership then existing DefeatActor"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test AvoidingCombat [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Enter owned avoidance; refresh configured peaceful budget; next Observe follows nearby combat"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test Wandering [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Enter owned wandering; refresh configured peaceful budget; next Observe follows nearby combat"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test Kneeling [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "Kneeling",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Choose explicit regular/blessing native family; preserve peaceful budget; restart 1800-real-second command hold"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test KneelingBound [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "KneelingBound",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Enter native bound kneel; preserve peaceful budget; restart 1800-real-second command hold"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test Dead [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "Dead",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Release ownership/defeat then native Kill(player); engine essential rules still apply"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ]
+            }
+        },
+        "AvoidingCombat": {},
+        "Wandering": {},
+        "Kneeling": {},
+        "Normal": {},
+        "Dead": {
+            "type": "final"
+        },
+        "Unconscious": {
+            "meta": {
+                "status": "planned"
+            }
+        },
+        "Fleeing": {
+            "meta": {
+                "status": "planned"
+            }
+        },
+        "Resting": {
+            "meta": {
+                "status": "planned"
+            }
+        },
+        "Sitting": {
+            "meta": {
+                "status": "planned"
+            }
+        },
+        "Combat": {},
+        "KneelingBound": {}
+    },
+    "meta": {
+        "generatedFrom": "fsm.json",
+        "focus": "Yielding"
+    }
+}

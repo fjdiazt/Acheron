@@ -1,0 +1,50 @@
+{
+    "id": "SkyrimCombat-Combat",
+    "initial": "Combat",
+    "states": {
+        "Combat": {
+            "on": {
+                "Hit [outcome = yield]": [
+                    {
+                        "target": "Yielding",
+                        "actions": []
+                    }
+                ],
+                "Hit [outcome = knockout]": [
+                    {
+                        "target": "Unconscious",
+                        "actions": [],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Death": [
+                    {
+                        "target": "Dead",
+                        "actions": []
+                    }
+                ],
+                "Hit [outcome = continue]": [
+                    {
+                        "target": "Combat",
+                        "actions": []
+                    }
+                ]
+            }
+        },
+        "Yielding": {},
+        "Unconscious": {
+            "meta": {
+                "status": "planned"
+            }
+        },
+        "Dead": {
+            "type": "final"
+        }
+    },
+    "meta": {
+        "generatedFrom": "fsm.json",
+        "focus": "Combat"
+    }
+}

@@ -185,9 +185,22 @@ them. Exact classification for ambiguous actors remains to be defined.
 
 - Planned native-dialogue command while the NPC is Yielding. End yielding and
   defeat/bleedout protection without consuming a potion or adding healing.
-- Enter AvoidingCombat while combat remains nearby, otherwise Wandering. Remain
-  unbound, pacified and talkable; use the configured rescued wandering budget
-  (1-600 seconds, default 60). No kneeling/binding or 1800-second commanded hold.
+- Enter AvoidingCombat while combat remains nearby. At the first no-combat
+  routing, choose once between automatic Resting and standing Wandering. Both
+  have a nonzero chance; exact resting percentage remains undecided. Store the
+  choice and reuse it after combat interruptions and save/load. Rescue keeps its
+  existing wandering route; this selection applies to surrendered enemies.
+- Remain unbound, pacified and talkable; use the configured rescued peaceful
+  budget (1-600 seconds, default 60), counting during Resting or Wandering and
+  paused during combat avoidance. No automatic binding or 1800-second hold.
+- Resting randomly selects any verified compatible bookmarked sitting family,
+  including compatible sitting variants in bookmarked groups/folders. Previously
+  agreed unbound kneeling/crouched families remain candidates. Use matched
+  entry/idle/exit from the [Resting variants catalog](docs/animations-bookmarks.md#resting-variants).
+  Store the chosen family; do not reroll on ticks, combat interruption or load.
+  Pose exit precedes combat avoidance or commands. Missing/failed playback falls
+  back to Wandering without resetting the peaceful budget. Exact playback mapping
+  and compatibility remain unverified; bound kneeling is outside this unbound pool.
 - Successful Surrender cancels the pending yield-expiry deadline/outcome;
   leaving Yielding must not allow a delayed expiry death/knockout roll.
 - Rescue remains the healing/potion command. On your knees. remains separate.
@@ -198,15 +211,28 @@ them. Exact classification for ambiguous actors remains to be defined.
 ### On your knees.
 
 - Use **On your knees.** to enter our own `Kneeling` FSM state from Yielding,
-  AvoidingCombat, or Wandering, without healing. This replaces the earlier kneeling
+  AvoidingCombat, Wandering, planned Sitting or Resting, without healing. From Resting,
+  exit the automatic pose first; explicit Kneel supersedes its saved automatic
+  choice. This replaces the earlier kneeling
   action's provisional Bind label; Surrender is now separate. Earlier
   handcuff/tie-up wording is superseded.
 - Use a kneeling idle animation with hands unbound; this action does not bind or
-  execute the NPC. Reuse an existing suitable animation where possible; identify
-  the actual animation and its VR suitability.
+  execute the NPC. Planned entry randomly selects blessing, regular kneeling or
+  child sit/kneel from the [three-family catalog](docs/animations-bookmarks.md#commanded-kneeling-variants).
+  Choose uniformly among verified compatible families; all three eligible means
+  1/3 each. Store selected variant; play matching enter -> idle/loop -> exit.
+  Preserve selection on ticks, Refresh and save/load; choose again only on a new
+  commanded Kneeling entry. Child-family adult compatibility and all playback
+  mappings/VR behavior remain unverified. Missing/failed variants use native
+  kneeling fallback without random retries or timer reset. Bound kneeling and
+  automatic Resting retain their separate animation policies.
 - While kneeling, remain talkable with the applicable conversation options,
   including **Get out of here.** where eligible and **Bind**.
   Kneeling must not itself change civilian/enemy action restrictions.
+- Unbound Kneeling also exposes **On your feet.**: finish the selected pose's
+  exit, then resume AvoidingCombat if nearby combat exists, otherwise Wandering.
+  Preserve health, pacification and frozen peaceful budget; clear the command
+  hold without restarting it. Bound posture commands remain separate.
 - Choosing **Bind** while kneeling transitions to our `KneelingBound` state,
   using the native hands-bound kneeling pose. This replaces the earlier prisoner
   command wording for this kneeling transition.
@@ -232,6 +258,25 @@ them. Exact classification for ambiguous actors remains to be defined.
 - Reference is **Combat Surrender SSE**, whose features include making yielded
   actors kneel for execution. Reuse the kneeling behavior alone; this command must
   not kill the actor. Speechcraft and Yielding is a different reference.
+
+### On the ground. / Sitting
+
+- Planned command enters owned, unbound `Sitting` from Yielding, AvoidingCombat,
+  Wandering, Resting or Kneeling. Same eligibility, pacification, dialogue and
+  1800-real-second hold as commanded Kneeling; peaceful budget stays frozen.
+- Kneeling -> Sitting and Sitting -> Kneeling start the destination hold on command
+  acceptance. Repeating the command in the same posture does not reset it. No healing
+  or unbound-hit timer refresh. Sitting is separate from Surrender's automatic Resting.
+- **On your feet.** resumes avoidance/wandering after sitting exit, preserving health
+  and peaceful budget, clearing the hold. Zero-budget/dialogue expiry rules stay the
+  same as Kneeling. **On your knees.** changes Sitting to unbound Kneeling.
+- **Bind from Sitting -> KneelingBound**: exit sitting, enter kneeling interaction,
+  then bound pose. No SittingBound state or intermediate owned Kneeling phase. Bind
+  restarts the 1800-second hold on acceptance; animation completion does not reset it.
+- Preserve selected sitting pose/hold through save/load; existing death, release,
+  renewed-defeat and eligibility cleanup cancels stale pose callbacks. Exact sitting
+  forms/clips, failure handling and runtime playback remain unqualified. See
+  [commanded Sitting policy](docs/fsm.md#commanded-sitting).
 
 ### On your feet.
 
@@ -357,14 +402,31 @@ At resolution:
 
 1. Evaluate death from wounds using meaningful injury health plus subsequent
    healing. A would-be fatal hit means death unless treatment saves the actor.
-2. For survivors, combine current meaningful health with Skyrim's **Confidence**
-   actor value to decide fleeing versus returning to normal AI/fighting.
+2. For living, conscious survivors, combine current meaningful health with Skyrim's
+   **Confidence** actor value to choose return to vanilla AI/fighting, finite fleeing,
+   or temporary AvoidingCombat/Wandering. Higher Confidence increases fight chance
+   at the same injury health, using the agreed FSM weights.
 3. Critical injury overrides bravery: a confident enemy at 1% health should flee
    unless they have healed enough to fight. Actors returning to combat may yield
    again on later hits.
 
 Confidence levels available for this decision are Cowardly, Cautious, Average,
-Brave, and Foolhardy. Exact health and Confidence cutoffs remain open.
+Brave, and Foolhardy. Agreed fight/flee/peaceful percentages are respectively
+`5/15/80`, `15/65/20`, `40/45/15`, `70/25/5`, `90/10/0`. Critical injury lowers
+fight weight and redistributes it between flee and peaceful in their existing
+ratio; the exact injury-factor curve/cutoff remains open.
+
+The latest [FSM survivor policy](docs/fsm.md#unattended-yield-survivor-behavior)
+preserves the death/unconscious lottery and subdivides conscious survival into
+fight/flee/peaceful outcomes using one persisted draw. Peaceful automatic recovery
+uses the existing budget and standing wandering, not Surrender's random Resting pool.
+The agreed [allied NPC healing bypass](docs/fsm.md#ally-healing-while-yielding) is
+feasible from source/API inspection: actual received healing from a confirmed allied
+NPC cancels yield resolution and restores vanilla AI immediately, bypassing mortality,
+Confidence weights and survivor injury adjustment. Current desktop
+healing instead enters peaceful movement regardless of caster. Caster-aware routing,
+actual allied spell delivery and natural combat resumption need in-game validation;
+autonomous ally healing AI is a separate requirement.
 
 ### Knockout\* (optional)
 
@@ -482,6 +544,10 @@ definition.
   configurability and civilian eligibility. Bound hold duration, hit restart,
   Follow/Stay preserving remaining time, unbind-and-flee expiry and frozen Rescue
   wandering budget are agreed; see [FSM rules](docs/fsm.md).
+- Surrender resting percentage and verified unbound resting pose families,
+  matching entry/loop/exit events, actor compatibility and playback failure timeout.
+- Commanded Kneeling's three-family entry/idle/exit playback, adult compatibility
+  of child sit/kneel, saved selection and native fallback qualification.
 - Interaction of existing recovery/consequence paths with the chosen deadline.
 
 ## Acceptance checks
@@ -501,6 +567,10 @@ definition.
 - Rescued actors avoid active combat, then wander peacefully nearby after combat
   ends. They remain talkable and do not attack civilians during the status;
   ordinary AI returns only at effect expiry.
+- Surrendered enemies may instead rest with a randomly selected sitting/kneeling
+  family after combat ends, or remain standing and wander. Choices survive
+  interruptions/load; shared peaceful budget counts during resting and wandering.
+  No suitable pose or playback failure falls back to wandering without timer reset.
 - Deadlines remain within configured min/max and survive save/load without rerolls.
 - Wound outcomes account for healing; critically injured survivors flee despite
   high Confidence. Temporary behavior expires back to normal AI.

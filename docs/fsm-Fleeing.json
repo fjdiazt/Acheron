@@ -1,0 +1,54 @@
+{
+    "id": "SkyrimCombat-Fleeing",
+    "initial": "Fleeing",
+    "states": {
+        "Fleeing": {
+            "on": {
+                "Flee ends [safe distance reached or finite flee timeout]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove temporary flee AI/pacification; restore underlying Skyrim/quest AI"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Death": [
+                    {
+                        "target": "Dead",
+                        "actions": [
+                            "Remove temporary flee AI/pacification and any remaining owned overrides"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Observe [ineligible or invalid flee state]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove temporary flee AI/pacification; restore underlying Skyrim/quest AI"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ]
+            },
+            "meta": {
+                "status": "planned"
+            }
+        },
+        "Normal": {},
+        "Dead": {
+            "type": "final"
+        }
+    },
+    "meta": {
+        "generatedFrom": "fsm.json",
+        "focus": "Fleeing"
+    }
+}

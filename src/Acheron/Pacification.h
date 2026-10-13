@@ -14,6 +14,7 @@ namespace Acheron::Pacification
     void RequestEnd(RE::FormID actorId, bool reset = false);
     void RequestRelease(RE::Actor* actor);
 #ifdef ACHERON_YIELD_TESTS
+    void ProbeCommandHold(RE::Actor* actor, float seconds);
     void Trace(RE::Actor* actor);
 #endif
     bool IsActive(const RE::Actor* actor);

@@ -1,0 +1,278 @@
+{
+    "id": "SkyrimCombat-AvoidingCombat",
+    "initial": "AvoidingCombat",
+    "states": {
+        "AvoidingCombat": {
+            "on": {
+                "Death": [
+                    {
+                        "target": "Dead",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Observe [renewed defeat]": [
+                    {
+                        "target": "Yielding",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides",
+                            "Preserve new defeat ownership and protection"
+                        ]
+                    }
+                ],
+                "Observe [ineligible or invalid peaceful state]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Release": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Nearby combat ends [loaded, unpaused, wander budget = 0, dialogue closed]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Kneel [loaded, unpaused]": [
+                    {
+                        "target": "Kneeling",
+                        "actions": [
+                            "Set CommandHoldDurationSeconds to 1800 real seconds; preserve wander budget"
+                        ]
+                    }
+                ],
+                "Refresh [valid duration, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Reset wander budget to valid requested duration (1-600 seconds)"
+                        ]
+                    }
+                ],
+                "Bind [eligible owned enemy, loaded, unpaused]": [
+                    {
+                        "target": "StandingBound",
+                        "actions": [
+                            "Enter standing hands-bound pose without healing; retain pacification and dialogue",
+                            "Set CommandHoldDurationSeconds to 1800 real seconds; preserve frozen wander budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Nearby combat ends [loaded, unpaused, wander budget > 0 or dialogue open, peaceful choice = wander or not surrendered]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Resume peaceful wandering; retain pacification"
+                        ]
+                    }
+                ],
+                "Nearby combat ends [loaded, unpaused, wander budget > 0 or dialogue open, surrendered, peaceful choice = rest]": [
+                    {
+                        "target": "Resting",
+                        "actions": [
+                            "Use persisted peacefulChoice; resolve once before routing if this is first eligible peace after Surrender",
+                            "Resume automatic resting; preserve remaining peaceful budget and selectedPose; retain pacification"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Refresh [valid duration, no nearby combat, peaceful choice = wander or not surrendered]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Reset wander budget to valid requested duration (1-600 seconds)"
+                        ]
+                    }
+                ],
+                "Refresh [valid duration, no nearby combat, surrendered, peaceful choice = rest]": [
+                    {
+                        "target": "Resting",
+                        "actions": [
+                            "Reset shared peaceful budget to valid requested duration (1-600 seconds)",
+                            "Use persisted peacefulChoice; resolve once before routing if this is first eligible peace after Surrender",
+                            "Retain selectedPose; do not reroll rest/wander or pose"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Sit [loaded, unpaused]": [
+                    {
+                        "target": "Sitting",
+                        "actions": [
+                            "Supersede automatic rest: set peacefulChoice to wander and clear selectedPose",
+                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Test Normal [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Restore ordinary AI; remove owned timers, packages and pacification"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test Combat [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "Combat",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Release ownership/defeat then native StartCombat(player)"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test Yielding [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "Yielding",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "End peaceful ownership then existing DefeatActor"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test AvoidingCombat [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Enter owned avoidance; refresh configured peaceful budget; next Observe follows nearby combat"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test Wandering [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Enter owned wandering; refresh configured peaceful budget; next Observe follows nearby combat"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test Kneeling [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "Kneeling",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Choose explicit regular/blessing native family; preserve peaceful budget; restart 1800-real-second command hold"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test KneelingBound [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "KneelingBound",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Enter native bound kneel; preserve peaceful budget; restart 1800-real-second command hold"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test Dead [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "Dead",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Release ownership/defeat then native Kill(player); engine essential rules still apply"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Setup failure [alive, not defeated, no safe fallback]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ],
+                        "meta": {
+                            "status": "current"
+                        }
+                    }
+                ]
+            },
+            "meta": {
+                "adapterContract": "fsm.md#implemented-flow-contracts; live guards, acceptance-time Bind and ordered pose exits implemented"
+            }
+        },
+        "Dead": {
+            "type": "final"
+        },
+        "Yielding": {},
+        "Normal": {},
+        "Kneeling": {},
+        "StandingBound": {
+            "meta": {
+                "status": "planned"
+            }
+        },
+        "Wandering": {},
+        "Resting": {
+            "meta": {
+                "status": "planned"
+            }
+        },
+        "Sitting": {
+            "meta": {
+                "status": "planned"
+            }
+        },
+        "Combat": {},
+        "KneelingBound": {}
+    },
+    "meta": {
+        "generatedFrom": "fsm.json",
+        "focus": "AvoidingCombat"
+    }
+}

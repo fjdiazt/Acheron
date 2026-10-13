@@ -1,0 +1,323 @@
+{
+    "id": "SkyrimCombat-KneelingBound",
+    "initial": "KneelingBound",
+    "states": {
+        "KneelingBound": {
+            "on": {
+                "Death": [
+                    {
+                        "target": "Dead",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Observe [renewed defeat]": [
+                    {
+                        "target": "Yielding",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides",
+                            "Preserve new defeat ownership and protection"
+                        ]
+                    }
+                ],
+                "Observe [ineligible or invalid peaceful state]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Release": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Hold Timer Expires [loaded, unpaused, dialogue closed, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Finish native held-pose exit before movement package; clear hold timer; preserve wander budget"
+                        ],
+                        "meta": {}
+                    }
+                ],
+                "Hold Timer Expires [loaded, unpaused, dialogue closed, no nearby combat, wander budget > 0]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Finish native held-pose exit before movement package; clear hold timer; preserve wander budget"
+                        ],
+                        "meta": {}
+                    }
+                ],
+                "Hold Timer Expires [loaded, unpaused, dialogue closed, no nearby combat, wander budget = 0]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Resume [loaded, unpaused, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ]
+                    }
+                ],
+                "Resume [loaded, unpaused, no nearby combat, wander budget > 0]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ]
+                    }
+                ],
+                "Resume [loaded, unpaused, no nearby combat, wander budget = 0, dialogue closed]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ]
+                    }
+                ],
+                "Resume [loaded, unpaused, no nearby combat, wander budget = 0, dialogue open]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ]
+                    }
+                ],
+                "Refresh [valid duration, hold remaining > 0]": [
+                    {
+                        "target": "KneelingBound",
+                        "actions": [
+                            "Reset wander budget to valid requested duration (1-600 seconds)"
+                        ]
+                    }
+                ],
+                "Refresh [valid duration, hold expired, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Reset wander budget to valid requested duration (1-600 seconds)",
+                            "Finish native held-pose exit before movement package; clear hold timer; preserve wander budget"
+                        ],
+                        "meta": {}
+                    }
+                ],
+                "Refresh [valid duration, hold expired, no nearby combat]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Reset wander budget to valid requested duration (1-600 seconds)",
+                            "Finish native held-pose exit before movement package; clear hold timer; preserve wander budget"
+                        ],
+                        "meta": {}
+                    }
+                ],
+                "Hit [post-damage health > 0]": [
+                    {
+                        "target": "KneelingBound",
+                        "actions": [
+                            "Apply ordinary hit damage; retain binding, pacification and held pose",
+                            "Restart CommandHoldDurationSeconds at 1800 real seconds; preserve frozen wander budget; do not roll an outcome"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Hit [post-damage health <= 0, eligible to die]": [
+                    {
+                        "target": "KneelingBound",
+                        "actions": [
+                            "Allow engine fatal damage instead of defeat or knockout interception",
+                            "Wait for Skyrim Death notification; retain binding until death cleanup"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Let go": [
+                    {
+                        "target": "Fleeing",
+                        "actions": [
+                            "Remove binding, bound pose, follow/stay orders, prisoner ownership and hold timer without healing",
+                            "Start temporary fleeing from the player; retain only flee AI/pacification until safe-distance or finite-time end condition"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Stand [loaded, unpaused, hold remaining > 0]": [
+                    {
+                        "target": "StandingBound",
+                        "actions": [
+                            "Preserve binding, pacification and frozen wander budget; do not heal or recruit",
+                            "Restart CommandHoldDurationSeconds at 1800 real seconds when the posture command is accepted; keep counting during animation; do not reset again on completion",
+                            "Play kneeling exit/stand-up animation and await completion",
+                            "Then play standing-bound entry and idle; settle in StandingBound"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Test Normal [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Restore ordinary AI; remove owned timers, packages and pacification"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test Combat [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "Combat",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Release ownership/defeat then native StartCombat(player)"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test Yielding [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "Yielding",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "End peaceful ownership then existing DefeatActor"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test AvoidingCombat [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Enter owned avoidance; refresh configured peaceful budget; next Observe follows nearby combat"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test Wandering [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Enter owned wandering; refresh configured peaceful budget; next Observe follows nearby combat"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test Kneeling [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "Kneeling",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Choose explicit regular/blessing native family; preserve peaceful budget; restart 1800-real-second command hold"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test KneelingBound [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "KneelingBound",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Enter native bound kneel; preserve peaceful budget; restart 1800-real-second command hold"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test Dead [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "Dead",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Release ownership/defeat then native Kill(player); engine essential rules still apply"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Setup failure [alive, not defeated, no safe fallback]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ],
+                        "meta": {
+                            "status": "current"
+                        }
+                    }
+                ]
+            },
+            "meta": {
+                "boundDamage": {
+                    "status": "planned"
+                },
+                "adapterContract": "fsm.md#implemented-flow-contracts; live guards, acceptance-time Bind and ordered pose exits implemented"
+            }
+        },
+        "Dead": {
+            "type": "final"
+        },
+        "Yielding": {},
+        "Normal": {},
+        "AvoidingCombat": {},
+        "Wandering": {},
+        "Fleeing": {
+            "meta": {
+                "status": "planned"
+            }
+        },
+        "StandingBound": {
+            "meta": {
+                "status": "planned"
+            }
+        },
+        "Combat": {},
+        "Kneeling": {}
+    },
+    "meta": {
+        "generatedFrom": "fsm.json",
+        "focus": "KneelingBound"
+    }
+}

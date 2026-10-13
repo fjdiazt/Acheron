@@ -1,0 +1,70 @@
+{
+    "id": "SkyrimCombat-Unconscious",
+    "initial": "Unconscious",
+    "states": {
+        "Unconscious": {
+            "on": {
+                "Wake up [nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Wake up [no nearby combat]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Death": [
+                    {
+                        "target": "Dead",
+                        "actions": [],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Wake up [low health]": [
+                    {
+                        "target": "Yielding",
+                        "actions": [],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Wound resolution [recorded fatal outcome, death not requested]": [
+                    {
+                        "target": "Unconscious",
+                        "actions": [
+                            "Request eligible engine death once; wait for Death notification"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ]
+            },
+            "meta": {
+                "status": "planned"
+            }
+        },
+        "AvoidingCombat": {},
+        "Wandering": {},
+        "Dead": {
+            "type": "final"
+        },
+        "Yielding": {}
+    },
+    "meta": {
+        "generatedFrom": "fsm.json",
+        "focus": "Unconscious"
+    }
+}

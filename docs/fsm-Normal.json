@@ -1,0 +1,21 @@
+{
+    "id": "SkyrimCombat-Normal",
+    "initial": "Normal",
+    "states": {
+        "Normal": {
+            "on": {
+                "Combat begins [vanilla AI selects valid hostile target]": [
+                    {
+                        "target": "Combat",
+                        "actions": []
+                    }
+                ]
+            }
+        },
+        "Combat": {}
+    },
+    "meta": {
+        "generatedFrom": "fsm.json",
+        "focus": "Normal"
+    }
+}

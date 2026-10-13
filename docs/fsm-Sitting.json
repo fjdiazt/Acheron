@@ -1,0 +1,260 @@
+{
+    "id": "SkyrimCombat-Sitting",
+    "initial": "Sitting",
+    "states": {
+        "Sitting": {
+            "on": {
+                "Death": [
+                    {
+                        "target": "Dead",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Observe [renewed defeat]": [
+                    {
+                        "target": "Yielding",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides",
+                            "Preserve new defeat ownership and protection"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Observe [ineligible or invalid peaceful state]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Release": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Hold Timer Expires [loaded, unpaused, dialogue closed, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Hold Timer Expires [loaded, unpaused, dialogue closed, no nearby combat, wander budget > 0]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Hold Timer Expires [loaded, unpaused, dialogue closed, no nearby combat, wander budget = 0]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Resume [loaded, unpaused, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Resume [loaded, unpaused, no nearby combat, wander budget > 0]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Resume [loaded, unpaused, no nearby combat, wander budget = 0, dialogue closed]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Resume [loaded, unpaused, no nearby combat, wander budget = 0, dialogue open]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Refresh [valid duration, hold remaining > 0]": [
+                    {
+                        "target": "Sitting",
+                        "actions": [
+                            "Reset wander budget to valid requested duration (1-600 seconds)"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Refresh [valid duration, hold expired, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Reset wander budget to valid requested duration (1-600 seconds)",
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Refresh [valid duration, hold expired, no nearby combat]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Reset wander budget to valid requested duration (1-600 seconds)",
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "On your feet. [loaded, unpaused, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "On your feet. [loaded, unpaused, no nearby combat, wander budget > 0]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "On your feet. [loaded, unpaused, no nearby combat, wander budget = 0, dialogue closed]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "On your feet. [loaded, unpaused, no nearby combat, wander budget = 0, dialogue open]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Kneel [loaded, unpaused]": [
+                    {
+                        "target": "Kneeling",
+                        "actions": [
+                            "Finish selected sitting family exit before unbound kneeling entry",
+                            "Supersede automatic rest: set peacefulChoice to wander and clear selectedPose",
+                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Bind [loaded, unpaused, owned unbound Sitting]": [
+                    {
+                        "target": "KneelingBound",
+                        "actions": [
+                            "Exit sitting; enter required kneeling interaction, then native bound-kneeling pose",
+                            "Restart CommandHoldDurationSeconds at 1800 real seconds on command acceptance; preserve frozen peaceful budget",
+                            "Invalidate pending posture callbacks on death, release, expiry or ownership loss; do not reset hold on completion"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ]
+            },
+            "meta": {
+                "status": "planned"
+            },
+            "entry": [
+                "Enter verified unbound sitting family enter then idle/loop; retain pacification and dialogue"
+            ],
+            "exit": [
+                "Finish selected sitting family exit before Resume, Kneel or Bind",
+                "Death/release/ownership loss invalidates callbacks; do not restart stale poses or delay death"
+            ]
+        },
+        "Dead": {
+            "type": "final"
+        },
+        "Yielding": {},
+        "Normal": {},
+        "AvoidingCombat": {},
+        "Wandering": {},
+        "Kneeling": {},
+        "KneelingBound": {}
+    },
+    "meta": {
+        "generatedFrom": "fsm.json",
+        "focus": "Sitting"
+    }
+}

@@ -146,7 +146,19 @@ Both cases temporarily enable OAR clip logging and restore its configuration.
 **Commanded Hold Duration** uses `CommandHoldDurationSeconds = 1800` real
 seconds. Combat and peaceful-duration refresh do not reset or pause it.
 Binding restarts this timer at 1800 real seconds; the test compares before/after
-hold budgets. Host checks cover the reset, combat, expiry and rejected standing Bind.
+hold budgets. Restart occurs on acceptance, before the native exit; exit/entry
+consume that budget and never restart it. Host checks cover the reset, combat,
+expiry and rejected standing Bind. The variants regression additionally rejects
+paused Bind/Resume, checks acceptance/completion timer logs, refreshes an expired
+hold during dialogue, then requires native bound exit before the movement package.
+Diagnostic-only `ProbeCommandHold(actor, seconds)` shortens the owned hold for this
+check; it leaves phase and peaceful budget intact. Production holds remain 1800 seconds.
+Desktop qualification `6e36fee3-eae6-4d81-b3b6-252cfb6de161` passed these checks:
+Bind hold 1800 at acceptance, 1799.2229 after native exit, 1798.265 at bound readiness;
+expired hold stayed bound during dialogue/Refresh, then native exit completed before
+the Wandering package. Health/pacification, both variants, save/load and both Resume
+destinations also passed. Candidate retained; game closed and test settings restored.
+Unloaded command races, forced exit timeout and VR remain unqualified.
 Bind readiness waits up to 20 seconds for furniture exit/re-entry, covering the
 controller's 15-second entry deadline. Timer checks account for time elapsed
 since selection instead of assuming animation entry finishes within 10 seconds.

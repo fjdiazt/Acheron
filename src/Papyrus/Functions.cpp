@@ -40,6 +40,7 @@ namespace Papyrus
     bool Defeat::IsPeacefulState(RE::StaticFunctionTag*, RE::Actor* actor) { return Acheron::Pacification::IsActive(actor); }
     bool Defeat::SupportsPeacefulRescue(RE::StaticFunctionTag*, RE::Actor* actor) { return !REL::Module::IsVR() && Acheron::Pacification::IsEligible(actor); }
 #ifdef ACHERON_YIELD_TESTS
+    void Defeat::ProbeCommandHold(RE::StaticFunctionTag*, RE::Actor* actor, float seconds) { Acheron::Pacification::ProbeCommandHold(actor, seconds); }
     void Defeat::ProbePeacefulState(RE::StaticFunctionTag*, RE::Actor* actor) { Acheron::Pacification::Trace(actor); }
     void Defeat::ProbePeacefulLinks(RE::StaticFunctionTag*, RE::Actor* actor, RE::TESObjectREFR* anchor, RE::TESObjectREFR* threat)
     {

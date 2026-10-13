@@ -121,6 +121,14 @@ try {
     $start=(Get-Content $animationLog -Raw).Length
     Invoke-NpcPapyrus Acheron KneelActor '' @(@{form=$actor}) | Out-Null
     $beforeBind=Assert-Variant $actor $start
+    Invoke-YieldTool menu @{action='open';name='Console'} | Out-Null
+    try {
+        Invoke-NpcPapyrus Acheron BindActor '' @(@{form=$actor}) | Out-Null
+        Invoke-NpcPapyrus Acheron ResumePeacefulState '' @(@{form=$actor}) | Out-Null
+        $paused=Read-PeacefulState $actor
+        if($paused.phase -ne 3 -or $paused.goal -ne $beforeBind.goal -or
+           $paused.commandHoldRemaining -gt $beforeBind.commandHoldRemaining+0.1) {throw 'Paused command changed pose or restarted hold'}
+    } finally {Invoke-YieldTool menu @{action='close';name='Console'} | Out-Null}
     $summary.bindSelection=Select-PeacefulDialogueChoice $actor 'Bind' 0x820 $RunId
     $summary.bound=Wait-PeacefulPhase $actor 4 20
     $bindAnimations=(Get-Content $animationLog -Raw).Substring($start)
@@ -130,6 +138,14 @@ try {
     if(-not $oldExit.Success -or -not $boundIdle.Success -or $oldExit.Index -ge $boundIdle.Index) {throw 'Bind did not play selected family exit before bound pose'}
     if($summary.bound.commandHoldRemaining -lt 1770 -or $summary.bound.remaining -ne $beforeBind.remaining -or
        (Get-Content $animationLog -Raw).Substring($start) -notmatch 'AnimationLogEntry:.*AOBoundKneesIdle\.hkx') {throw 'Bind lost native pose or failed to restart hold'}
+    $id=[regex]::Escape(($actor -replace '^0x',''))
+    $bindLog=Get-Content $logPath -Raw
+    $accepted=[regex]::Matches($bindLog,"\[PeacefulPoseExit\] actor=$id phase=3 event=3 hold=(?<hold>[0-9.eE+-]+)")
+    $completed=[regex]::Matches($bindLog,"\[PeacefulPoseExitComplete\] actor=$id event=3 hold=(?<hold>[0-9.eE+-]+)")
+    if(-not $accepted.Count -or -not $completed.Count -or [double]$accepted[-1].Groups['hold'].Value -ne 1800 -or
+       [double]$completed[-1].Groups['hold'].Value -ge 1800 -or
+       $summary.bound.commandHoldRemaining -gt [double]$completed[-1].Groups['hold'].Value+0.1) {throw 'Bind did not start hold at acceptance or restarted it after exit'}
+    $summary.bindTiming=@{accepted=[double]$accepted[-1].Groups['hold'].Value;exitComplete=[double]$completed[-1].Groups['hold'].Value;ready=$summary.bound.commandHoldRemaining;pausedCommandsRejected=$true}
     Invoke-NpcPapyrus ObjectReference Activate $actor @(@{form=$player},$false) | Out-Null
     $deadline=(Get-Date).AddSeconds(8)
     do {
@@ -137,8 +153,24 @@ try {
         try {Assert-PeacefulDialogueChoice $dialogue $actor 'Continue.' | Out-Null;break} catch {}
     } while((Get-Date) -lt $deadline)
     if(@($dialogue.choices | Where-Object text -eq 'On your feet.').Count) {throw 'Unbound On your feet exposed while bound'}
+    Invoke-NpcPapyrus Acheron ProbeCommandHold '' @(@{form=$actor},0.0) | Out-Null
+    Invoke-NpcPapyrus Acheron BeginPeacefulState '' @(@{form=$actor},120) | Out-Null
+    $heldDialogue=Read-PeacefulState $actor
+    if($heldDialogue.phase -ne 4 -or $heldDialogue.commandHoldRemaining -ne 0 -or $heldDialogue.remaining -ne 120) {throw 'Refresh/expired hold interrupted live dialogue'}
+    $exitStart=(Get-Content $logPath -Raw).Length
+    $animationStart=(Get-Content $animationLog -Raw).Length
     Close-PeacefulDialogue $actor $RunId
-    return @{message='PASS: both native kneeling families, matching loops/exits, saved selection, On your feet peaceful/combat routing and native Bind';screenshot=$null}
+    $afterExpiry=Wait-PeacefulPhase $actor 2 20
+    $expiryLog=(Get-Content $logPath -Raw).Substring($exitStart)
+    $exitDone=[regex]::Match($expiryLog,"\[PeacefulPoseExitComplete\] actor=$id event=0 hold=0")
+    $movement=[regex]::Match($expiryLog,"\[PeacefulPackage\] actor=$id generation=\d+ stage=request phase=2")
+    if(-not $exitDone.Success -or -not $movement.Success -or $exitDone.Index -ge $movement.Index -or
+       (Invoke-NpcPapyrus Actor GetSitState $actor).returned -ne 0 -or
+       (Get-Content $animationLog -Raw).Substring($animationStart) -notmatch 'AnimationLogEntry:.*AOBoundKneesExit\.hkx') {throw 'Automatic hold expiry applied movement before native bound exit'}
+    if((Invoke-NpcPapyrus Actor GetActorValue $actor @('Health')).returned -ne $health -or
+       -not (Invoke-NpcPapyrus Acheron IsPacified '' @(@{form=$actor})).returned) {throw 'Automatic hold expiry lost health or pacification'}
+    $summary.holdExpiry=@{duringDialogue=$heldDialogue;after=$afterExpiry;exitBeforeMovement=$true}
+    return @{message='PASS: kneeling variants, save/load, command guards, acceptance-time Bind and ordered hold expiry';screenshot=$null}
 } finally {
     Invoke-YieldTool input @{action='releaseAll';device='keyboard';owner=$RunId} | Out-Null
     Invoke-YieldTool menu @{action='close';name='Dialogue Menu'} | Out-Null
