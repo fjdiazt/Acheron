@@ -34,7 +34,7 @@ function New-VariantActor([string] $Base, [double] $X) {
 }
 function Assert-Variant([string] $Actor, [int] $Start) {
     $state=Wait-PeacefulPhase $Actor 3 20
-    if($null -eq $state.selectedKneelingVariant -or $state.selectedKneelingVariant -notin @(0,1)) {throw 'Saved kneeling variant missing/invalid'}
+    if($null -eq $state.selectedKneelingVariant -or $state.selectedKneelingVariant -notin @(0,1,2)) {throw 'Saved kneeling variant missing/invalid'}
     $expected='0x000E8E4E'
     if((Invoke-NpcPapyrus Actor GetFurnitureReference $Actor).returned.formId -ne $state.goal -or
        (Invoke-NpcPapyrus ObjectReference GetBaseObject $state.goal).returned.formId -ne $expected -or
@@ -66,7 +66,7 @@ try {
     $health=(Invoke-NpcPapyrus Actor GetActorValue $actor @('Health')).returned
     Invoke-NpcPapyrus Actor EnableAI $actor @($true) | Out-Null
     $animationLog=Join-Path (Split-Path -Parent $PrefsPath) 'SKSE\OpenAnimationReplacer.log'
-    for($attempt=0;$attempt -lt 12;$attempt++) {
+    for($attempt=0;$attempt -lt 18;$attempt++) {
         $start=(Get-Content $animationLog -Raw).Length
         Invoke-NpcPapyrus Acheron KneelActor '' @(@{form=$actor}) | Out-Null
         $state=Assert-Variant $actor $start
@@ -86,18 +86,15 @@ try {
         $exitLog=(Get-Content $animationLog -Raw).Substring($start)
         if($exitLog -notmatch ('AnimationLogEntry:.*'+$exit+'\.hkx')) {throw "Matching variant exit missing: $exit"}
         $summary.stand+=@{selection=$selection;before=$state;after=$standing;exit=$exit}
-        if($seen.Count -eq 2) {break}
+        Close-PeacefulDialogue $actor $RunId
+        if($seen.Count -eq 3) {break}
     }
-    if($seen.Count -ne 2) {throw 'INCONCLUSIVE: random draw did not cover both kneeling families in 12 entries'}
-    for($attempt=0;$attempt -lt 12;$attempt++) {
-        $start=(Get-Content $animationLog -Raw).Length
-        Invoke-NpcPapyrus Acheron KneelActor '' @(@{form=$actor}) | Out-Null
-        $beforeSave=Assert-Variant $actor $start
-        if($beforeSave.selectedKneelingVariant -eq 1) {break}
-        Invoke-NpcPapyrus Acheron ResumePeacefulState '' @(@{form=$actor}) | Out-Null
-        Wait-PeacefulPhase $actor 2 20 | Out-Null
-    }
-    if($beforeSave.selectedKneelingVariant -ne 1) {throw 'INCONCLUSIVE: random draw did not select non-default blessing for persistence probe'}
+    if($seen.Count -ne 3) {throw 'INCONCLUSIVE: random draw did not cover all three kneeling families in 18 entries'}
+    Select-PeacefulDialogueChoice $actor 'Test' 0x837 $RunId | Out-Null
+    $start=(Get-Content $animationLog -Raw).Length
+    Select-PeacefulDialogueChoice $actor 'Kneel (Child sit/kneel)' 0x84F $RunId -AlreadyOpen | Out-Null
+    $beforeSave=Assert-Variant $actor $start
+    if($beforeSave.selectedKneelingVariant -ne 2) {throw 'Explicit child pose did not select child for persistence test'}
     $save=Invoke-YieldTool scenario @{steps=@(@{tool='game';args=@{action='save';name=$saveName}},@{waitFor='saveGame';timeoutMs=10000})}
     if(-not $save.ok) {throw 'Kneeling save lifecycle event missing'}
     $listing=Wait-PeacefulSave $saveName $saveDir

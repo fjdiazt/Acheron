@@ -126,7 +126,7 @@ try {& (Join-Path $PSScriptRoot '../scripts/Setup-Scenario.ps1') | Out-Null} cat
     $rejected=$true
 }
 Assert ($rejected -and -not $summary.scenarioReady -and $scenarioTestState.actors.Count -eq 0) 'missing interaction perk allowed manual handoff'
-foreach($failure in @(@{flag='failSex';message='Enemy fixture must be female'},@{flag='failEquipment';message='Enemy fixture sword-only equipment incorrect'})) {
+foreach($failure in @(@{flag='failSex';message='Enemy fixture sex differs from requested fixture'},@{flag='failEquipment';message='Enemy fixture sword-only equipment incorrect'})) {
     $scenarioTestState=@{actors=@{};calls=[Collections.Generic.List[object]]::new()};$scenarioTestState[$failure.flag]=$true
     $summary=[ordered]@{};$rejected=$false
     try {& (Join-Path $PSScriptRoot '../scripts/Setup-Scenario.ps1') | Out-Null} catch {
@@ -149,4 +149,11 @@ try {Set-NpcEnemyEquipment '0xFF000001' | Out-Null} catch {
     $rejected=$true
 }
 Assert ($rejected -and @($scenarioTestState.calls | Where-Object {$_.args.function -in @('RemoveItem','AddItem','EquipItem')}).Count -eq 0) 'foreign NPC inventory could be changed'
-Write-Output 'PASS: all 3 Forsworn / 5 follower choices, unchanged call counts, sword-only equipment, handoff, ownership guards and failure cleanup; mocked DevBench'
+$scenarioTestState=@{actors=@{};calls=[Collections.Generic.List[object]]::new()};$summary=[ordered]@{}
+& (Join-Path $PSScriptRoot '../scripts/Setup-Scenario.ps1') | Out-Null
+$maleFixture=@($scenarioTestState.actors.Keys)[0]
+$scenarioTestState.actors[$maleFixture].ai=$false
+$scenarioTestState.failSex=$true # Mock male sex for the explicit male equipment path.
+$maleEquipment=Set-NpcEnemyEquipment $maleFixture -ExpectedSex 0
+Assert ($maleEquipment.sex -eq 0 -and -not $maleEquipment.shield) 'explicit male fixture equipment failed'
+Write-Output 'PASS: all 3 Forsworn / 5 follower choices, male opt-in, unchanged call counts, sword-only equipment, handoff, ownership guards and failure cleanup; mocked DevBench'

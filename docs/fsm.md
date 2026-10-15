@@ -131,7 +131,7 @@ source/build evidence and desktop qualification remain separate from VR qualific
 | Command guards | Revalidate living, eligible actor and ownership; phase changes require loading and unpaused execution. Read actual dialogue state for zero-budget/expiry routing. | Shared live facts cover Observe, Refresh and Resume; Kneel/Bind and Test also check pause/loading. Refresh may update the budget while paused, without changing phase or invalidating pending package callbacks. |
 | Bind timer | Restart the shared 1800-real-second hold on accepted Bind; preserve peaceful budget. Exit/entry animation consumes that new hold; completion never restarts it. | Bind restarts before requesting native exit. Real elapsed time consumes the hold during exit and entry; completion retains its remainder. |
 | Held-pose exit | Finish native pose exit before nonurgent movement/binding destination packages. Death, renewed defeat, ownership loss and explicit Release prioritize cleanup. Exit failure must have bounded safe cleanup. | Resume, Bind, Test, automatic hold expiry and Refresh wait for native normal posture before destination packages. Automatic exits recheck combat/dialogue/budget after exit. Existing 15-second loaded/unpaused setup deadline cleans up failed held exits. |
-| Setup failure | If no safe pose/package fallback remains for a living, non-defeated managed actor, remove our temporary ownership and return to Normal. | Implemented through `End`; now drawn as Setup failure. A blessing entry can first fall back once to regular kneeling. Death/renewed-defeat cleanup retains its own destination. |
+| Setup failure | If no safe pose/package fallback remains for a living, non-defeated managed actor, remove our temporary ownership and return to Normal. | Implemented through `End`; now drawn as Setup failure. A non-default entry can first fall back once to regular kneeling. Death/renewed-defeat cleanup retains its own destination. |
 
 Source: [command adapters](../src/Acheron/Pacification.cpp),
 [pure decision rules](../src/Acheron/PacificationState.h). The diagram models the
@@ -239,9 +239,9 @@ NPC's pose. A new surrender episode gets a new permitted choice.
 
 ## Commanded Kneeling: three random variants
 
-Keep one `Kneeling` state. Desktop chooses regular kneeling or
-blessing uniformly on each new entry and saves `selectedKneelingVariant` as data.
-Child sit/kneel remains a candidate, excluded until adult compatibility qualifies.
+Keep one `Kneeling` state. Desktop chooses regular, blessing or child sit/kneel
+uniformly (1/3 each) on new entry and saves `selectedKneelingVariant`.
+Child clips are qualified on adult female and male Forsworn; no child actor is spawned.
 The clip triples belong to the
 [Commanded Kneeling variants catalog](animations-bookmarks.md#commanded-kneeling-variants),
 not three extra states or random guards on every update.
@@ -255,17 +255,17 @@ Keep the existing 1800-second commanded hold and frozen peaceful budget.
 
 Bound KneelingBound uses its own bound pose, including StandingBound's Kneel path;
 it never draws from this unbound pool. Automatic Resting keeps its separate pose
-policy. Both unbound families use persistent regular kneeling furniture. Our hidden
+policy. All three unbound families use persistent regular kneeling furniture. Our hidden
 pose faction selects OAR enter/loop/exit replacements; it remains through ordered
 Resume/Bind exit and clears on the next phase or ownership cleanup. Explicit phase
 mapping is `scripts/kneeling-animations.json`; blessing loops
 `idleblessingkneel_loop.hkx` and exits with `idlekneelexit.hkx`.
 Native blessing furniture auto-exits after one loop despite a live hold; no new
 entry uses it. Older saves containing its marker remain migration-unqualified.
-Broader actor compatibility remains unverified;
-the child-family filename alone does not prove suitability for adult enemies.
+Broader actor compatibility and VR remain unverified. Child uses the BYOH
+special_childsitkneel enter/idle/exit triple through scoped OAR rank 2.
 No suitable variant or failed entry uses the existing native kneeling fallback,
-without repeated random retries or timer resets. A blessing entry timeout exits
+without repeated random retries or timer resets. A non-default entry timeout exits
 its interaction first, then attempts regular kneeling once with the existing
 hold budget. Cosave version 3 saves the selection; versions 1/2 default to regular.
 This does not fix the native furniture approach/walking detour.
@@ -276,6 +276,8 @@ checked matching exits before Resume/Bind, both Resume destinations, unchanged
 health/pacification and Bind's hold restart. Forced timeout fallback and old-cosave
 migration remain runtime-unverified. Version-2 binaries do not read version-3
 peaceful records; rollback needs a matching older development save.
+Older two-family version-3 binaries reject child variant 2; use a pre-change save
+when rolling back rather than loading a saved child pose into those binaries.
 
 ### On your feet.
 
@@ -666,7 +668,8 @@ Code references: [peaceful decisions](../src/Acheron/PacificationState.h),
 
 Desktop managed NPCs expose native `Test` dialogue while Yielding, AvoidingCombat,
 Wandering, Kneeling or KneelingBound. Its linked choices select Normal, Combat,
-Yielding, Avoiding combat, Wandering, Kneel (Regular), Kneel (Blessing), Kneeling bound
+Yielding, Avoiding combat, Wandering, Kneel (Regular), Kneel (Blessing),
+Kneel (Child sit/kneel), Kneeling bound
 or Dead (kill NPC). These are development commands, not ordinary gameplay transitions.
 Unmanaged Normal/Combat actors and corpses do not acquire a global Test dialogue.
 
@@ -674,7 +677,8 @@ Commands bypass gameplay transition restrictions, retain eligibility/lifecycle g
 and finish held furniture exits before changing markers/packages. Exact kneeling
 families never roll randomness or silently substitute another family. Placement/entry
 failure is logged; normal gameplay retains its existing random selection/fallback.
-Child sit/kneel and other planned states remain excluded.
+Other planned states remain excluded. Child command is appended as TestState 9,
+INFO 0x84F; existing command IDs stay unchanged.
 
 Owned destinations use normal pacification, talkability, rescued movement markers and
 packages. Avoidance/wandering refresh the configured peaceful budget; command holds

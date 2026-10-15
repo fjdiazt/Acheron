@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('peaceful-suite','god-preset','peaceful-state','peaceful-healing','peaceful-movement','peaceful-lifecycle','peaceful-persistence','peaceful-talk','peaceful-reset','peaceful-kneeling','peaceful-kneeling-hold','peaceful-kneeling-variants','peaceful-test-dialogue','peaceful-bind','npc-defeat','player-finish-physical','rescue-locomotion','native-aggression-probe','greeting-probe','silent-greeting-probe','native-dialogue-bypass-probe')]
+    [ValidateSet('peaceful-suite','god-preset','peaceful-state','peaceful-healing','peaceful-movement','peaceful-lifecycle','peaceful-persistence','peaceful-talk','peaceful-reset','peaceful-kneeling','peaceful-child-kneeling','peaceful-child-kneeling-male','peaceful-kneeling-hold','peaceful-kneeling-variants','peaceful-test-dialogue','peaceful-bind','npc-defeat','player-finish-physical','rescue-locomotion','native-aggression-probe','greeting-probe','silent-greeting-probe','native-dialogue-bypass-probe')]
     [string] $Test='peaceful-suite',
     [string] $GameRoot='S:\games\The Elder Scrolls V - Skyrim Special Edition',
     [switch] $KeepInstalled
@@ -55,7 +55,7 @@ try {
     }
     $cases=if($Test -eq 'peaceful-suite') {@('peaceful-state','peaceful-healing','peaceful-movement','peaceful-lifecycle','peaceful-persistence','peaceful-talk')}else{@($Test)}
     foreach($case in $cases) {
-        $runner=if($case -in @('rescue-locomotion','peaceful-bind','peaceful-kneeling','peaceful-kneeling-hold','peaceful-kneeling-variants','peaceful-test-dialogue')) {'Invoke-InjuredAnimationTests.ps1'}else{'Run-YieldTests.ps1'}
+        $runner=if($case -in @('rescue-locomotion','peaceful-bind','peaceful-kneeling','peaceful-child-kneeling','peaceful-child-kneeling-male','peaceful-kneeling-hold','peaceful-kneeling-variants','peaceful-test-dialogue')) {'Invoke-InjuredAnimationTests.ps1'}else{'Run-YieldTests.ps1'}
         & pwsh -NoProfile -File (Join-Path $PSScriptRoot $runner) -Test $case -GameRoot $GameRoot
         if($LASTEXITCODE) {throw "Pacification case failed: $case"}
     }

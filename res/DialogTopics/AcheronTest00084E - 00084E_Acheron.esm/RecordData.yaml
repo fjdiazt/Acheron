@@ -1,0 +1,8 @@
+FormKey: 00084E:Acheron.esm
+EditorID: AcheronTest00084E
+Name:
+  TargetLanguage: English
+  Value: Kneel (Child sit/kneel)
+Branch: 000834:Acheron.esm
+Quest: 000818:Acheron.esm
+SubtypeName: CUST

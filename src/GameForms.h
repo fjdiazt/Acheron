@@ -42,7 +42,8 @@ namespace Acheron
         static inline RE::FormID BindDialogueInfoID;
         static inline RE::FormID StandDialogueInfoID;
         static inline std::array<RE::FormID, 2> TestRootInfoIDs{};
-        static inline std::array<RE::FormID, 9> TestDialogueInfoIDs{};
+        static constexpr std::array<RE::FormID, 10> TestDialogueOffsets{ 0x839, 0x83B, 0x83D, 0x83F, 0x841, 0x843, 0x845, 0x847, 0x849, 0x84F };
+        static inline std::array<RE::FormID, TestDialogueOffsets.size()> TestDialogueInfoIDs{};
         static inline std::array<RE::FormID, 4> DefeatedDialogueInfoIDs{};
         static inline RE::TESQuest* MainQuest;
         static inline RE::TESQuest* PeacefulDialogue;
@@ -108,7 +109,7 @@ namespace Acheron
                     if (!TestRootInfoIDs[i]) return false;
                 }
                 for (std::size_t i = 0; i < TestDialogueInfoIDs.size(); ++i) {
-                    TestDialogueInfoIDs[i] = RE::TESDataHandler::GetSingleton()->LookupFormID(static_cast<RE::FormID>(0x839 + 2 * i), "Acheron.esm");
+                    TestDialogueInfoIDs[i] = RE::TESDataHandler::GetSingleton()->LookupFormID(TestDialogueOffsets[i], "Acheron.esm");
                     if (!TestDialogueInfoIDs[i]) return false;
                 }
             }

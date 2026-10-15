@@ -128,7 +128,7 @@ function Resolve-NpcSpawn($Before, $After, [string] $BaseId, [string] $ReturnedI
     return $newActors[0].formId
 }
 
-function Set-NpcEnemyEquipment([string] $Actor) {
+function Set-NpcEnemyEquipment([string] $Actor, [ValidateSet(0,1)] [int] $ExpectedSex=1) {
     if($Actor -notmatch '^0xFF[0-9A-Fa-f]{6}$') {throw 'Enemy fixture must be a disposable actor'}
     $deadline=(Get-Date).AddSeconds(5)
     do {$loaded=(Invoke-NpcPapyrus ObjectReference Is3DLoaded $actor).returned} while($loaded -ne $true -and (Get-Date) -lt $deadline)
@@ -136,7 +136,7 @@ function Set-NpcEnemyEquipment([string] $Actor) {
     $actorBase=(Invoke-NpcPapyrus ObjectReference GetBaseObject $actor).returned.formId
     if($actorBase -ne $yieldEnemyBase) {throw 'Unexpected enemy fixture base'}
     $sex=(Invoke-NpcPapyrus ActorBase GetSex $actorBase).returned
-    if($sex -ne 1) {throw 'Enemy fixture must be female'}
+    if($sex -ne $ExpectedSex) {throw 'Enemy fixture sex differs from requested fixture'}
     # Preserve armor; remove weapons, ammunition and shields from this disposable copy only.
     foreach($entry in Get-NpcInventory $actor) {
         $item=$entry.formId

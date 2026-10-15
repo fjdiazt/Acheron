@@ -12,5 +12,12 @@
     "enter": "idleblessingkneel_enter.hkx",
     "loop": "idleblessingkneel_loop.hkx",
     "exit": "idlekneelexit.hkx"
+  },
+  "childSitKneel": {
+    "rank": 2,
+    "priority": 5004,
+    "enter": "byoh/special_childsitkneelenter.hkx",
+    "loop": "byoh/special_childsitkneelidle.hkx",
+    "exit": "byoh/special_childsitkneelexit.hkx"
   }
 }

@@ -21,12 +21,12 @@ int main()
 {
     for (const auto phase : { Phase::AvoidingCombat, Phase::Wandering, Phase::Kneeling, Phase::KneelingBound }) {
         const State previous{ phase, 37, 12, KneelingVariant::Blessing };
-        for (const auto command : { TestState::KneelingRegular, TestState::KneelingBlessing, TestState::KneelingBound }) {
+        for (const auto command : { TestState::KneelingRegular, TestState::KneelingBlessing, TestState::KneelingChild, TestState::KneelingBound }) {
             const auto next = SelectTestState(command, previous, 60);
             Require(next && next->remaining == 37 && next->commandHoldRemaining == CommandHoldDurationSeconds, "Test hold changed peaceful budget or failed to restart hold");
             Require(next->phase == (command == TestState::KneelingBound ? Phase::KneelingBound : Phase::Kneeling), "Test transition restriction not bypassed");
             if (command != TestState::KneelingBound)
-                Require(next->selectedKneelingVariant == (command == TestState::KneelingRegular ? KneelingVariant::Regular : KneelingVariant::Blessing), "Test variant not deterministic");
+                Require(next->selectedKneelingVariant == (command == TestState::KneelingRegular ? KneelingVariant::Regular : command == TestState::KneelingBlessing ? KneelingVariant::Blessing : KneelingVariant::ChildSitKneel), "Test variant not deterministic");
         }
         for (const auto command : { TestState::AvoidingCombat, TestState::Wandering }) {
             const auto next = SelectTestState(command, previous, 60);

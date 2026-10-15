@@ -70,13 +70,19 @@ function Load-PeacefulSave([string] $Name) {
 function Close-PeacefulDialogue([string] $ActorId, [string] $Owner) {
     if((Read-PeacefulDialogue $ActorId).menuOpen) {
         Invoke-YieldTool input @{action='tap';device='keyboard';key='tab';durationMs=50;owner=$Owner} | Out-Null
-        $deadline=(Get-Date).AddSeconds(3)
-        do {$dialogue=Read-PeacefulDialogue $ActorId} while($dialogue.menuOpen -and (Get-Date) -lt $deadline)
-        if($dialogue.menuOpen) {throw 'Native dialogue did not end'}
     }
+    $deadline=(Get-Date).AddSeconds(3)
+    do {
+        $dialogue=Read-PeacefulDialogue $ActorId
+        $uiOpen=(Invoke-NpcPapyrus UI IsMenuOpen '' @('Dialogue Menu')).returned
+    } while(($dialogue.menuOpen -or $uiOpen) -and (Get-Date) -lt $deadline)
+    if($dialogue.menuOpen -or $uiOpen) {throw 'Native dialogue did not end'}
 }
 function Select-PeacefulDialogueChoice([string] $ActorId, [string] $Text, [int] $InfoOffset, [string] $Owner, [switch] $AlreadyOpen) {
-    if(-not $AlreadyOpen) {Invoke-NpcPapyrus ObjectReference Activate $ActorId @(@{form='0x00000014'},$false) | Out-Null}
+    if(-not $AlreadyOpen) {
+        Close-PeacefulDialogue $ActorId $Owner
+        Invoke-NpcPapyrus ObjectReference Activate $ActorId @(@{form='0x00000014'},$false) | Out-Null
+    }
     $deadline=(Get-Date).AddSeconds(8)
     do {
         $snapshot=Read-PeacefulDialogue $ActorId
@@ -86,8 +92,16 @@ function Select-PeacefulDialogueChoice([string] $ActorId, [string] $Text, [int] 
     $delta=[int]$choice.row-[int]$snapshot.selectedIndex
     $key=if($delta -lt 0) {'w'}else{'s'}
     for($i=0;$i -lt [math]::Abs($delta);$i++) {Invoke-YieldTool input @{action='tap';device='keyboard';key=$key;durationMs=50;owner=$Owner} | Out-Null}
-    $selected=Read-PeacefulDialogue $ActorId
-    $choice=Assert-PeacefulDialogueChoice $selected $ActorId $Text
+    # Native menu briefly gates progression after moving the cursor; keep the readiness assertion.
+    $deadline=(Get-Date).AddSeconds(3)
+    do {
+        $selected=Read-PeacefulDialogue $ActorId
+        $choice=$null
+        try {$choice=Assert-PeacefulDialogueChoice $selected $ActorId $Text} catch {}
+        if($choice) {break}
+        Start-Sleep -Milliseconds 25
+    } while((Get-Date) -lt $deadline)
+    if(-not $choice) {throw 'Native dialogue choices did not become ready after cursor movement'}
     if($selected.selectedIndex -ne $choice.row) {throw 'Wrong native dialogue row selected'}
     $start=(Get-Content $logPath -Raw).Length
     $info=(Invoke-NpcPapyrus Game GetFormFromFile '' @($InfoOffset,'Acheron.esm')).returned.formId

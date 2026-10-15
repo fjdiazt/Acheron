@@ -9,7 +9,7 @@ namespace Acheron::Peaceful
 {
     enum class Phase : std::uint8_t { AvoidingCombat = 1, Wandering = 2, Kneeling = 3, KneelingBound = 4 };
     enum class EventKind { Observe, Refresh, Kneel, Bind, Resume, Release, Test };
-    enum class KneelingVariant : std::uint8_t { Regular, Blessing };
+    enum class KneelingVariant : std::uint8_t { Regular, Blessing, ChildSitKneel };
     inline constexpr float CommandHoldDurationSeconds = 1800.0f;
     inline bool IsCommandHold(Phase phase) { return phase == Phase::Kneeling || phase == Phase::KneelingBound; }
 
@@ -46,7 +46,8 @@ namespace Acheron::Peaceful
         return (state.phase == Phase::AvoidingCombat || state.phase == Phase::Wandering || IsCommandHold(state.phase)) &&
                std::isfinite(state.remaining) && state.remaining >= 0.0f && state.remaining <= 600.0f &&
                std::isfinite(state.commandHoldRemaining) && state.commandHoldRemaining >= 0.0f && state.commandHoldRemaining <= CommandHoldDurationSeconds &&
-               (state.selectedKneelingVariant == KneelingVariant::Regular || state.selectedKneelingVariant == KneelingVariant::Blessing);
+               (state.selectedKneelingVariant == KneelingVariant::Regular || state.selectedKneelingVariant == KneelingVariant::Blessing ||
+                state.selectedKneelingVariant == KneelingVariant::ChildSitKneel);
     }
     inline bool CanRemainManaged(const Facts& facts) { return facts.alive && facts.eligible && !facts.defeated; }
     inline void AdvanceCommandHold(State& state, float seconds)

@@ -32,9 +32,22 @@ with tempfile.TemporaryDirectory() as temp:
         raise AssertionError("Missing clip accepted")
     assert path.read_bytes() == archive, "Source archive modified"
 
+# The same basename under BYOH must stay distinct from the adult root.
+with tempfile.TemporaryDirectory() as temp:
+    path = Path(temp) / "byoh.bsa"
+    child_folder = folder[:-1] + bytes([92]) + b"byoh" + bytes([0])
+    delta = len(child_folder) - len(folder)
+    child_header = struct.pack("<4s8I", b"BSA" + bytes([0]), 105, 36, 0x100, 1, 2, len(child_folder), len(names), 0)
+    child_entries = struct.pack("<QII", 0, 0x40000000 | len(embedded), file_offset + delta)
+    child_entries += struct.pack("<QII", 0, 0, file_offset + delta + len(embedded))
+    path.write_bytes(child_header + directory + bytes([len(child_folder)]) + child_folder + child_entries + names + embedded)
+    assert reader(path, {"byoh/idlekneelidle.hkx"}) == {"byoh/idlekneelidle.hkx": payload}
+
 config = json.loads((root / "scripts/kneeling-animations.json").read_text())
 assert config["blessing"]["loop"] == "idleblessingkneel_loop.hkx"
 assert config["blessing"]["exit"] == "idlekneelexit.hkx"
+assert config["childSitKneel"]["rank"] == 2
+assert config["childSitKneel"]["loop"] == "byoh/special_childsitkneelidle.hkx"
 manifest = json.loads((root / "build/staging/kneeling-animations.json").read_text())
 for clip in manifest:
     import hashlib

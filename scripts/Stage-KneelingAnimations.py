@@ -3,7 +3,7 @@ import argparse
 import hashlib
 import json
 import mmap
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import struct
 
 import lz4.frame
@@ -36,8 +36,11 @@ def read_clips(archive, wanted):
             raise ValueError("BSA name count mismatch")
         clips = {}
         for (folder, size, file_offset), name in zip(entries, names):
-            name = name.decode().lower()
-            if folder != r"meshes\actors\character\animations" or name not in wanted:
+            base = r"meshes\actors\character\animations"
+            if folder != base and not folder.startswith(base + "\\"):
+                continue
+            name = ((folder[len(base):].strip("\\") + "\\" if folder != base else "") + name.decode()).lower().replace("\\", "/")
+            if name not in wanted:
                 continue
             payload = bytes(data[file_offset:file_offset + (size & 0x3fffffff)])
             if flags & 0x100:
@@ -55,17 +58,18 @@ def read_clips(archive, wanted):
 
 def stage(game_data):
     families = json.loads((ROOT / "scripts/kneeling-animations.json").read_text())
-    if set(families) != {"regular", "blessing"}:
-        raise ValueError("Expected regular and blessing families")
+    if set(families) != {"regular", "blessing", "childSitKneel"}:
+        raise ValueError("Expected regular, blessing and childSitKneel families")
     wanted = set()
-    for rank, name in enumerate(("regular", "blessing")):
+    for rank, name in enumerate(("regular", "blessing", "childSitKneel")):
         family = families[name]
         if family["rank"] != rank or family["priority"] != 5002 + rank:
             raise ValueError("Family rank/priority must match the managed pose mapping")
         for phase in DRIVER:
             clip = family[phase]
-            if Path(clip).name != clip or "\\" in clip or not clip.endswith(".hkx"):
-                raise ValueError("Clip override must be an HKX basename from the desktop archive")
+            path = PurePosixPath(clip)
+            if path.is_absolute() or ".." in path.parts or ":" in clip or "\\" in clip or not clip.endswith(".hkx"):
+                raise ValueError("Clip override must be a relative HKX path within the desktop animation archive")
             wanted.add(clip.lower())
     clips = read_clips(game_data / "Skyrim - Animations.bsa", wanted)
     relative = Path("meshes/actors/character/animations/DynamicAnimationReplacer/_CustomConditions")
@@ -83,7 +87,7 @@ def stage(game_data):
                              "target": str((folder / target).relative_to(output)),
                              "sha256": hashlib.sha256(payload).hexdigest()})
     (ROOT / "build/staging/kneeling-animations.json").write_text(json.dumps(manifest, indent=2))
-    print("Staged six scoped kneeling clips; desktop/VR installations unchanged")
+    print(f"Staged {len(manifest)} scoped kneeling clips; desktop/VR installations unchanged")
 
 
 if __name__ == "__main__":

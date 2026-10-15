@@ -156,14 +156,19 @@ python scripts/Stage-KneelingAnimations.py
 pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test peaceful-kneeling-variants -KeepInstalled
 ```
 
-Focused sustained blessing hold and repeated native Talk regression:
+Focused sustained hold and repeated native Talk regressions:
 
 ```powershell
 python tests/Test-KneelingAnimations.py
 pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test peaceful-kneeling-hold
+pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test peaceful-child-kneeling
+pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test peaceful-child-kneeling-male
 ```
 
 Uses a disposable actor, 12-second hold, three Talk opens, then On your feet.
+Child cases also re-enter child pose and Bind, verifying child exit before bound
+idle, restarted hold, marker cleanup and bound dialogue. Female remains default
+for other tests/scenarios; male coverage uses explicit Forsworn base 0x43BDD.
 Asserts no premature exit, actual sit state 3, selected family, scoped OAR
 replacement paths and cleanup, unchanged health/aggression/pacification.
 Checks repeated loop events and original-clip playback outside commanded Kneeling.
@@ -178,9 +183,21 @@ matching exit before Bind, bound pose and restarted hold. GUID-owned saves were
 archived/removed; settings restored and desktop closed. Qualified DLL and plugin
 remain installed; backup `build/pacification-backups/b0e81b89-15b8-4d9a-9bd0-7247ddda57fe`.
 
-Selection is uniform over the two enabled clip families; the qualification
+Selection is uniform over the three enabled clip families; the qualification
 probe bounds random coverage attempts and reports missing coverage as inconclusive.
-Child sit/kneel, forced fallback, old-cosave migration and VR remain unqualified.
+Three-family qualification `30e6235a-9fb9-485e-840a-52761eb8af2e` passed random
+coverage, child save/load, both Resume destinations, Bind and hold expiry. Dedicated
+child hold/Talk/exit/Bind cases passed on male (`28904db0`) and female (`ecfddef7`)
+adult Forsworn. Desktop deployment receipt:
+`build/pacification-backups/f4092851-f227-412f-aa80-094ffc6c5785/manifest.json`.
+Native dialogue helpers wait for post-cursor progression and complete UI closure;
+random re-entry waits for the previous Talk UI to close before its next command.
+The broader native Test-tree gate remains failing after its pose-switch checks:
+`f86d2721`, `71e8167d` and `3fc29002` stalled during combat-fixture cleanup / automatic
+AvoidingCombat -> Wandering. The last diagnostic confirmed all owned actors and
+player were out of combat. Root cause remains open in Beads `skyrim-1ir`; this is
+not a passing full-tree result. See the animation catalog for probe details.
+Forced fallback, old-cosave migration and VR remain unqualified.
 The separate in-place-entry regression below still covers the unresolved native
 furniture walking detour. This pass does not claim that detour fixed.
 
@@ -829,7 +846,7 @@ loss. Original INI bytes are archived and restored, with an external-edit check.
 Summary includes `startupIniRestored`; no VR config is written.
 
 Build-time record gate: `python tests/Test-TestDialogueRecords.py`. This checks the
-compiled ESM root response/conditions and nine native links, catching malformed YAML
+compiled ESM root response/conditions and ten native links, catching malformed YAML
 that Spriggit accepts while discarding INFO fields.
 
 Qualified desktop run: `9862c8ae-b917-44b1-b3fe-1ab477a7f455` (all command indices

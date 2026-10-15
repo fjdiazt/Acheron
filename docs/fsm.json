@@ -307,7 +307,7 @@
                         "target": "Kneeling",
                         "actions": [
                             "Exit current held native pose before changing destination",
-                            "Choose explicit regular/blessing clip family on persistent regular furniture; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Choose explicit regular/blessing/childSitKneel clip family on persistent regular furniture; preserve peaceful budget; restart 1800-real-second command hold"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -597,7 +597,7 @@
                         "target": "Kneeling",
                         "actions": [
                             "Exit current held native pose before changing destination",
-                            "Choose explicit regular/blessing clip family on persistent regular furniture; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Choose explicit regular/blessing/childSitKneel clip family on persistent regular furniture; preserve peaceful budget; restart 1800-real-second command hold"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -817,7 +817,7 @@
                         "target": "Kneeling",
                         "actions": [
                             "Exit current held native pose before changing destination",
-                            "Choose explicit regular/blessing clip family on persistent regular furniture; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Choose explicit regular/blessing/childSitKneel clip family on persistent regular furniture; preserve peaceful budget; restart 1800-real-second command hold"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -1115,7 +1115,7 @@
                         "target": "Kneeling",
                         "actions": [
                             "Exit current held native pose before changing destination",
-                            "Choose explicit regular/blessing clip family on persistent regular furniture; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Choose explicit regular/blessing/childSitKneel clip family on persistent regular furniture; preserve peaceful budget; restart 1800-real-second command hold"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -1172,9 +1172,10 @@
                     "catalog": "animations-bookmarks.md#commanded-kneeling-variants",
                     "enabledVariants": [
                         "kneeling",
-                        "blessing"
+                        "blessing",
+                        "childSitKneel"
                     ],
-                    "childCompatibility": "unverified-disabled",
+                    "childCompatibility": "desktop-adult-female-and-male-forsworn; broader actors and VR unverified",
                     "persistenceVersion": 3,
                     "phaseOverrides": "scripts/kneeling-animations.json"
                 },
@@ -1185,7 +1186,7 @@
                 "nativeDialogue": "Scoped desktop player Talk; original Aggression preserved; no state change until action selection"
             },
             "entry": [
-                "Choose and save selectedKneelingVariant once on new entry; uniform regular/blessing selection; both use persistent regular kneeling furniture; child sit/kneel disabled pending qualification",
+                "Choose and save selectedKneelingVariant once on new entry; uniform regular/blessing/childSitKneel selection (1/3 each); all use persistent regular kneeling furniture",
                 "Owned pose faction rank selects explicit OAR enter/loop/exit overrides on persistent regular furniture; blessing uses idleblessingkneel_loop.hkx and idlekneelexit.hkx exit; failed entry uses regular fallback without timer reset"
             ],
             "exit": [
@@ -1685,7 +1686,7 @@
                         "target": "Kneeling",
                         "actions": [
                             "Exit current held native pose before changing destination",
-                            "Choose explicit regular/blessing clip family on persistent regular furniture; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Choose explicit regular/blessing/childSitKneel clip family on persistent regular furniture; preserve peaceful budget; restart 1800-real-second command hold"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -2275,9 +2276,10 @@
             "lifecycle": "Bypass gameplay transition guards, not eligibility/death/load/scene guards; native pose exit before switching; ordinary observation resumes after entry",
             "variants": [
                 "regular",
-                "blessing"
+                "blessing",
+                "childSitKneel"
             ],
-            "excluded": "Planned states and child sit/kneel remain unavailable"
+            "excluded": "Other planned states remain unavailable"
         },
         "adapterContracts": {
             "status": "implemented",

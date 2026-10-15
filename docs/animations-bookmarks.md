@@ -84,24 +84,24 @@ in [FSM documentation](fsm.md#surrender-random-resting-or-standing-wandering).
 
 ### Commanded Kneeling variants
 
-Intended three-family pool for **On your knees.** entering unbound Kneeling.
+Implemented desktop three-family pool for **On your knees.** entering unbound Kneeling.
 FSM entry action chooses a family; this catalog records its matching clips.
-Bound kneeling uses its separate pose. Families still need verified playback
-events/forms and actor compatibility, including adult use of Child sit/kneel.
-Desktop uses persistent native KneelingMarker (`0xE8E4E`) for both enabled families.
+Bound kneeling uses its separate pose. Child clips qualified on adult female
+and male Forsworn; wider actors/races and VR remain unverified.
+Desktop uses persistent native KneelingMarker (`0xE8E4E`) for all three enabled families.
 OAR replaces its enter/idle/exit clips only for our hidden `AcheronKneelingPose`
-faction (`0x84D`, rank 0 regular, rank 1 blessing). Native BlessingKneelMarker
+faction (`0x84D`, rank 0 regular, rank 1 blessing, rank 2 child sit/kneel). Native BlessingKneelMarker
 plays its exit after one loop even while the command hold remains active; it is
-not used for new entries. Child sit/kneel remains disabled. Bound pose stays separate.
+not used for new entries. Child sit/kneel is enabled. Bound pose stays separate.
 
 | Variant ID | Enter | Idle/loop | Exit |
 | --- | --- | --- | --- |
 | blessing | `idleblessingkneel_enter.hkx` | `idleblessingkneel_loop.hkx` | `idlekneelexit.hkx` (explicit override) |
 | kneeling | `idlekneelenter.hkx` | `idlekneelidle.hkx` | `idlekneelexit.hkx` |
-| childSitKneel | `special_childsitkneelenter.hkx` | `special_childsitkneelidle.hkx` | `special_childsitkneelexit.hkx` |
+| childSitKneel | `byoh/special_childsitkneelenter.hkx` | `byoh/special_childsitkneelidle.hkx` | `byoh/special_childsitkneelexit.hkx` |
 
 Explicit phase overrides live in `scripts/kneeling-animations.json`; no filename
-suffix inference. Edit enter/loop/exit independently using an HKX basename from the
+suffix inference. Edit enter/loop/exit independently using a relative HKX path within the
 desktop animation archive, then run `python scripts/Stage-KneelingAnimations.py`.
 The script extracts independent clips into candidate staging, not the game or VR.
 The persistent graph slots remain `idlekneelenter`, `idlekneelidle`, `idlekneelexit`;
@@ -118,8 +118,33 @@ Run `8934b36f-2518-483d-9816-b77e5384afff` passed both families, save/load witho
 reroll, both On your feet destinations, exit before Bind, restarted hold, bound
 dialogue and hold expiry. Candidate installed on desktop; VR unchanged.
 Earlier `72989f68-f72f-41e6-a9c7-1fe94ef5c0b5` stopped on a REST socket error;
-candidate restored, then retry passed. Old native blessing-marker saves, child
-pose and VR remain unqualified. Silent-opening promotion remains separate.
+candidate restored, then retry passed. Old native blessing-marker saves and VR
+remain unqualified. Silent-opening promotion remains separate.
+
+Child integration qualified on adult male Forsworn (`0x43BDD`, sex 0, DefaultMale)
+and the default adult female Forsworn. Male probe `010da013-4422-4daa-88bb-879ba37a4404`
+also received visual review without obvious pose distortion. Integrated rank-2
+runs `28904db0-16ee-4c2b-8be6-ed595a5087e7` (male) and
+`ecfddef7-bc3b-4b80-a8c6-9004eab5c759` (female) passed sustained hold, repeated
+Talk, child exit, unowned-animation control and child-to-Bind handoff.
+Three-family run `30e6235a-9fb9-485e-840a-52761eb8af2e` passed random coverage,
+explicit child save/load without reroll/timer reset, both On your feet destinations,
+Bind and ordered hold expiry. All 34 installed candidate hashes matched deployment
+receipt `build/pacification-backups/f4092851-f227-412f-aa80-094ffc6c5785/manifest.json`.
+Earlier runs `7f8564d4` and `897d0d57` failed while issuing the next activation or
+direct kneel before the previous Talk UI finished closing; candidate restored.
+The harness now waits for both dialogue-manager and UI closure before repeating.
+These results do not qualify broader races, VR, forced fallback or old-marker saves.
+
+The broader `peaceful-test-dialogue` run `f86d2721-b5ae-4690-b1a0-b4b3250cc855`
+passed regular -> blessing -> child -> bound -> regular and the later engine
+destinations, but failed waiting for AvoidingCombat -> Wandering after combat
+fixture teardown. Diagnostic retries `71e8167d` and `3fc29002` did not resolve it;
+the latter confirmed all four owned NPCs and the player were out of combat while
+the managed actor remained ready in AvoidingCombat. No cause is established.
+Temporary teardown probes were removed; their script is archived locally at
+`build/test-dialogue-investigation/With-CombatDiagnostics.ps1`. Track further
+investigation in Beads `skyrim-1ir`; the complete Test-tree gate is not passing.
 
 Many animation families have **start/enter**, **idle/loop**, and/or **exit** clips.
 Check related clips together when selecting behavior; one bookmarked clip may be

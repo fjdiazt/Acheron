@@ -71,9 +71,7 @@ namespace Acheron::Pacification
         {
             using Peaceful::KneelingVariant;
             if (choose) {
-                // Child sit/kneel is not enabled until adult playback is qualified.
-                state.selectedKneelingVariant = RE::TESForm::LookupByID<RE::TESFurniture>(0xF11F1) && Random::draw<unsigned>(0, 1) ?
-                    KneelingVariant::Blessing : KneelingVariant::Regular;
+                state.selectedKneelingVariant = static_cast<KneelingVariant>(Random::draw<unsigned>(0, 2));
             }
             const auto position = actor->GetPosition();
             const auto yaw = actor->GetAngle().z;
@@ -301,8 +299,8 @@ namespace Acheron::Pacification
                     record.applyAge += pending.delta;
                     if (record.applyAge >= (Peaceful::IsCommandHold(record.state.phase) ? 15.0f : 5.0f)) {
                         if (!record.testTarget && !record.exitingFor && !record.pending && record.state.phase == Phase::Kneeling &&
-                            record.state.selectedKneelingVariant == Peaceful::KneelingVariant::Blessing) {
-                            logger::warn("Kneeling blessing entry failed for {:08X}; using native fallback", id);
+                            record.state.selectedKneelingVariant != Peaceful::KneelingVariant::Regular) {
+                            logger::warn("Non-default kneeling entry failed for {:08X}; using native fallback", id);
                             if (!StartPoseExit(record, actor.get(), Peaceful::EventKind::Kneel)) End(id);
                         } else { logger::warn("Peaceful package/dialogue did not become ready for {:08X}", id); End(id); }
                         continue;
