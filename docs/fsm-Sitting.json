@@ -233,10 +233,15 @@
                 ]
             },
             "meta": {
-                "status": "planned"
+                "status": "planned",
+                "catalog": "animations-bookmarks.md#commanded-sitting-selections-2026-10-15",
+                "health": "Positive meaningful injury health on Sit entry; never compare the artificial defeated-health clamp",
+                "healingPoseSwap": "Shared animationPhases on the incoming healing edge selects direct held-idle swap; visual qualification pending"
             },
             "entry": [
-                "Enter verified unbound sitting family enter then idle/loop; retain pacification and dialogue"
+                "Enter the selected normal sitting family through the shared transition animation-phase policy; retain pacification and dialogue",
+                "Play its held idle/loop; applicable exit/enter phases default to play unless transition data skips them",
+                "Persist selected family; healing preserves the remaining command hold and frozen peaceful budget"
             ],
             "exit": [
                 "Finish selected sitting family exit before Resume, Kneel or Bind",

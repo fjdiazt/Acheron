@@ -1,0 +1,318 @@
+{
+    "id": "SkyrimCombat-SittingWounded",
+    "initial": "SittingWounded",
+    "states": {
+        "SittingWounded": {
+            "on": {
+                "Death": [
+                    {
+                        "target": "Dead",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Observe [renewed defeat]": [
+                    {
+                        "target": "Yielding",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides",
+                            "Preserve new defeat ownership and protection"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Observe [ineligible or invalid peaceful state]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Release": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Hold Timer Expires [loaded, unpaused, dialogue closed, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Hold Timer Expires [loaded, unpaused, dialogue closed, no nearby combat, wander budget > 0]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Hold Timer Expires [loaded, unpaused, dialogue closed, no nearby combat, wander budget = 0]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Resume [loaded, unpaused, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Resume [loaded, unpaused, no nearby combat, wander budget > 0]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Resume [loaded, unpaused, no nearby combat, wander budget = 0, dialogue closed]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Resume [loaded, unpaused, no nearby combat, wander budget = 0, dialogue open]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Refresh [valid duration, hold remaining > 0]": [
+                    {
+                        "target": "SittingWounded",
+                        "actions": [
+                            "Reset wander budget to valid requested duration (1-600 seconds)"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Refresh [valid duration, hold expired, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Reset wander budget to valid requested duration (1-600 seconds)",
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Refresh [valid duration, hold expired, no nearby combat]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Reset wander budget to valid requested duration (1-600 seconds)",
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "On your feet. [loaded, unpaused, nearby combat active]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "On your feet. [loaded, unpaused, no nearby combat, wander budget > 0]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "On your feet. [loaded, unpaused, no nearby combat, wander budget = 0, dialogue closed]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "On your feet. [loaded, unpaused, no nearby combat, wander budget = 0, dialogue open]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Exit held pose; clear hold timer; preserve wander budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Kneel [loaded, unpaused]": [
+                    {
+                        "target": "Kneeling",
+                        "actions": [
+                            "Finish selected sitting family exit before unbound kneeling entry",
+                            "Supersede automatic rest: set peacefulChoice to wander and clear selectedPose",
+                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Bind [loaded, unpaused, owned unbound SittingWounded]": [
+                    {
+                        "target": "KneelingBound",
+                        "actions": [
+                            "Exit sitting; enter required kneeling interaction, then native bound-kneeling pose",
+                            "Restart CommandHoldDurationSeconds at 1800 real seconds on command acceptance; preserve frozen peaceful budget",
+                            "Invalidate pending posture callbacks on death, release, expiry or ownership loss; do not reset hold on completion"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Heal [meaningful injury health = 0]": [
+                    {
+                        "target": "SittingWounded",
+                        "actions": [
+                            "Apply healing through the existing healing mechanism; selecting Heal alone is not treatment success",
+                            "If healing fails, is cancelled or leaves injury health at zero, retain the wounded pose, risk, command hold and peaceful budget; do not replay entry"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Healing observed [meaningful injury health > 0, loaded, unpaused]": [
+                    {
+                        "target": "Sitting",
+                        "actions": [
+                            "Retain the actual healing received, regardless of healing source; re-evaluate injury context without a mortality reroll",
+                            "Apply shared transition animationPhases to swap wounded held idle/loop to normal sitting held idle/loop; no intermediate standing or movement state",
+                            "Preserve pacification, dialogue, remaining command hold and frozen peaceful budget; hide Heal after leaving SittingWounded",
+                            "Qualify the direct swap visually before enabling it; no animation interpolation or seamless blend is assumed"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "visualQualification": "pending",
+                            "animationPhases": {
+                                "sourceExit": "skip",
+                                "destinationEnter": "skip"
+                            }
+                        }
+                    }
+                ],
+                "Wound resolution [recorded fatal outcome, death not requested]": [
+                    {
+                        "target": "SittingWounded",
+                        "actions": [
+                            "Request eligible engine death once; wait for Death notification; animation must not delay death"
+                        ],
+                        "meta": {
+                            "status": "planned",
+                            "timing": "Unresolved; no new wound timer or probability introduced by the sitting command"
+                        }
+                    }
+                ]
+            },
+            "meta": {
+                "status": "planned",
+                "catalog": "animations-bookmarks.md#commanded-sitting-selections-2026-10-15",
+                "health": "Zero meaningful injury health on Sit entry; injury record includes later healing and is independent of Acheron health clamp 0.05",
+                "dialogue": {
+                    "Heal": "Visible only in SittingWounded at zero meaningful injury health; health rising above zero triggers Sitting automatically"
+                },
+                "woundRisk": "Retain untreated injury context and any pending wound deadline; commanding Sit or changing pose is not a cure; mortality timing remains unresolved",
+                "healingPoseSwap": "Direct held-idle swap to Sitting, no outgoing exit or incoming enter; pending visual qualification"
+            },
+            "entry": [
+                "Fresh Sit command: enter a qualified wounded-family pose, then its held idle/loop; female Laydown and Mirrored variants only for female NPCs",
+                "Remain alive, stationary, pacified and talkable; expose Heal while meaningful injury health is zero",
+                "Persist selected family and injury context; new Sit command uses the existing 1800-real-second command hold, not a new wounded timer"
+            ],
+            "exit": [
+                "Follow shared transition animationPhases: the healing edge skips source exit and destination enter, with no hold reset; visual qualification pending",
+                "Resume, Kneel or Bind finishes the selected family exit before its destination; preserve unresolved injury context",
+                "Death/release/ownership loss invalidates pose callbacks; do not restart stale poses or delay death; posture changes do not count as treatment"
+            ]
+        },
+        "Dead": {
+            "type": "final"
+        },
+        "Yielding": {},
+        "Normal": {},
+        "AvoidingCombat": {},
+        "Wandering": {},
+        "Kneeling": {},
+        "KneelingBound": {},
+        "Sitting": {
+            "meta": {
+                "status": "planned"
+            }
+        }
+    },
+    "meta": {
+        "generatedFrom": "fsm.json",
+        "focus": "SittingWounded"
+    }
+}

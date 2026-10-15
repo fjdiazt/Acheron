@@ -236,6 +236,11 @@ them. Exact classification for ambiguous actors remains to be defined.
 - Choosing **Bind** while kneeling transitions to our `KneelingBound` state,
   using the native hands-bound kneeling pose. This replaces the earlier prisoner
   command wording for this kneeling transition.
+  Planned shared transition phase policy skips kneeling exit and bound entry,
+  directly selecting bound held idle without standing or re-kneeling. Current
+  code/logs still show exit -> standing -> bound re-entry; updating that path and
+  the tests requiring its old exit is in scope (`skyrim-3y4`). Bind still restarts
+  the 1800-real-second hold on acceptance, unlike healing's preserved hold.
 - Planned **On your knees.** from StandingBound instead enters KneelingBound:
   play kneeling entry, then bound-kneeling entry/idle. Retain binding and
   pacification; restart the hold at 1800 real seconds when the command is accepted
@@ -261,19 +266,34 @@ them. Exact classification for ambiguous actors remains to be defined.
 
 ### On the ground. / Sitting
 
-- Planned command enters owned, unbound `Sitting` from Yielding, AvoidingCombat,
-  Wandering, Resting or Kneeling. Same eligibility, pacification, dialogue and
+- Planned command enters owned, unbound `Sitting` at positive meaningful injury
+  health or `SittingWounded` at zero, from Yielding, AvoidingCombat, Wandering,
+  Resting or Kneeling. Use tracked injury health including healing, not the
+  artificial defeated-health clamp `0.05`. Same eligibility, pacification, dialogue and
   1800-real-second hold as commanded Kneeling; peaceful budget stays frozen.
 - Kneeling -> Sitting and Sitting -> Kneeling start the destination hold on command
   acceptance. Repeating the command in the same posture does not reset it. No healing
-  or unbound-hit timer refresh. Sitting is separate from Surrender's automatic Resting.
+  or unbound-hit timer refresh. Both sitting states are separate from Surrender's automatic Resting.
+- Show **Heal** only in `SittingWounded` while injury health is zero. Failed or
+  cancelled healing leaves its pose/timers intact. Any actual healing above zero
+  automatically enters `Sitting`, retaining remaining hold, peaceful budget,
+  pacification and dialogue. Hide Heal afterward; do not force full health.
+- Use shared per-transition animation phase policy, not a Heal-specific bypass:
+  play applicable source exit/destination enter by default, or skip either through
+  transition data. Healing sets both to skip and directly swaps the held wounded
+  idle to normal sitting idle; no stand-up or sit-down transition. Ordinary cleanup,
+  stale-callback and death guards remain. Direct swap/native compatibility and
+  visual quality still need user testing; no seamless interpolation assumed.
+- Sit adds no healing and must retain untreated injury context and wound/death
+  risk, transferring any pending wound deadline instead of curing through posture.
+  Wound scheduling remains open; no new mortality curve or timer is specified.
 - **On your feet.** resumes avoidance/wandering after sitting exit, preserving health
   and peaceful budget, clearing the hold. Zero-budget/dialogue expiry rules stay the
-  same as Kneeling. **On your knees.** changes Sitting to unbound Kneeling.
-- **Bind from Sitting -> KneelingBound**: exit sitting, enter kneeling interaction,
+  same as Kneeling. **On your knees.** changes either sitting state to unbound Kneeling.
+- **Bind from Sitting or SittingWounded -> KneelingBound**: exit sitting, enter kneeling interaction,
   then bound pose. No SittingBound state or intermediate owned Kneeling phase. Bind
   restarts the 1800-second hold on acceptance; animation completion does not reset it.
-- Preserve selected sitting pose/hold through save/load; existing death, release,
+- Preserve selected sitting state/pose/hold and injury context through save/load; existing death, release,
   renewed-defeat and eligibility cleanup cancels stale pose callbacks. Exact sitting
   forms/clips, failure handling and runtime playback remain unqualified. See
   [commanded Sitting policy](docs/fsm.md#commanded-sitting).

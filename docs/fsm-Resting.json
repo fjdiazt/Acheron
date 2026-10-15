@@ -124,13 +124,28 @@
                         }
                     }
                 ],
-                "Sit [loaded, unpaused]": [
+                "Sit [loaded, unpaused, injury health > 0]": [
                     {
                         "target": "Sitting",
                         "actions": [
                             "Exit selected automatic rest pose",
                             "Supersede automatic rest: set peacefulChoice to wander and clear selectedPose",
-                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget"
+                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget",
+                            "Preserve meaningful injury health and unresolved wound risk; Sit adds no healing and never rerolls mortality"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Sit [loaded, unpaused, injury health = 0]": [
+                    {
+                        "target": "SittingWounded",
+                        "actions": [
+                            "Exit selected automatic rest pose",
+                            "Supersede automatic rest: set peacefulChoice to wander and clear selectedPose",
+                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget",
+                            "Preserve meaningful injury health and unresolved wound risk; Sit adds no healing and never rerolls mortality"
                         ],
                         "meta": {
                             "status": "planned"
@@ -160,6 +175,11 @@
         "Kneeling": {},
         "Wandering": {},
         "Sitting": {
+            "meta": {
+                "status": "planned"
+            }
+        },
+        "SittingWounded": {
             "meta": {
                 "status": "planned"
             }

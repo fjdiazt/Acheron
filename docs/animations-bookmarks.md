@@ -59,6 +59,69 @@ including their clips and variants. Relative paths verified in installed mod.
 - `meshes\actors\character\Animations\BillyysHuman\fmPos\BillyyCglay`
 - `meshes\actors\character\Animations\BillyysHuman\fmPos\BillyyHj3lay`
 
+## Commanded sitting selections (2026-10-15)
+
+User-selected candidate pools for planned `Sitting` and `SittingWounded`.
+Deduplicate by source/group + priority + clip, not filename alone: Take a Seat
+replacements with the same filename may contain different poses. Repeated
+Take a Seat 4 cross-legged screenshots represent one selection. Ungrouped
+cross-legged screenshots and the bare `idlesit_crosslegged` reference are recorded
+together provisionally; source paths/hashes must establish whether they differ.
+Only the selected clips below are included, not entire replacement groups.
+
+### Sitting
+
+| Source shown | Priority | Selected clip(s) |
+| --- | --- | --- |
+| Ungrouped/base cross-legged; exact source not shown | — | `idlesit_crosslegged.hkx`; matching `idlesit_crosslegged_enter.hkx` and `idlesit_crosslegged_exit.hkx` shown |
+| Ungrouped ledge; exact source not shown | — | `idlesitledge.hkx` |
+| Take a Seat 1 | `60001` | `idlesit_crosslegged.hkx` |
+| Take a Seat 2 | `60002` | `idlesit_crosslegged.hkx` |
+| Take a Seat 3 | `60003` | `idlesitledge.hkx`, `idlesit_crosslegged.hkx` |
+| Take a Seat 4 | `60004` | `idlesit_crosslegged.hkx` |
+| Take a Seat 5 | `60005` | `idlesit_crosslegged.hkx` |
+| Take a Seat 6 | `60006` | `idlesitledge.hkx` |
+| Take a Seat 7 | `60007` | `idlesit_crosslegged.hkx` |
+
+### SittingWounded
+
+| Source shown | Priority | Selected clip | Actor restriction |
+| --- | --- | --- | --- |
+| Native beggar family | — | `mt_beggarsit.hkx` | No sex restriction requested |
+| Female Laydown | `800001` | `idlelaydown.hkx` | Female NPCs only |
+| Female Laydown Mirrored | `800002` | `idlelaydown.hkx` | Female NPCs only; shown alongside normal Laydown |
+| Wounded 01; exact replacement source not shown | — | `mt_wounded_01.hkx` | No sex restriction requested |
+| Wounded 02; exact replacement source not shown | — | `mt_wounded_02.hkx` | No sex restriction requested |
+| Wounded 03; exact replacement source not shown | — | `mt_wounded_03.hkx` | No sex restriction requested |
+
+Native beggar assets were found in the desktop BSA and behavior graph:
+`mt_beggarsit.hkx` (expected entry), `mt_beggaridle.hkx` (expected held idle),
+`mt_beggarstand.hkx` (expected exit). This phase mapping is not live-qualified.
+Do not use the entry clip as the held loop merely because its name says "sit".
+
+The wounded pool intentionally includes female lying poses; it is a visual
+injury/risk cue, not proof of unconsciousness or death. Actual posture, matching
+enter/idle/exit, sustained hold, dialogue and sex compatibility require probes.
+File names alone do not establish that Wounded 01-03 are seated poses.
+
+Requested routing: Sit at health zero chooses `SittingWounded`; positive health
+chooses `Sitting`. The cue must preserve untreated wound/death risk rather than
+silently cure the NPC. Acheron currently clamps defeated actor health to `0.05`
+in `src/Acheron/Defeat.cpp`; injury-health tracking still needs implementation.
+Heal is shown only in `SittingWounded` at zero injury health; successful healing
+above zero, from any source, automatically selects `Sitting` and preserves remaining
+hold and peaceful budget. Failed/cancelled healing keeps the wounded pose.
+The transition declares skipped source exit and destination enter through the
+shared animation-phase pipeline policy. Swap held idle directly, without standing
+up or sitting down again; no healing-specific bypass or assumed interpolation.
+Native compatibility and the visual result need testing and user confirmation.
+Kneeling -> KneelingBound is included in that same shared phase-policy scope:
+skip kneeling exit and bound enter, directly select bound held idle; Bind still
+restarts the command hold. Existing qualified Bind runs played kneeling exit
+before bound idle and do not qualify the proposed direct handoff.
+Both sitting states, their health routing, Heal and animation-phase policy are
+planned in the [FSM](fsm.md#commanded-sitting), not enabled gameplay.
+
 ## Playback notes
 
 ### Resting variants

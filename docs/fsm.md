@@ -31,11 +31,12 @@ views and removes obsolete generated views. The check command reports missing,
 stale or obsolete views without writing files. Generator leaves master untouched.
 
 Examples: [Yielding](fsm-Yielding.json), [Kneeling](fsm-Kneeling.json),
-[Sitting](fsm-Sitting.json), [KneelingBound](fsm-KneelingBound.json).
+[Sitting](fsm-Sitting.json), [SittingWounded](fsm-SittingWounded.json),
+[KneelingBound](fsm-KneelingBound.json).
 
 Combat, Yielding, Normal and Dead describe engine/defeat behavior. The implemented
 owned peaceful phases are AvoidingCombat, Wandering, Kneeling and KneelingBound;
-their adapter is desktop-only. Sitting, StandingBound, FollowingBound and Resting are planned
+their adapter is desktop-only. Sitting, SittingWounded, StandingBound, FollowingBound and Resting are planned
 owned phases. Planned Fleeing follows release or an automatic yield outcome and
 retains temporary flight effects without prisoner
 ownership. Normal means no peaceful-controller ownership; ordinary Skyrim AI resumes
@@ -74,9 +75,10 @@ ordinary observation ticks.
 Resting; it does not imply healing. Combat ending changes phase, not pacification.
 The shared peaceful budget counts during Wandering or planned Resting and pauses
 during avoidance and command holds.
-Kneeling, planned Sitting and bound states use a separate 1800-real-second hold.
-Accepted Bind restarts it immediately; Kneeling -> KneelingBound exit and entry
-consume the restarted hold. See the implemented-flow contracts below.
+Kneeling, planned Sitting/SittingWounded and bound states use a separate 1800-real-second hold.
+Accepted Bind restarts it immediately; the current Kneeling -> KneelingBound exit
+and entry consume that hold. Planned shared phase policy removes those animation
+phases while preserving the acceptance-time timer restart.
 Current Kneeling/KneelingBound expiry returns to avoidance/wandering, or ends
 ownership when no combat and no wander budget remain. Planned StandingBound and
 FollowingBound expiry unbinds and starts fleeing. Automatic expiry waits for
@@ -85,8 +87,8 @@ dialogue to close.
 Yielding -> Kneeling exits bleedout, then initializes the owned Kneeling state,
 native kneeling marker and hold directly. No intermediate AvoidingCombat or
 Wandering package. Existing peaceful -> Kneeling transitions also apply only
-the target package. Kneeling -> KneelingBound retains the required furniture
-exit before starting the bound pose.
+the target package. The current Kneeling -> KneelingBound adapter exits furniture
+before starting the bound pose; the scoped direct handoff is planned below.
 
 Native `SitTarget` still approaches the kneeling marker's Behind entry point.
 Direct phase initialization does not guarantee in-place animation entry.
@@ -118,7 +120,7 @@ Current Kneeling/KneelingBound holds account for elapsed real time on observatio
 expiry routing requires a loaded, unpaused actor and closed dialogue. Bind and Resume
 preserve the frozen wander budget. Refresh changes that budget without restarting
 the hold. Current held phases ignore Kneel: repeating it neither resets the hold
-nor unbinds KneelingBound. Planned bound posture commands and unbound Sitting/Kneeling
+nor unbinds KneelingBound. Planned bound posture commands and unbound Sitting/SittingWounded/Kneeling
 posture switches are explicit exceptions.
 
 ## Implemented-flow contracts
@@ -248,16 +250,21 @@ not three extra states or random guards on every update.
 
 Choose uniformly among the verified actor-compatible variants on each new
 commanded Kneeling entry; with all three available, each has a 1/3 chance. Play
-that family's configured enter, then idle/loop; use its configured exit when leaving, including
-before Bind. Observations, Refresh and save/load preserve the selection. Existing
+that family's configured enter, then idle/loop; normally use its configured exit
+when leaving. Planned Bind
+instead skips source exit and destination enter through the shared transition
+policy below; the current adapter still plays the exit before Bind. Observations,
+Refresh and save/load preserve the selection. Existing
 commands ignored while already in the held phase must not trigger another draw.
 Keep the existing 1800-second commanded hold and frozen peaceful budget.
 
 Bound KneelingBound uses its own bound pose, including StandingBound's Kneel path;
 it never draws from this unbound pool. Automatic Resting keeps its separate pose
 policy. All three unbound families use persistent regular kneeling furniture. Our hidden
-pose faction selects OAR enter/loop/exit replacements; it remains through ordered
-Resume/Bind exit and clears on the next phase or ownership cleanup. Explicit phase
+pose faction selects OAR enter/loop/exit replacements; the current adapter retains
+it through ordered Resume/Bind exit and clears it on the next phase or ownership
+cleanup. The planned direct Bind must preserve that scoped ownership discipline.
+Explicit phase
 mapping is `scripts/kneeling-animations.json`; blessing loops
 `idleblessingkneel_loop.hkx` and exits with `idlekneelexit.hkx`.
 Native blessing furniture auto-exits after one loop despite a live hold; no new
@@ -294,7 +301,7 @@ command below remains separate.
 | Source | Event | Destination |
 | --- | --- | --- |
 | Kneeling | Bind | KneelingBound (current) |
-| Sitting | Bind | KneelingBound (planned) |
+| Sitting or SittingWounded | Bind | KneelingBound (planned) |
 | Wandering | Bind | StandingBound (planned) |
 | AvoidingCombat | Bind | StandingBound (planned) |
 
@@ -310,30 +317,43 @@ Current code has no StandingBound phase and accepts Bind only from Kneeling.
 
 ## Commanded Sitting
 
-**Agreed, implementation planned.** Add an owned, unbound `Sitting` phase. The
-dialogue label is **On the ground.**; logical event is `Sit`. Use a sitting pose,
-not prone lying. This is an explicit command with a hold, separate from automatic
-Surrender `Resting` and its random choice/pose policy.
+**Agreed, implementation planned.** Add owned, unbound `Sitting` and
+`SittingWounded` phases. The dialogue label is **On the ground.**; logical event
+is `Sit`. Select the destination from meaningful injury health, including later
+healing: zero selects `SittingWounded`, positive selects `Sitting`. Use normalized
+injury health, not Acheron's artificial defeated-health clamp `0.05`.
+These are explicit commanded holds, separate from automatic Surrender `Resting`.
+The wounded pose is a visible cue of untreated injury/death risk, not a cure or
+an unconscious state. Its selected pool includes female-only lying poses.
 
 | Source | Command / event | Destination |
 | --- | --- | --- |
-| Yielding, AvoidingCombat, Wandering, Resting | On the ground. / Sit | Sitting |
-| Kneeling | On the ground. / Sit | Sitting |
-| Sitting | On your knees. / Kneel | Kneeling |
-| Sitting | On your feet. / Resume | AvoidingCombat or Wandering, subject to normal budget cleanup |
-| Sitting | Bind | KneelingBound |
+| Yielding, AvoidingCombat, Wandering, Resting, Kneeling | On the ground. / Sit; injury health > 0 | Sitting |
+| Yielding, AvoidingCombat, Wandering, Resting, Kneeling | On the ground. / Sit; injury health = 0 | SittingWounded |
+| SittingWounded at zero injury health | Heal | Apply healing; remain wounded unless health actually rises above zero |
+| SittingWounded | Healing observed; injury health > 0, any healing source | Sitting; direct held-pose swap, remaining hold unchanged |
+| Sitting or SittingWounded | On your knees. / Kneel | Kneeling |
+| Sitting or SittingWounded | On your feet. / Resume | AvoidingCombat or Wandering, subject to normal budget cleanup |
+| Sitting or SittingWounded | Bind | KneelingBound |
 
-Use the same actor eligibility as commanded Kneeling. Yielding -> Sitting ends
-defeat/bleedout protection without healing, cancels pending yield resolution and
-enters sitting directly; no intermediate avoidance/wandering package. From Resting
+Use the same actor eligibility as commanded Kneeling. Sit from Yielding ends
+defeat/bleedout protection without healing and cancels automatic yield recovery
+and survivor routing. Transfer injury context, unresolved wound risk and any
+pending wound-resolution deadline; commanding Sit must not erase untreated risk.
+Enter the selected sitting state directly, without an intermediate movement phase.
+Wound-resolution scheduling remains to be qualified; this adds no new probability
+curve or wound timer. A recorded fatal outcome requests eligible engine death
+once, then waits for Death; animation must not delay it. From Resting
 or a retained automatic-rest episode, exit its pose and clear the automatic choice:
 set `peacefulChoice` to wander and clear `selectedPose`.
 
-Sitting remains stationary, pacified and talkable. Initialize the separate
+Both states remain stationary, pacified and talkable. Initialize the separate
 1800-real-second commanded hold on accepted entry, preserving the peaceful budget.
-Kneeling -> Sitting and Sitting -> Kneeling are new posture entries: start the
+Kneeling -> either sitting state and either sitting state -> Kneeling are new
+posture entries: start the
 destination's 1800-second hold on acceptance, not again on animation completion.
-Repeating Sit while already Sitting or Kneel while already Kneeling remains ignored;
+Repeating Sit while already in either sitting state or Kneel while already
+Kneeling remains ignored;
 it must not refresh the hold. Combat does not pause the hold; Refresh changes only
 the peaceful budget. No hit-driven timer reset applies to this unbound state.
 
@@ -341,22 +361,86 @@ On your feet. finishes sitting exit, clears the hold and resumes nearby-combat
 avoidance or wandering, preserving health and the peaceful budget. Hold expiry uses
 the same loaded/unpaused/dialogue and zero-budget routing as Kneeling. Death,
 renewed defeat, invalidity, loss of eligibility and Release use existing cleanup;
-persist the sitting phase, selected pose and remaining hold across save/load.
+persist the sitting phase, selected pose, injury context and remaining hold across save/load.
 
-**Bind from Sitting ends in KneelingBound, not SittingBound.** Exit sitting, enter
+Expose **Heal** in `SittingWounded` only while meaningful injury health is zero.
+Selecting the dialogue line alone does not change state. Failed/cancelled healing
+or healing that leaves health at zero retains the wounded pose, injury context
+and timers. Any actual healing above zero automatically enters `Sitting`, whether
+from this action, a spell or another healing source. Retain actual healing,
+pacification, talkability, the remaining commanded hold and frozen peaceful budget.
+Hide Heal after that transition. This pose change does not redefine the separate
+wound-mortality rules or imply maximum health.
+
+**Bind from either sitting state ends in KneelingBound, not SittingBound.** Exit sitting, enter
 the required kneeling interaction, then apply the native bound-kneeling pose.
 Treat that choreography as transition actions, not an intermediate owned Kneeling
 phase. Retain pacification, restart the bound hold at 1800 seconds on accepted Bind,
 and preserve the peaceful budget. Death/release/expiry/ownership loss invalidates
 pending pose callbacks; completion must not restart the timer or rebind a released
 actor. Qualify ordered playback and failure/timeout handling before implementation.
-The existing Kneeling -> KneelingBound furniture-exit sequence remains unchanged.
+Kneeling -> KneelingBound is separately included in the shared no-exit/no-enter
+transition scope below; its current adapter still exits and re-enters.
 
-Use a verified actor-compatible sitting enter -> idle/loop -> exit family from the
-[bookmarks](animations-bookmarks.md#resting-variants). Exact seating family, native
+Use qualified families from the separate [selected normal/wounded pools](animations-bookmarks.md#commanded-sitting-selections-2026-10-15).
+Female Laydown and Mirrored candidates are female-only. Keep same-basename
+replacements distinct by source and priority until paths/hashes prove duplication.
+Fresh Sit entry uses its family's enter -> idle/loop; requested pose exits use its
+configured exit unless the shared transition policy skips it. Exact seating family, native
 form/event mappings and failure fallback remain unqualified; this agreement adds
 no new random sitting-selection weights. No Sit command from bound states is added.
-Current code has no Sitting phase, Sit event or On the ground. dialogue topic.
+Current code has neither sitting phase, Sit event, sitting Heal topic nor the
+planned per-transition animation-phase policy. No runtime qualification claimed.
+
+## Transition animation phase policy
+
+**Planned reusable pipeline behavior, not a healing-specific bypass.** A pose
+transition may declare `meta.animationPhases.sourceExit` and
+`meta.animationPhases.destinationEnter`, each `play` or `skip`. Omitted values
+default to playing the applicable configured phase. Family configuration still
+selects the clip; the transition policy decides whether that phase plays.
+The shared pose-transition adapter must consume this policy for all callers.
+Phase playback is independent of the FSM's timer actions: skipping a clip cannot
+add a timer reset or replace a required acceptance-time reset.
+
+The healed `SittingWounded` -> `Sitting` edge sets both phases to `skip` and swaps
+directly from wounded held idle/loop to normal sitting held idle/loop. Do not play
+the wounded stand-up exit or a new sit-down entry, or pass through standing or
+movement. The destination held pose still runs. Do not wait for completion events
+from skipped clips; retain ordinary state, ownership, generation, death/release
+and timer safeguards. Skipping animation is not permission to skip cleanup or
+change native actor flags blindly. No timer reset at pose completion.
+
+The direct swap is **pending visual qualification**, including compatible native
+graph/furniture ownership. No interpolation or seamless blend is assumed. The user
+must inspect whether the change snaps or looks wrong; pipeline support and the
+final visual choice remain unqualified. Other transitions keep default phase
+playback unless their own transition data explicitly requests skipping.
+
+Kneeling -> KneelingBound uses the same policy: planned Bind skips source exit
+and destination enter, retaining kneeling while selecting the native bound held pose.
+Bind still restarts the 1800-real-second hold on acceptance; animation completion
+must not reset it. Deterministic Test callers must use the same shared policy.
+Sitting -> KneelingBound keeps its distinct default exit/kneel/bound sequence;
+its source posture is different and no skip was requested for that path.
+
+Current Bind calls `StartPoseExit`, emits `IdleChairExitStart`, waits for native
+standing, replaces the marker and later emits `IdleBoundKneesEnterInstant`.
+This is source-confirmed in `src/Acheron/Pacification.cpp`. Male child-pose run
+`28904db0-16ee-4c2b-8be6-ed595a5087e7` also recorded kneeling exit at 15:39:31.206
+before bound idle at 15:39:32.946. Those results prove the old exit path, not the
+requested direct handoff. Implementation is tracked in Beads `skyrim-3y4`;
+sitting support in `skyrim-b09` depends on it.
+
+Regression scope: preserve default On your feet exits, cover independent skip-exit,
+skip-enter and skip-both policies, all three kneeling families into bound idle
+without exit/re-entry/standing, native Talk/actor invariants and lifecycle cleanup.
+Replace current Bind tests that require kneeling exit before bound idle; retain
+that assertion for transitions whose policy still plays the exit. Verify restarted
+Bind hold vs preserved healing hold, no phantom waits for skipped phase events,
+and native graph/furniture ownership. Visual discontinuity still needs user review.
+Assert actual clip logs and continuous native posture, not merely absence of a
+scripted exit request: native package/furniture changes can also play exit clips.
 
 ## Bound posture commands
 
@@ -371,7 +455,7 @@ hold at **1800 real seconds** when either posture command is accepted; preserve
 the frozen wander budget. The new hold keeps counting during animation; completion
 does not reset it again. Existing nonfatal-hit reset remains applicable.
 
-`On your knees.` is context-sensitive: Yielding, AvoidingCombat, Wandering, Resting and Sitting enter
+`On your knees.` is context-sensitive: Yielding, AvoidingCombat, Wandering, Resting, Sitting and SittingWounded enter
 unbound Kneeling; StandingBound enters KneelingBound. The bound path must never
 route through unbound Kneeling. The planned bound **On your feet.** retains binding
 and enters StandingBound. The implemented unbound command above resumes peaceful
@@ -436,7 +520,7 @@ Agreed behavior from `KneelingBound`, `StandingBound` and `FollowingBound`:
   then remove binding/peaceful overrides. Preserve essential-NPC protections.
 
 Hit-driven timer restart applies **only to bound states**, including FollowingBound. It does not
-restart timers in Yielding, AvoidingCombat, Wandering, unbound Kneeling, Sitting or
+restart timers in Yielding, AvoidingCombat, Wandering, unbound Kneeling, Sitting/SittingWounded or
 Unconscious. A fatal hit takes priority over hold refresh; it must not extend a
 dead NPC's timer. A hit near expiry while binding remains owned restarts the hold.
 
@@ -468,8 +552,10 @@ planned expiry paths in JSON are alternatives, never concurrent handlers.
    the recorded result; they cannot reroll this episode.
 5. Route the recorded death, unconscious, fight, flee or peaceful outcome below.
 
-Manual Rescue/healing, Surrender, Kneel or planned Sit ends yielding and cancels
-pending expiry resolution.
+Manual Rescue/healing, Surrender or Kneel ends yielding and cancels pending expiry
+resolution. Planned Sit cancels automatic yield recovery/survivor routing while
+retaining meaningful injury context and unresolved wound risk/deadline for sitting;
+it is not treatment. Detailed wound scheduling outside Yielding remains open.
 Death removes the episode. A later defeat creates a new episode with its own
 deadline and one permitted decision. Preserve existing essential-NPC protections;
 zero-health guaranteed death applies to NPCs eligible to die. Protected-NPC

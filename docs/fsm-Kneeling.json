@@ -128,10 +128,19 @@
                         "target": "KneelingBound",
                         "actions": [
                             "Restart CommandHoldDurationSeconds at 1800 real seconds on command acceptance; preserve wander budget",
-                            "Finish native kneeling exit before bound entry; animation time consumes the restarted hold",
-                            "Enter native bound kneeling pose without restarting hold on completion"
+                            "Apply shared transition animationPhases: retain kneeling posture, skip selected kneeling exit and destination enter; transition directly to the bound held pose",
+                            "Retain pacification, dialogue and health; preserve native ownership and stale-callback/lifecycle safeguards; do not reset hold on pose completion"
                         ],
-                        "meta": {}
+                        "meta": {
+                            "status": "implemented",
+                            "animationPhases": {
+                                "sourceExit": "skip",
+                                "destinationEnter": "skip"
+                            },
+                            "animationPolicyStatus": "planned",
+                            "implementationGap": "Current adapter exits to standing and re-enters bound kneeling; direct shared-policy transition and updated regressions tracked in skyrim-3y4",
+                            "visualQualification": "pending"
+                        }
                     }
                 ],
                 "On your feet. [loaded, unpaused, nearby combat active]": [
@@ -166,13 +175,28 @@
                         ]
                     }
                 ],
-                "Sit [loaded, unpaused]": [
+                "Sit [loaded, unpaused, injury health > 0]": [
                     {
                         "target": "Sitting",
                         "actions": [
                             "Finish selected kneeling family exit before sitting entry",
                             "Supersede automatic rest: set peacefulChoice to wander and clear selectedPose",
-                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget"
+                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget",
+                            "Preserve meaningful injury health and unresolved wound risk; Sit adds no healing and never rerolls mortality"
+                        ],
+                        "meta": {
+                            "status": "planned"
+                        }
+                    }
+                ],
+                "Sit [loaded, unpaused, injury health = 0]": [
+                    {
+                        "target": "SittingWounded",
+                        "actions": [
+                            "Finish selected kneeling family exit before sitting entry",
+                            "Supersede automatic rest: set peacefulChoice to wander and clear selectedPose",
+                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget",
+                            "Preserve meaningful injury health and unresolved wound risk; Sit adds no healing and never rerolls mortality"
                         ],
                         "meta": {
                             "status": "planned"
@@ -261,12 +285,17 @@
                     {
                         "target": "KneelingBound",
                         "actions": [
-                            "Exit current held native pose before changing destination",
+                            "Apply shared phase policy for this source/destination; skip kneeling exit and bound enter, retain kneeling posture",
                             "Enter native bound kneel; preserve peaceful budget; restart 1800-real-second command hold"
                         ],
                         "meta": {
                             "status": "implemented",
-                            "debug": true
+                            "debug": true,
+                            "animationPhases": {
+                                "sourceExit": "skip",
+                                "destinationEnter": "skip"
+                            },
+                            "animationPolicyStatus": "planned"
                         }
                     }
                 ],
@@ -324,7 +353,7 @@
                 "Owned pose faction rank selects explicit OAR enter/loop/exit overrides on persistent regular furniture; blessing uses idleblessingkneel_loop.hkx and idlekneelexit.hkx exit; failed entry uses regular fallback without timer reset"
             ],
             "exit": [
-                "Finish configured selected family exit before Resume or Bind; retain pose faction through exit, clear on destination/cleanup; keep epoch/generation guards",
+                "Follow shared per-transition source-exit policy; default Resume plays configured family exit, planned Bind skips it; clear pose faction through normal ownership handoff/cleanup; keep epoch/generation guards",
                 "Death/release/ownership loss invalidates callbacks; animation exit must not delay death or restart a stale pose"
             ]
         },
@@ -337,6 +366,11 @@
         "Wandering": {},
         "KneelingBound": {},
         "Sitting": {
+            "meta": {
+                "status": "planned"
+            }
+        },
+        "SittingWounded": {
             "meta": {
                 "status": "planned"
             }
