@@ -42,13 +42,16 @@ namespace Acheron
         static inline RE::FormID BindDialogueInfoID;
         static inline RE::FormID StandDialogueInfoID;
         static inline std::array<RE::FormID, 2> TestRootInfoIDs{};
-        static constexpr std::array<RE::FormID, 10> TestDialogueOffsets{ 0x839, 0x83B, 0x83D, 0x83F, 0x841, 0x843, 0x845, 0x847, 0x849, 0x84F };
+        static constexpr std::array<RE::FormID, 26> TestDialogueOffsets{ 0x839, 0x83B, 0x83D, 0x83F, 0x841, 0x843, 0x845, 0x847, 0x849, 0x84F, 0x861, 0x863, 0x865, 0x867, 0x869, 0x86b, 0x86d, 0x86f, 0x871, 0x873, 0x875, 0x877, 0x879, 0x87b, 0x87d, 0x87f };
         static inline std::array<RE::FormID, TestDialogueOffsets.size()> TestDialogueInfoIDs{};
         static inline std::array<RE::FormID, 4> DefeatedDialogueInfoIDs{};
         static inline RE::TESQuest* MainQuest;
         static inline RE::TESQuest* PeacefulDialogue;
         static inline RE::TESFaction* RescuedWounded;
         static inline RE::TESFaction* KneelingPose;
+        static inline RE::TESFaction* ManagedPhase;
+        static inline std::array<RE::FormID, 2> SitDialogueInfoIDs{};
+        static inline RE::FormID HealSittingDialogueInfoID;
 
 
         [[nodiscard]] static bool LoadForms()
@@ -97,6 +100,10 @@ namespace Acheron
                 }
                 LOOKUPFORM(RescuedWounded, 0x819);
                 LOOKUPFORM(KneelingPose, 0x84D);
+                LOOKUPFORM(ManagedPhase, 0x850);
+                SitDialogueInfoIDs = {RE::TESDataHandler::GetSingleton()->LookupFormID(0x852, "Acheron.esm"), RE::TESDataHandler::GetSingleton()->LookupFormID(0x853, "Acheron.esm")};
+                HealSittingDialogueInfoID = RE::TESDataHandler::GetSingleton()->LookupFormID(0x856, "Acheron.esm");
+                if (!SitDialogueInfoIDs[0] || !SitDialogueInfoIDs[1] || !HealSittingDialogueInfoID) return false;
                 LOOKUPFORM(PeacefulKneel, 0x81A);
                 LOOKUPFORM(PeacefulKneelBound, 0x81E);
                 LOOKUPFORM(PeacefulBoundMarker, 0x822);

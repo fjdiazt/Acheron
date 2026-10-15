@@ -25,6 +25,16 @@ namespace Acheron
             const auto actor = event->speakerRef->As<RE::Actor>();
             if (actor && Pacification::IsActive(actor)) Pacification::RequestKneel(actor, true);
         }
+        if (event->type.underlying() == 0 && std::ranges::find(GameForms::SitDialogueInfoIDs, event->topicInfoFormID) != GameForms::SitDialogueInfoIDs.end())
+            Pacification::RequestSit(event->speakerRef->As<RE::Actor>());
+        if (event->type.underlying() == 0 && event->topicInfoFormID == GameForms::HealSittingDialogueInfoID) {
+            const auto actor = event->speakerRef->As<RE::Actor>();
+            if (Pacification::NeedsHealing(actor)) {
+                const auto script = Script::GetScriptObject(GameForms::MainQuest, "AcheronHunterPride", true);
+                if (!script || !Script::DispatchMethodCall(script, "HealTarget", nullptr, static_cast<RE::Actor*>(actor)))
+                    logger::error("Unable to dispatch sitting Heal");
+            }
+        }
         if (GameForms::StandDialogueInfoID && event->topicInfoFormID == GameForms::StandDialogueInfoID && event->type.underlying() == 0) {
             const auto actor = event->speakerRef->As<RE::Actor>();
             if (actor && Pacification::IsActive(actor)) Pacification::RequestResume(actor);
@@ -60,6 +70,8 @@ namespace Acheron
             (GameForms::YieldKneelDialogueInfoID && event->topicInfoFormID == GameForms::YieldKneelDialogueInfoID) ||
             (GameForms::BindDialogueInfoID && event->topicInfoFormID == GameForms::BindDialogueInfoID) ||
             (GameForms::StandDialogueInfoID && event->topicInfoFormID == GameForms::StandDialogueInfoID) ||
+            std::ranges::find(GameForms::SitDialogueInfoIDs, event->topicInfoFormID) != GameForms::SitDialogueInfoIDs.end() ||
+            event->topicInfoFormID == GameForms::HealSittingDialogueInfoID ||
             std::ranges::find(GameForms::TestRootInfoIDs, event->topicInfoFormID) != GameForms::TestRootInfoIDs.end() ||
             std::ranges::find(GameForms::TestDialogueInfoIDs, event->topicInfoFormID) != GameForms::TestDialogueInfoIDs.end() ||
             std::ranges::find(GameForms::DefeatedDialogueInfoIDs, event->topicInfoFormID) != GameForms::DefeatedDialogueInfoIDs.end()) {

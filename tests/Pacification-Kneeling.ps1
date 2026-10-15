@@ -223,7 +223,7 @@ try {
     $animationStart=(Get-Content $animationLog -Raw).Length
     $bindClock=[Diagnostics.Stopwatch]::StartNew()
     Invoke-YieldTool input @{action='tap';device='keyboard';key='e';durationMs=50;owner=$RunId} | Out-Null
-    # Bind must finish furniture exit and re-entry; the controller permits 15 seconds for entry.
+    # Bind keeps occupied kneel geometry and switches the held graph directly.
     $summary.bound=Wait-PeacefulPhase $actor 4 20
     $summary.bindElapsedSeconds=$bindClock.Elapsed.TotalSeconds
     $deadline=(Get-Date).AddSeconds(12)
@@ -232,11 +232,11 @@ try {
         $furniture=(Invoke-NpcPapyrus Actor GetFurnitureReference $actor).returned.formId
         if($sit -eq 3 -and $furniture -eq $summary.bound.goal) {break}
     } while((Get-Date) -lt $deadline)
-    $boundBase=(Invoke-NpcPapyrus Game GetFormFromFile '' @(0x822,'Acheron.esm')).returned.formId
+    $boundBase=(Invoke-NpcPapyrus ObjectReference GetBaseObject $summary.beforeBind.goal).returned.formId
     if($sit -ne 3 -or $furniture -ne $summary.bound.goal -or
        (Invoke-NpcPapyrus ObjectReference GetBaseObject $furniture).returned.formId -ne $boundBase) {throw 'Native bound kneeling pose not acquired'}
     $summary.boundClip=@((Get-Content $animationLog -Raw).Substring($animationStart) -split "`n" | Where-Object {$_ -match 'AnimationLogEntry:.*AOBoundKneesIdle\.hkx'}) | Select-Object -Last 1
-    if(-not $summary.boundClip) {throw 'Bound kneeling animation clip missing'}
+    if(-not $summary.boundClip -or $summary.bound.goal -ne $summary.beforeBind.goal -or (Get-Content $animationLog -Raw).Substring($animationStart) -match 'AnimationLogEntry:.*(?:IdleKneelExit|AOBoundKneesEnter)\.hkx') {throw 'Bound direct held-pose handoff failed'}
     $resetBudget=$summary.bound.commandHoldRemaining+$summary.bindElapsedSeconds
     if($resetBudget -lt 1798 -or $resetBudget -gt 1805 -or
        $summary.bound.remaining -ne $summary.beforeBind.remaining) {throw 'Bind did not restart only the command hold timer'}

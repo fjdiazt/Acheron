@@ -138,6 +138,7 @@ namespace Acheron
         const auto health = a_victim->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth);
         if (health > 0.05f) a_victim->AsActorValueOwner()->DamageActorValue(RE::ActorValue::kHealth, health - 0.05f);
         else a_victim->AsActorValueOwner()->RestoreActorValue(RE::ActorValue::kHealth, 0.05f - health);
+        data->injuryDamageBaseline = a_victim->GetActorValueModifier(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kHealth);
 
         data->state.store(VictimState::Defeated);
 
@@ -398,9 +399,12 @@ namespace Acheron
                 for (size_t i = 0; i < numRegs; i++) {
                     std::uint8_t dialogueFlags{};
                     float aggression{}, aggressionBefore{};
+                    std::uint8_t baselineKnown{};
+                    float baseline{};
                     if (!a_intfc->ReadRecordData(formID) || !a_intfc->ReadRecordData(time) ||
                         (version >= 2 && (!a_intfc->ReadRecordData(dialogueFlags) || !a_intfc->ReadRecordData(aggression) || !a_intfc->ReadRecordData(aggressionBefore))) ||
-                        dialogueFlags > 7 || !std::isfinite(aggression) || std::abs(aggression) > 1000 || !std::isfinite(aggressionBefore) || std::abs(aggressionBefore) > 1000) {
+                        (version >= 3 && (!a_intfc->ReadRecordData(baselineKnown) || !a_intfc->ReadRecordData(baseline))) ||
+                        baselineKnown > 1 || !std::isfinite(baseline) || dialogueFlags > 7 || !std::isfinite(aggression) || std::abs(aggression) > 1000 || !std::isfinite(aggressionBefore) || std::abs(aggressionBefore) > 1000) {
                         logger::error("Invalid defeated dialogue cosave record"); return;
                     }
                     if (!a_intfc->ResolveFormID(formID, formID)) {
@@ -420,6 +424,13 @@ namespace Acheron
                         ref->As<RE::BGSKeywordForm>()->AddKeyword(GameForms::Defeated);
                     }
                     auto data = std::make_shared<VictimData>(time);
+                    if (baselineKnown) data->injuryDamageBaseline = baseline;
+                    else if (version < 3 && victim) {
+                        // Old saves lack the floor sample; only migration uses the legacy rounding tolerance.
+                        const auto health = victim->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth);
+                        data->injuryDamageBaseline = victim->GetActorValueModifier(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kHealth) -
+                            (health <= 0.051f ? 0.0f : health);
+                    }
                     data->dialogueFlags = version >= 2 ? dialogueFlags : victim ? CaptureDialogue(victim) : 0;
                     data->dialogueAggression = aggression;
                     data->dialogueAggressionModifierBefore = aggressionBefore;
@@ -491,6 +502,11 @@ namespace Acheron
                     }
                     if (!a_intfc->WriteRecordData(data->dialogueFlags) || !a_intfc->WriteRecordData(data->dialogueAggression) ||
                         !a_intfc->WriteRecordData(data->dialogueAggressionModifierBefore)) { logger::error("Failed to save defeated dialogue state"); return; }
+                    const std::uint8_t baselineKnown = data->injuryDamageBaseline.has_value();
+                    const auto baseline = data->injuryDamageBaseline.value_or(0);
+                    if (!a_intfc->WriteRecordData(baselineKnown) || !a_intfc->WriteRecordData(baseline)) {
+                        logger::error("Failed to save defeated injury baseline"); return;
+                    }
                 }
             }
             break;

@@ -12,6 +12,13 @@
 namespace Papyrus
 {
     void Utility::ApplyGodPreset(RE::StaticFunctionTag*) { Acheron::GodMode::Apply(); }
+    bool Defeat::NeedsSittingHeal(RE::StaticFunctionTag*, RE::Actor* actor) { return Acheron::Pacification::NeedsHealing(actor); }
+    bool Defeat::SitActor(RE::StaticFunctionTag*, RE::Actor* actor)
+    {
+        if (REL::Module::IsVR() || !Acheron::Pacification::IsEligible(actor) ||
+            (!Acheron::Defeat::IsDefeated(actor) && !Acheron::Pacification::IsActive(actor))) return false;
+        Acheron::Pacification::RequestSit(actor); return true;
+    }
     bool Defeat::KneelActor(RE::StaticFunctionTag*, RE::Actor* actor)
     {
         if (REL::Module::IsVR() || !Acheron::Pacification::IsEligible(actor) ||

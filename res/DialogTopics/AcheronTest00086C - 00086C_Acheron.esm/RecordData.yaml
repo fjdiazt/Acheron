@@ -1,0 +1,8 @@
+FormKey: 00086C:Acheron.esm
+EditorID: AcheronPose00086C
+Name:
+  TargetLanguage: English
+  Value: Sit (Take a Seat 4 (cross-legged))
+Branch: 000834:Acheron.esm
+Quest: 000818:Acheron.esm
+SubtypeName: CUST

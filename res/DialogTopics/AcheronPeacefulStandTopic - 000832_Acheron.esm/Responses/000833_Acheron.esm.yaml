@@ -2,7 +2,7 @@ FormKey: 000833:Acheron.esm
 Flags:
   Flags:
   - Goodbye
-PreviousDialog: Null
+PreviousDialog: null
 FavorLevel: None
 ResponseData: 019B8C:Dawnguard.esm
 Conditions:
@@ -13,6 +13,13 @@ Conditions:
   ComparisonValue: 1
 - MutagenObjectType: ConditionFloat
   Data:
-    MutagenObjectType: GetIsCurrentPackageConditionData
-    Package: 00081A:Acheron.esm
-  ComparisonValue: 1
+    MutagenObjectType: GetFactionRankConditionData
+    Faction: 000850:Acheron.esm
+  ComparisonValue: 3
+  CompareOperator: GreaterThanOrEqualTo
+- MutagenObjectType: ConditionFloat
+  Data:
+    MutagenObjectType: GetFactionRankConditionData
+    Faction: 000850:Acheron.esm
+  ComparisonValue: 4
+  CompareOperator: NotEqualTo

@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('suite','god-preset','npc-defeat','follower-pacification','npc-pacification','follower-defeat','npc-lethal','player-finish-physical','player-finish-magic','essential-protection','npc-recovery-2s','npc-recovery-3s','native-peaceful-probe','native-talk-probe','native-aggression-probe','greeting-probe','silent-greeting-probe','native-dialogue-bypass-probe','peaceful-state','peaceful-healing','peaceful-movement','peaceful-lifecycle','peaceful-persistence','peaceful-talk','peaceful-reset','peaceful-kneeling','peaceful-child-kneeling','peaceful-child-kneeling-male','peaceful-kneeling-hold','peaceful-kneeling-variants','peaceful-test-dialogue','peaceful-bind','injured-locomotion','rescue-locomotion','setup-enemy','setup-enemy-follower')]
+    [ValidateSet('suite','god-preset','npc-defeat','follower-pacification','npc-pacification','follower-defeat','npc-lethal','player-finish-physical','player-finish-magic','essential-protection','npc-recovery-2s','npc-recovery-3s','native-peaceful-probe','native-talk-probe','native-aggression-probe','greeting-probe','silent-greeting-probe','native-dialogue-bypass-probe','peaceful-state','peaceful-healing','peaceful-movement','peaceful-lifecycle','peaceful-persistence','peaceful-talk','peaceful-reset','peaceful-kneeling','peaceful-child-kneeling','peaceful-child-kneeling-male','peaceful-regular-kneeling','peaceful-kneeling-hold','peaceful-kneeling-variants','peaceful-sitting','peaceful-sitting-poses','peaceful-sitting-poses-male','peaceful-test-dialogue','peaceful-bind','injured-locomotion','rescue-locomotion','setup-enemy','setup-enemy-follower')]
     [string] $Test = 'suite',
     [string] $GameRoot = 'S:\games\The Elder Scrolls V - Skyrim Special Edition',
     [string] $PrefsPath = (Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'My Games\Skyrim Special Edition\SkyrimPrefs.ini'),
@@ -290,8 +290,12 @@ try {
         'peaceful-kneeling' { 'Pacification-Kneeling.ps1' }
         'peaceful-child-kneeling' { 'Pacification-KneelingHold.ps1' }
         'peaceful-child-kneeling-male' { 'Pacification-KneelingHold.ps1' }
+        'peaceful-regular-kneeling' { 'Pacification-KneelingHold.ps1' }
         'peaceful-kneeling-hold' { 'Pacification-KneelingHold.ps1' }
         'peaceful-kneeling-variants' { 'Pacification-KneelingVariants.ps1' }
+        'peaceful-sitting' { 'Pacification-Sitting.ps1' }
+        'peaceful-sitting-poses' { 'Pacification-Sitting.ps1' }
+        'peaceful-sitting-poses-male' { 'Pacification-Sitting.ps1' }
         'peaceful-test-dialogue' { 'Pacification-TestDialogue.ps1' }
         'peaceful-bind' { 'Pacification-Kneeling.ps1' }
         'injured-locomotion' { 'Injured-Locomotion.ps1' }
@@ -300,8 +304,11 @@ try {
         'setup-enemy-follower' { '../scripts/Setup-Scenario.ps1' }
     }
     $caseArguments = @{ RunId=$runId; RunDirectory=$runDirectory }
+    if($Test -in @('peaceful-sitting-poses','peaceful-sitting-poses-male')) {$caseArguments.Poses=$true}
+    if($Test -eq 'peaceful-sitting-poses-male') {$caseArguments.Male=$true}
     if($Test -in @('peaceful-child-kneeling','peaceful-child-kneeling-male')) {$caseArguments.Child=$true}
     if($Test -eq 'peaceful-child-kneeling-male') {$caseArguments.Male=$true}
+    if($Test -eq 'peaceful-regular-kneeling') {$caseArguments.Regular=$true}
     if ($Test -eq 'peaceful-bind') { $caseArguments.BindOnly = $true }
     if ($Test -eq 'native-talk-probe') { $caseArguments.DialogueOnly = $true }
     if ($Test -eq 'native-aggression-probe') { $caseArguments.RequireOriginalTalk = $true }

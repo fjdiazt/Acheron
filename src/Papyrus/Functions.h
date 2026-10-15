@@ -36,6 +36,8 @@ namespace Papyrus
     namespace Defeat
     {
         bool BeginPeacefulState(RE::StaticFunctionTag*, RE::Actor*, int);
+        bool SitActor(RE::StaticFunctionTag*, RE::Actor*);
+        bool NeedsSittingHeal(RE::StaticFunctionTag*, RE::Actor*);
         bool KneelActor(RE::StaticFunctionTag*, RE::Actor*);
         bool BindActor(RE::StaticFunctionTag*, RE::Actor*);
         bool ResumePeacefulState(RE::StaticFunctionTag*, RE::Actor*);
@@ -61,6 +63,8 @@ namespace Papyrus
         inline void Register(VM* a_vm)
         {
             REGISTERFUNC(BeginPeacefulState, "Acheron");
+            REGISTERFUNC(SitActor, "Acheron");
+            REGISTERFUNC(NeedsSittingHeal, "Acheron");
             REGISTERFUNC(KneelActor, "Acheron");
             REGISTERFUNC(BindActor, "Acheron");
             REGISTERFUNC(ResumePeacefulState, "Acheron");

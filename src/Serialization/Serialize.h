@@ -16,12 +16,12 @@ namespace Serialization
             _Consequence = 'cnsq',
 
             _Defeated = 'dfts',
-            _DefeatedVersion = 2,
+            _DefeatedVersion = 3,
             _Pacified = 'pfcy',
 
             _HunterPride = 'htpr',
             _Peaceful = 'pcfl',
-            _PeacefulVersion = 3
+            _PeacefulVersion = 4
         };
 
         static void SaveCallback(SKSE::SerializationInterface* a_intfc);

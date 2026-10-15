@@ -19,13 +19,13 @@ function Read-PeacefulDialogue([string] $ActorId) {
 function Read-PeacefulState([string] $ActorId) {
     $start=(Get-Content $logPath -Raw).Length
     Invoke-NpcPapyrus Acheron ProbePeacefulState '' @(@{form=$ActorId}) | Out-Null
-    $pattern='\[PeacefulSnapshot\] actor='+($ActorId -replace '^0x','')+' phase=(?<phase>\d+) remaining=(?<remaining>[0-9.eE+-]+) generation=(?<generation>\d+) anchor=(?<anchor>[0-9A-F]+) goal=(?<goal>[0-9A-F]+) ready=(?<ready>true|false) loaded=(?<loaded>true|false)(?: commandHoldRemaining=(?<kneeling>[0-9.eE+-]+))?(?: selectedKneelingVariant=(?<variant>\d+))?'
+    $pattern='\[PeacefulSnapshot\] actor='+($ActorId -replace '^0x','')+' phase=(?<phase>\d+) remaining=(?<remaining>[0-9.eE+-]+) generation=(?<generation>\d+) anchor=(?<anchor>[0-9A-F]+) goal=(?<goal>[0-9A-F]+) ready=(?<ready>true|false) loaded=(?<loaded>true|false)(?: commandHoldRemaining=(?<kneeling>[0-9.eE+-]+))?(?: selectedKneelingVariant=(?<variant>\d+))?(?: selectedSittingVariant=(?<sitting>\d+) injuryHealth=(?<injury>[0-9.eE+-]+))?'
     $deadline=(Get-Date).AddSeconds(3)
     do {
         $log=Get-Content $logPath -Raw
         $match=if($log.Length -ge $start) {[regex]::Match($log.Substring($start),$pattern)}else{$null}
         if($match -and $match.Success) {
-            return @{phase=[int]$match.Groups['phase'].Value;remaining=[double]$match.Groups['remaining'].Value;generation=[long]$match.Groups['generation'].Value;anchor='0x'+$match.Groups['anchor'].Value;goal='0x'+$match.Groups['goal'].Value;ready=$match.Groups['ready'].Value -eq 'true';loaded=$match.Groups['loaded'].Value -eq 'true';commandHoldRemaining=if($match.Groups['kneeling'].Success){[double]$match.Groups['kneeling'].Value}else{$null};selectedKneelingVariant=if($match.Groups['variant'].Success){[int]$match.Groups['variant'].Value}else{$null}}
+            return @{phase=[int]$match.Groups['phase'].Value;remaining=[double]$match.Groups['remaining'].Value;generation=[long]$match.Groups['generation'].Value;anchor='0x'+$match.Groups['anchor'].Value;goal='0x'+$match.Groups['goal'].Value;ready=$match.Groups['ready'].Value -eq 'true';loaded=$match.Groups['loaded'].Value -eq 'true';commandHoldRemaining=if($match.Groups['kneeling'].Success){[double]$match.Groups['kneeling'].Value}else{$null};selectedSittingVariant=if($match.Groups['sitting'].Success){[int]$match.Groups['sitting'].Value}else{$null};injuryHealth=if($match.Groups['injury'].Success){[double]$match.Groups['injury'].Value}else{$null};selectedKneelingVariant=if($match.Groups['variant'].Success){[int]$match.Groups['variant'].Value}else{$null}}
         }
         Start-Sleep -Milliseconds 25
     } while((Get-Date) -lt $deadline)

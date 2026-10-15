@@ -1,8 +1,10 @@
-param([string] $RunId, [string] $RunDirectory, [switch] $Child, [switch] $Male)
+param([string] $RunId, [string] $RunDirectory, [switch] $Child, [switch] $Male, [switch] $Regular)
 $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot 'Pacification-Fixture.ps1')
 if($Male) {$yieldEnemyBase='0x00043BDD'}
-$variant=if($Child){2}else{1}; $priority=5002+$variant
+$variant=if($Child){2}elseif($Regular){0}else{1}; $priority=5002+$variant
+$poseLabel=@("Kneel (Regular)","Kneel (Blessing)","Kneel (Child sit/kneel)")[$variant]
+$poseInfo=@(0x843,0x845,0x84F)[$variant]
 $actor=$null; $summary.actorCleaned=$false; $summary.holdSamples=@()
 $animationLog=Join-Path (Split-Path -Parent $PrefsPath) 'SKSE\OpenAnimationReplacer.log'
 try {
@@ -24,7 +26,7 @@ try {
     Invoke-NpcPapyrus Actor EnableAI $actor @($true) | Out-Null
     Select-PeacefulDialogueChoice $actor 'Test' 0x836 $RunId | Out-Null
     $start=(Get-Content $animationLog -Raw).Length
-    Select-PeacefulDialogueChoice $actor $(if($Child){'Kneel (Child sit/kneel)'}else{'Kneel (Blessing)'}) $(if($Child){0x84F}else{0x845}) $RunId -AlreadyOpen | Out-Null
+    Select-PeacefulDialogueChoice $actor $poseLabel $poseInfo $RunId -AlreadyOpen | Out-Null
     $initial=Wait-PeacefulPhase $actor 3 20
     if($initial.selectedKneelingVariant -ne $variant) {throw 'Requested variant not selected'}
     $poseFaction=(Invoke-NpcPapyrus Game GetFormFromFile '' @(0x84D,'Acheron.esm')).returned.formId
@@ -47,7 +49,7 @@ try {
     foreach($clip in @('idlekneelenter','idlekneelidle')) {
         if($held -notmatch ('AnimationLogEntry:.*_CustomConditions[\\/]'+$priority+'[\\/]'+$clip+'\.hkx')) {throw "Scoped kneeling replacement missing: $clip"}
     }
-    if([regex]::Matches($held,('AnimationLogEntry: Loop animation.*_CustomConditions[\\/]'+$priority+'[\\/]idlekneelidle\.hkx'),'IgnoreCase').Count -lt 2) {throw 'Kneeling clip did not repeat during hold'}
+    if([regex]::Matches($held,('AnimationLogEntry: Loop.*_CustomConditions[\\/]'+$priority+'[\\/]idlekneelidle\.hkx'),'IgnoreCase').Count -lt 2) {throw 'Kneeling clip did not repeat during hold'}
     for($i=0;$i -lt 3;$i++) {
         Invoke-NpcPapyrus ObjectReference Activate $actor @(@{form=$player},$false) | Out-Null
         $deadline=(Get-Date).AddSeconds(8)
@@ -74,22 +76,28 @@ try {
        $control -match '_CustomConditions[\\/]500[234][\\/]') {throw 'Kneeling replacement leaked outside owned pose'}
     $summary.unownedPoseControl=$control
     Invoke-NpcPapyrus Debug SendAnimationEvent '' @(@{form=$actor},'IdleChairExitStart') | Out-Null
-    if($Child) {
+    & {
         Invoke-NpcPapyrus Actor EnableAI $actor @($true) | Out-Null
         Select-PeacefulDialogueChoice $actor 'Test' 0x837 $RunId | Out-Null
-        Select-PeacefulDialogueChoice $actor 'Kneel (Child sit/kneel)' 0x84F $RunId -AlreadyOpen | Out-Null
+        Select-PeacefulDialogueChoice $actor $poseLabel $poseInfo $RunId -AlreadyOpen | Out-Null
         $beforeBind=Wait-PeacefulPhase $actor 3 20
         $bindStart=(Get-Content $animationLog -Raw).Length
-        $summary.bindSelection=Select-PeacefulDialogueChoice $actor 'Bind' 0x820 $RunId
+        if($Regular) {
+            Select-PeacefulDialogueChoice $actor 'Test' 0x837 $RunId | Out-Null
+            $summary.bindSelection=Select-PeacefulDialogueChoice $actor 'Kneeling bound' 0x847 $RunId -AlreadyOpen
+        } else {
+            $summary.bindSelection=Select-PeacefulDialogueChoice $actor 'Bind' 0x820 $RunId
+        }
         $summary.bound=Wait-PeacefulPhase $actor 4 20
         $bindLog=(Get-Content $animationLog -Raw).Substring($bindStart)
-        $exit=[regex]::Match($bindLog,'AnimationLogEntry:.*_CustomConditions[\\/]5004[\\/]idlekneelexit\.hkx','IgnoreCase')
+        $exit=[regex]::Match($bindLog,'AnimationLogEntry:.*(?:IdleKneelExit|IdleKneelEnter|AOBoundKneesEnter)\.hkx','IgnoreCase')
         $bound=[regex]::Match($bindLog,'AnimationLogEntry:.*AOBoundKneesIdle\.hkx','IgnoreCase')
-        if(-not $exit.Success -or -not $bound.Success -or $exit.Index -ge $bound.Index -or
+        if($exit.Success -or -not $bound.Success -or $summary.bound.goal -ne $beforeBind.goal -or
+           (Invoke-NpcPapyrus Actor GetSitState $actor).returned -ne 3 -or
            $summary.bound.commandHoldRemaining -lt 1770 -or $summary.bound.remaining -ne $beforeBind.remaining -or
            (Invoke-NpcPapyrus Actor IsInFaction $actor @(@{form=$poseFaction})).returned -or
            (Invoke-NpcPapyrus Actor GetActorValue $actor @('Health')).returned -ne $health -or
-           -not (Invoke-NpcPapyrus Acheron IsPacified '' @(@{form=$actor})).returned) {throw 'Child Bind exit, timer, scope or actor invariants failed'}
+           -not (Invoke-NpcPapyrus Acheron IsPacified '' @(@{form=$actor})).returned) {throw 'Direct Bind phase playback, retained marker, timer or actor invariants failed'}
         $summary.boundDialogue=Select-PeacefulDialogueChoice $actor 'Continue.' 0x817 $RunId
     }
     @{message="PASS: kneeling variant $variant sustained hold, native Talk/stand and scoped animation control; male=$Male";screenshot=$null}

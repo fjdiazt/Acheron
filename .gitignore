@@ -5,6 +5,7 @@
 .release/
 .xmake/
 build/
+__pycache__/
 
 dist/SKSE/Plugins/
 dist/Acheron.esm

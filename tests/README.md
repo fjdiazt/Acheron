@@ -166,7 +166,7 @@ pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test peaceful-child-kn
 ```
 
 Uses a disposable actor, 12-second hold, three Talk opens, then On your feet.
-Child cases also re-enter child pose and Bind, verifying child exit before bound
+Child cases also re-enter child pose and Bind, verifying direct handoff without child exit or bound enter into bound
 idle, restarted hold, marker cleanup and bound dialogue. Female remains default
 for other tests/scenarios; male coverage uses explicit Forsworn base 0x43BDD.
 Asserts no premature exit, actual sit state 3, selected family, scoped OAR
@@ -252,7 +252,7 @@ expired hold stayed bound during dialogue/Refresh, then native exit completed be
 the Wandering package. Health/pacification, both variants, save/load and both Resume
 destinations also passed. Candidate retained; game closed and test settings restored.
 Unloaded command races, forced exit timeout and VR remain unqualified.
-Bind readiness waits up to 20 seconds for furniture exit/re-entry, covering the
+Legacy Bind qualification below used furniture exit/re-entry; direct kneeling Bind now retains geometry. Default sitting Bind still waits for the
 controller's 15-second entry deadline. Timer checks account for time elapsed
 since selection instead of assuming animation entry finishes within 10 seconds.
 The existing wandering budget stays separate. Host FSM checks simulate expiry;
@@ -846,7 +846,7 @@ loss. Original INI bytes are archived and restored, with an external-edit check.
 Summary includes `startupIniRestored`; no VR config is written.
 
 Build-time record gate: `python tests/Test-TestDialogueRecords.py`. This checks the
-compiled ESM root response/conditions and ten native links, catching malformed YAML
+compiled ESM root response/conditions and 26 native links, catching malformed YAML
 that Spriggit accepts while discarding INFO fields.
 
 Qualified desktop run: `9862c8ae-b917-44b1-b3fe-1ab477a7f455` (all command indices
@@ -857,3 +857,43 @@ records an inconclusive direct synthetic-combat -> DefeatActor settling probe; t
 extra bootstrap is not a prerequisite for talkable-source Test commands.
 Acheron's animation-driven defeat can differ from native IsBleedingOut; use its own
 flag/package plus fresh targeted OAR bleedout/locomotion clips for transition readiness.
+
+## Commanded sitting and direct pose transitions
+
+```powershell
+python scripts/Stage-SittingAnimations.py
+pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test peaceful-sitting
+pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test peaceful-sitting-poses
+pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test peaceful-sitting-poses-male
+```
+
+`peaceful-suite` includes the core `peaceful-sitting` regression; complete pose
+qualification stays explicit. `peaceful-sitting` uses real native Sit/Heal/On your feet/Kneel/Bind topics,
+exact zero-injury baseline, yielding/sitting save-load, failed no-potion treatment,
+an actual consumed healing potion and an external native healing spell.
+It asserts unchanged occupied marker/native sitting, no enter/exit clips on Heal,
+preserved remaining hold/peaceful budget, and a fresh unbound menu without Heal.
+Default posture changes and sitting Bind retain their requested exit/entry sequence.
+Pose cases select each native Test entry and require its actual scoped OAR loop;
+male case excludes female-only families. Every variant has its own Test choice.
+Each asset case uses a fresh actor; repeated marker-entry stress is separate.
+Pose selection preserves engine health; real injury routing is tested separately
+through actual defeat and On the ground. Forced wounded Test poses use a diagnostic
+injury baseline, not health damage.
+Visual seating geometry, swaps and VR remain separate acceptance checks.
+
+Direct Kneeling -> KneelingBound now shares the held package/marker and skips exit
+and enter, resetting hold once at acceptance. Regular/blessing/child hold cases
+assert that contract; older exit-before-Bind results above describe superseded code.
+Regular uses the Test bound choice; blessing and child use the ordinary Bind choice.
+Routine evidence remains logs/hooks, with no automatic screenshots.
+
+2026-10-15 desktop qualification: core sitting `7f6938bd-25ff-44b9-b892-b2f09caa8f0e`,
+all16 female poses `e560ab49`,13 male poses `186f2737`, regular/Test-bound `8d297cb7`,
+blessing/Bind `41a9015b`, child/Bind `76dbfbae`, real player-hit defeat `fdaa3914`.
+Candidate retained with130 deployment hashes verified; owned actors/saves cleaned,
+desktop closed, INI/Prefs/config snapshots restored. Full receipts and limits live in
+[the animation catalog](../docs/animations-bookmarks.md#sitting-asset-staging).
+The long one-actor pose sweep stalls after nine entries (`skyrim-emh`); asset tests
+use fresh actors and do not claim that stress case fixed. Visual seating/blends,
+mortality scheduling and VR remain unqualified.

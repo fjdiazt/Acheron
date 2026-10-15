@@ -1,0 +1,8 @@
+FormKey: 000870:Acheron.esm
+EditorID: AcheronPose000870
+Name:
+  TargetLanguage: English
+  Value: Sit (Take a Seat 6 (ledge))
+Branch: 000834:Acheron.esm
+Quest: 000818:Acheron.esm
+SubtypeName: CUST

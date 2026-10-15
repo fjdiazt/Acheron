@@ -11,7 +11,7 @@
                             "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented"
                         }
                     }
                 ],
@@ -23,7 +23,7 @@
                             "Preserve new defeat ownership and protection"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented"
                         }
                     }
                 ],
@@ -34,7 +34,7 @@
                             "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented"
                         }
                     }
                 ],
@@ -45,7 +45,7 @@
                             "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented"
                         }
                     }
                 ],
@@ -56,7 +56,7 @@
                             "Exit held pose; clear hold timer; preserve wander budget"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented"
                         }
                     }
                 ],
@@ -67,7 +67,7 @@
                             "Exit held pose; clear hold timer; preserve wander budget"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented"
                         }
                     }
                 ],
@@ -78,7 +78,7 @@
                             "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented"
                         }
                     }
                 ],
@@ -89,7 +89,7 @@
                             "Exit held pose; clear hold timer; preserve wander budget"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented"
                         }
                     }
                 ],
@@ -100,7 +100,7 @@
                             "Exit held pose; clear hold timer; preserve wander budget"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented"
                         }
                     }
                 ],
@@ -111,7 +111,7 @@
                             "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented"
                         }
                     }
                 ],
@@ -122,7 +122,7 @@
                             "Exit held pose; clear hold timer; preserve wander budget"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented"
                         }
                     }
                 ],
@@ -133,7 +133,7 @@
                             "Reset wander budget to valid requested duration (1-600 seconds)"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented"
                         }
                     }
                 ],
@@ -145,7 +145,7 @@
                             "Exit held pose; clear hold timer; preserve wander budget"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented"
                         }
                     }
                 ],
@@ -157,7 +157,7 @@
                             "Exit held pose; clear hold timer; preserve wander budget"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented"
                         }
                     }
                 ],
@@ -168,7 +168,7 @@
                             "Exit held pose; clear hold timer; preserve wander budget"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented"
                         }
                     }
                 ],
@@ -179,7 +179,7 @@
                             "Exit held pose; clear hold timer; preserve wander budget"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented"
                         }
                     }
                 ],
@@ -190,7 +190,7 @@
                             "Remove peaceful ownership and its temporary AI, pose, movement and rescued overrides"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented"
                         }
                     }
                 ],
@@ -201,7 +201,7 @@
                             "Exit held pose; clear hold timer; preserve wander budget"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented"
                         }
                     }
                 ],
@@ -210,11 +210,10 @@
                         "target": "Kneeling",
                         "actions": [
                             "Finish selected sitting family exit before unbound kneeling entry",
-                            "Supersede automatic rest: set peacefulChoice to wander and clear selectedPose",
                             "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented"
                         }
                     }
                 ],
@@ -227,16 +226,66 @@
                             "Invalidate pending posture callbacks on death, release, expiry or ownership loss; do not reset hold on completion"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented"
+                        }
+                    }
+                ],
+                "Test Sitting [eligible loaded talkable managed desktop NPC; compatible sex]": [
+                    {
+                        "target": "Sitting",
+                        "actions": [
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Explicit normal sitting pose; deterministic selectedSittingVariant"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true,
+                            "variants": [
+                                "Cross-legged",
+                                "Ledge",
+                                "Take a Seat 1 (cross-legged)",
+                                "Take a Seat 2 (cross-legged)",
+                                "Take a Seat 3 (ledge)",
+                                "Take a Seat 3 (cross-legged)",
+                                "Take a Seat 4 (cross-legged)",
+                                "Take a Seat 5 (cross-legged)",
+                                "Take a Seat 6 (ledge)",
+                                "Take a Seat 7 (cross-legged)"
+                            ]
+                        }
+                    }
+                ],
+                "Test SittingWounded [eligible loaded talkable managed desktop NPC; compatible sex]": [
+                    {
+                        "target": "SittingWounded",
+                        "actions": [
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Force diagnostic zero-injury baseline for this pose; preserve engine health. Use Test Yielding first to exercise real defeat injury."
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true,
+                            "variants": [
+                                "Beggar",
+                                "Wounded 1",
+                                "Wounded 2",
+                                "Wounded 3",
+                                "Female Laydown",
+                                "Female Laydown Mirrored"
+                            ]
                         }
                     }
                 ]
             },
             "meta": {
-                "status": "planned",
+                "status": "implemented",
                 "catalog": "animations-bookmarks.md#commanded-sitting-selections-2026-10-15",
                 "health": "Positive meaningful injury health on Sit entry; never compare the artificial defeated-health clamp",
-                "healingPoseSwap": "Shared animationPhases on the incoming healing edge selects direct held-idle swap; visual qualification pending"
+                "healingPoseSwap": "Shared animationPhases on the incoming healing edge selects direct held-idle swap; visual qualification pending",
+                "persistenceVersion": 4,
+                "phase": 5,
+                "poseSelection": "selectedSittingVariant; explicit enter/loop/exit in scripts/sitting-animations.json; persistent held geometry, enter/exit priorities5005-5020, idle-only interruptible priorities5105-5120",
+                "qualification": "Desktop candidate; functional/clip qualification recorded in animations catalog; visual swaps and VR require review"
             },
             "entry": [
                 "Enter the selected normal sitting family through the shared transition animation-phase policy; retain pacification and dialogue",
@@ -256,7 +305,12 @@
         "AvoidingCombat": {},
         "Wandering": {},
         "Kneeling": {},
-        "KneelingBound": {}
+        "KneelingBound": {},
+        "SittingWounded": {
+            "meta": {
+                "status": "implemented"
+            }
+        }
     },
     "meta": {
         "generatedFrom": "fsm.json",

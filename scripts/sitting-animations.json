@@ -1,0 +1,146 @@
+[
+  {
+    "name": "Cross-legged",
+    "rank": 3,
+    "enter": "idlesit_crosslegged_enter.hkx",
+    "loop": "idlesit_crosslegged.hkx",
+    "exit": "idlesit_crosslegged_exit.hkx",
+    "femaleOnly": false,
+    "loopSeconds": 2.0
+  },
+  {
+    "name": "Ledge",
+    "rank": 4,
+    "enter": "idlesit_crosslegged_enter.hkx",
+    "loop": "idlesitledge.hkx",
+    "exit": "idlesit_crosslegged_exit.hkx",
+    "femaleOnly": false,
+    "loopSeconds": 6.666667
+  },
+  {
+    "name": "Take a Seat 1 (cross-legged)",
+    "rank": 5,
+    "enter": "idlesit_crosslegged_enter.hkx",
+    "loop": "mod:Take a Seat - New OAR Sitting Animations/meshes/actors/character/animations/OpenAnimationReplacer/Take a Seat/Sitting Animation 1/idlesit_crosslegged.hkx",
+    "exit": "idlesit_crosslegged_exit.hkx",
+    "femaleOnly": false,
+    "loopSeconds": 6.666667
+  },
+  {
+    "name": "Take a Seat 2 (cross-legged)",
+    "rank": 6,
+    "enter": "idlesit_crosslegged_enter.hkx",
+    "loop": "mod:Take a Seat - New OAR Sitting Animations/meshes/actors/character/animations/OpenAnimationReplacer/Take a Seat/Sitting Animation 2/idlesit_crosslegged.hkx",
+    "exit": "idlesit_crosslegged_exit.hkx",
+    "femaleOnly": false,
+    "loopSeconds": 2.0
+  },
+  {
+    "name": "Take a Seat 3 (ledge)",
+    "rank": 7,
+    "enter": "idlesit_crosslegged_enter.hkx",
+    "loop": "mod:Take a Seat - New OAR Sitting Animations/meshes/actors/character/animations/OpenAnimationReplacer/Take a Seat/Sitting Animation 3/idlesitledge.hkx",
+    "exit": "idlesit_crosslegged_exit.hkx",
+    "femaleOnly": false,
+    "loopSeconds": 6.666667
+  },
+  {
+    "name": "Take a Seat 3 (cross-legged)",
+    "rank": 8,
+    "enter": "idlesit_crosslegged_enter.hkx",
+    "loop": "mod:Take a Seat - New OAR Sitting Animations/meshes/actors/character/animations/OpenAnimationReplacer/Take a Seat/Sitting Animation 3/idlesit_crosslegged.hkx",
+    "exit": "idlesit_crosslegged_exit.hkx",
+    "femaleOnly": false,
+    "loopSeconds": 2.0
+  },
+  {
+    "name": "Take a Seat 4 (cross-legged)",
+    "rank": 9,
+    "enter": "idlesit_crosslegged_enter.hkx",
+    "loop": "mod:Take a Seat - New OAR Sitting Animations/meshes/actors/character/animations/OpenAnimationReplacer/Take a Seat/Sitting Animation 4/idlesit_crosslegged.hkx",
+    "exit": "idlesit_crosslegged_exit.hkx",
+    "femaleOnly": false,
+    "loopSeconds": 6.666667
+  },
+  {
+    "name": "Take a Seat 5 (cross-legged)",
+    "rank": 10,
+    "enter": "idlesit_crosslegged_enter.hkx",
+    "loop": "mod:Take a Seat - New OAR Sitting Animations/meshes/actors/character/animations/OpenAnimationReplacer/Take a Seat/Sitting Animation 5/idlesit_crosslegged.hkx",
+    "exit": "idlesit_crosslegged_exit.hkx",
+    "femaleOnly": false,
+    "loopSeconds": 2.0
+  },
+  {
+    "name": "Take a Seat 6 (ledge)",
+    "rank": 11,
+    "enter": "idlesit_crosslegged_enter.hkx",
+    "loop": "mod:Take a Seat - New OAR Sitting Animations/meshes/actors/character/animations/OpenAnimationReplacer/Take a Seat/Sitting Animation 6/idlesitledge.hkx",
+    "exit": "idlesit_crosslegged_exit.hkx",
+    "femaleOnly": false,
+    "loopSeconds": 2.0
+  },
+  {
+    "name": "Take a Seat 7 (cross-legged)",
+    "rank": 12,
+    "enter": "idlesit_crosslegged_enter.hkx",
+    "loop": "mod:Take a Seat - New OAR Sitting Animations/meshes/actors/character/animations/OpenAnimationReplacer/Take a Seat/Sitting Animation 7/idlesit_crosslegged.hkx",
+    "exit": "idlesit_crosslegged_exit.hkx",
+    "femaleOnly": true,
+    "loopSeconds": 2.0
+  },
+  {
+    "name": "Beggar",
+    "rank": 13,
+    "enter": "mt_beggarsit.hkx",
+    "loop": "mt_beggaridle.hkx",
+    "exit": "mt_beggarstand.hkx",
+    "femaleOnly": false,
+    "loopSeconds": 2.0
+  },
+  {
+    "name": "Wounded 1",
+    "rank": 14,
+    "enter": "idlesit_crosslegged_enter.hkx",
+    "loop": "mt_wounded_01.hkx",
+    "exit": "idlesit_crosslegged_exit.hkx",
+    "femaleOnly": false,
+    "loopSeconds": 6.666667
+  },
+  {
+    "name": "Wounded 2",
+    "rank": 15,
+    "enter": "idlesit_crosslegged_enter.hkx",
+    "loop": "mt_wounded_02.hkx",
+    "exit": "idlesit_crosslegged_exit.hkx",
+    "femaleOnly": false,
+    "loopSeconds": 6.666667
+  },
+  {
+    "name": "Wounded 3",
+    "rank": 16,
+    "enter": "idlesit_crosslegged_enter.hkx",
+    "loop": "mt_wounded_03.hkx",
+    "exit": "idlesit_crosslegged_exit.hkx",
+    "femaleOnly": false,
+    "loopSeconds": 6.666667
+  },
+  {
+    "name": "Female Laydown",
+    "rank": 17,
+    "enter": "mod:Improved Idle Laydown Animations/meshes/actors/character/animations/OpenAnimationReplacer/SDB IILD/unisex laydown/idlelaydown_enter.hkx",
+    "loop": "mod:Improved Idle Laydown Animations/meshes/actors/character/animations/OpenAnimationReplacer/SDB IILD/female laydown/idlelaydown.hkx",
+    "exit": "mod:Improved Idle Laydown Animations/meshes/actors/character/animations/OpenAnimationReplacer/SDB IILD/unisex laydown/idlelaydown_exit.hkx",
+    "femaleOnly": true,
+    "loopSeconds": 47.916668
+  },
+  {
+    "name": "Female Laydown Mirrored",
+    "rank": 18,
+    "enter": "mod:Improved Idle Laydown Animations/meshes/actors/character/animations/OpenAnimationReplacer/SDB IILD/unisex laydown/idlelaydown_enter.hkx",
+    "loop": "mod:Improved Idle Laydown Animations/meshes/actors/character/animations/OpenAnimationReplacer/SDB IILD/female laydown mirror/idlelaydown.hkx",
+    "exit": "mod:Improved Idle Laydown Animations/meshes/actors/character/animations/OpenAnimationReplacer/SDB IILD/unisex laydown/idlelaydown_exit.hkx",
+    "femaleOnly": true,
+    "loopSeconds": 47.916668
+  }
+]

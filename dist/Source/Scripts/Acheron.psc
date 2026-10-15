@@ -6,6 +6,8 @@ Function ApplyGodPreset() global native
 ; True means queued; IsPeacefulState confirms the acquired state.
 bool Function BeginPeacefulState(Actor akActor, int aiDurationSeconds) native global
 ; Queued commands; no health restoration. Resume returns to avoidance/wandering.
+bool Function SitActor(Actor akActor) native global
+bool Function NeedsSittingHeal(Actor akActor) native global
 bool Function KneelActor(Actor akActor) native global
 bool Function BindActor(Actor akActor) native global
 bool Function ResumePeacefulState(Actor akActor) native global

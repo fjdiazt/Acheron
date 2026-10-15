@@ -129,6 +129,7 @@ try {
         if($paused.phase -ne 3 -or $paused.goal -ne $beforeBind.goal -or
            $paused.commandHoldRemaining -gt $beforeBind.commandHoldRemaining+0.1) {throw 'Paused command changed pose or restarted hold'}
     } finally {Invoke-YieldTool menu @{action='close';name='Console'} | Out-Null}
+    $start=(Get-Content $animationLog -Raw).Length
     $summary.bindSelection=Select-PeacefulDialogueChoice $actor 'Bind' 0x820 $RunId
     $summary.bound=Wait-PeacefulPhase $actor 4 20
     Invoke-NpcPapyrus ObjectReference Activate $actor @(@{form=$player},$false) | Out-Null
@@ -143,20 +144,12 @@ try {
     $summary.originalAggression=$originalAggression
     Close-PeacefulDialogue $actor $RunId
     $bindAnimations=(Get-Content $animationLog -Raw).Substring($start)
-    $exit='IdleKneelExit'
-    $oldExit=[regex]::Match($bindAnimations,'AnimationLogEntry:.*'+$exit+'\.hkx','IgnoreCase')
-    $boundIdle=[regex]::Match($bindAnimations,'AnimationLogEntry:.*AOBoundKneesIdle\.hkx','IgnoreCase')
-    if(-not $oldExit.Success -or -not $boundIdle.Success -or $oldExit.Index -ge $boundIdle.Index) {throw 'Bind did not play selected family exit before bound pose'}
-    if($summary.bound.commandHoldRemaining -lt 1770 -or $summary.bound.remaining -ne $beforeBind.remaining -or
-       (Get-Content $animationLog -Raw).Substring($start) -notmatch 'AnimationLogEntry:.*AOBoundKneesIdle\.hkx') {throw 'Bind lost native pose or failed to restart hold'}
+    if($bindAnimations -match 'AnimationLogEntry:.*(?:IdleKneelExit|AOBoundKneesEnter)\.hkx' -or
+       $bindAnimations -notmatch 'AnimationLogEntry:.*AOBoundKneesIdle\.hkx' -or $summary.bound.goal -ne $beforeBind.goal) {throw 'Bind failed direct held-pose handoff'}
+    if($summary.bound.commandHoldRemaining -lt 1770 -or $summary.bound.remaining -ne $beforeBind.remaining) {throw 'Bind timer contract failed'}
     $id=[regex]::Escape(($actor -replace '^0x',''))
-    $bindLog=Get-Content $logPath -Raw
-    $accepted=[regex]::Matches($bindLog,"\[PeacefulPoseExit\] actor=$id phase=3 event=3 hold=(?<hold>[0-9.eE+-]+)")
-    $completed=[regex]::Matches($bindLog,"\[PeacefulPoseExitComplete\] actor=$id event=3 hold=(?<hold>[0-9.eE+-]+)")
-    if(-not $accepted.Count -or -not $completed.Count -or [double]$accepted[-1].Groups['hold'].Value -ne 1800 -or
-       [double]$completed[-1].Groups['hold'].Value -ge 1800 -or
-       $summary.bound.commandHoldRemaining -gt [double]$completed[-1].Groups['hold'].Value+0.1) {throw 'Bind did not start hold at acceptance or restarted it after exit'}
-    $summary.bindTiming=@{accepted=[double]$accepted[-1].Groups['hold'].Value;exitComplete=[double]$completed[-1].Groups['hold'].Value;ready=$summary.bound.commandHoldRemaining;pausedCommandsRejected=$true}
+    if((Get-Content $logPath -Raw) -notmatch "\[PeacefulTransition\] actor=$id from=3 to=4 sourceExit=skip destinationEnter=skip hold=1800") {throw 'Bind did not restart hold at acceptance'}
+    $summary.bindTiming=@{accepted=1800;ready=$summary.bound.commandHoldRemaining;pausedCommandsRejected=$true}
     Invoke-NpcPapyrus ObjectReference Activate $actor @(@{form=$player},$false) | Out-Null
     $deadline=(Get-Date).AddSeconds(8)
     do {

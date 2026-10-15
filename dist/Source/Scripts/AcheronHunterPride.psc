@@ -17,19 +17,7 @@ Function PerformAction(int aiOptionID, Actor akTarget)
   EndIf
   Debug.Trace("[Acheron] PerformAction: " + aiOptionID + " / " + akTarget)
   If(aiOptionID == 0)
-    Potion p = Acheron.GetMostEfficientPotion(akTarget, PlayerRef)
-    If(!p)
-      NoPotionMsg.Show()
-      return
-    EndIf
-    PlayerRef.RemoveItem(p, 1, true, akTarget)
-    akTarget.EquipItem(p, false, true)
-    If(Acheron.IsDefeated(akTarget) && !Acheron.SupportsPeacefulRescue(akTarget))
-      ; Some actors are immune to potion effect
-      akTarget.PlaceAtMe(HealTargetFX)
-      akTarget.RestoreActorValue("Health", 25.0)
-      Acheron.RescueActor(akTarget, true)
-    EndIf
+    HealTarget(akTarget)
   ElseIf(aiOptionID == 1)
     akTarget.OpenInventory(true)
     akTarget.SendAssaultAlarm()
@@ -85,4 +73,23 @@ bool Function CheckEssential(Actor akTarget)
     return false
   EndIf
   return true
+EndFunction
+
+Function HealTarget(Actor akTarget)
+  If(!akTarget || (!Acheron.IsDefeated(akTarget) && !Acheron.NeedsSittingHeal(akTarget)))
+    return
+  EndIf
+    Potion p = Acheron.GetMostEfficientPotion(akTarget, PlayerRef)
+    If(!p)
+      NoPotionMsg.Show()
+      return
+    EndIf
+    PlayerRef.RemoveItem(p, 1, true, akTarget)
+    akTarget.EquipItem(p, false, true)
+    If(Acheron.IsDefeated(akTarget) && !Acheron.SupportsPeacefulRescue(akTarget))
+      ; Some actors are immune to potion effect
+      akTarget.PlaceAtMe(HealTargetFX)
+      akTarget.RestoreActorValue("Health", 25.0)
+      Acheron.RescueActor(akTarget, true)
+    EndIf
 EndFunction

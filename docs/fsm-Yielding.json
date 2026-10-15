@@ -203,7 +203,8 @@
                             "Preserve meaningful injury health and unresolved wound risk; Sit adds no healing and never rerolls mortality"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented",
+                            "implementationGap": "Mortality scheduling remains planned; health and defeat time retained, no fabricated wound deadline"
                         }
                     }
                 ],
@@ -218,7 +219,8 @@
                             "Preserve meaningful injury health and unresolved wound risk; Sit adds no healing and never rerolls mortality"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented",
+                            "implementationGap": "Mortality scheduling remains planned; health and defeat time retained, no fabricated wound deadline"
                         }
                     }
                 ],
@@ -304,12 +306,13 @@
                     {
                         "target": "KneelingBound",
                         "actions": [
-                            "Exit current held native pose before changing destination",
+                            "Apply shared source/destination phase policy; ordinary exit and enter outside Kneeling -> KneelingBound",
                             "Enter native bound kneel; preserve peaceful budget; restart 1800-real-second command hold"
                         ],
                         "meta": {
                             "status": "implemented",
-                            "debug": true
+                            "debug": true,
+                            "animationPolicyStatus": "implemented"
                         }
                     }
                 ],
@@ -323,6 +326,52 @@
                         "meta": {
                             "status": "implemented",
                             "debug": true
+                        }
+                    }
+                ],
+                "Test Sitting [eligible loaded talkable managed desktop NPC; compatible sex]": [
+                    {
+                        "target": "Sitting",
+                        "actions": [
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Explicit normal sitting pose; deterministic selectedSittingVariant"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true,
+                            "variants": [
+                                "Cross-legged",
+                                "Ledge",
+                                "Take a Seat 1 (cross-legged)",
+                                "Take a Seat 2 (cross-legged)",
+                                "Take a Seat 3 (ledge)",
+                                "Take a Seat 3 (cross-legged)",
+                                "Take a Seat 4 (cross-legged)",
+                                "Take a Seat 5 (cross-legged)",
+                                "Take a Seat 6 (ledge)",
+                                "Take a Seat 7 (cross-legged)"
+                            ]
+                        }
+                    }
+                ],
+                "Test SittingWounded [eligible loaded talkable managed desktop NPC; compatible sex]": [
+                    {
+                        "target": "SittingWounded",
+                        "actions": [
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Force diagnostic zero-injury baseline for this pose; preserve engine health. Use Test Yielding first to exercise real defeat injury."
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true,
+                            "variants": [
+                                "Beggar",
+                                "Wounded 1",
+                                "Wounded 2",
+                                "Wounded 3",
+                                "Female Laydown",
+                                "Female Laydown Mirrored"
+                            ]
                         }
                     }
                 ]
@@ -355,12 +404,12 @@
         },
         "Sitting": {
             "meta": {
-                "status": "planned"
+                "status": "implemented"
             }
         },
         "SittingWounded": {
             "meta": {
-                "status": "planned"
+                "status": "implemented"
             }
         },
         "Combat": {},

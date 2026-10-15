@@ -137,8 +137,8 @@
                                 "sourceExit": "skip",
                                 "destinationEnter": "skip"
                             },
-                            "animationPolicyStatus": "planned",
-                            "implementationGap": "Current adapter exits to standing and re-enters bound kneeling; direct shared-policy transition and updated regressions tracked in skyrim-3y4",
+                            "animationPolicyStatus": "implemented",
+                            "implementation": "Shared adapter retains occupied kneeling marker/package and selects bound held pose; regression covers ordinary Bind and native Test entry",
                             "visualQualification": "pending"
                         }
                     }
@@ -185,7 +185,8 @@
                             "Preserve meaningful injury health and unresolved wound risk; Sit adds no healing and never rerolls mortality"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented",
+                            "implementationGap": "Mortality scheduling remains planned; health and defeat time retained, no fabricated wound deadline"
                         }
                     }
                 ],
@@ -199,7 +200,8 @@
                             "Preserve meaningful injury health and unresolved wound risk; Sit adds no healing and never rerolls mortality"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented",
+                            "implementationGap": "Mortality scheduling remains planned; health and defeat time retained, no fabricated wound deadline"
                         }
                     }
                 ],
@@ -295,7 +297,7 @@
                                 "sourceExit": "skip",
                                 "destinationEnter": "skip"
                             },
-                            "animationPolicyStatus": "planned"
+                            "animationPolicyStatus": "implemented"
                         }
                     }
                 ],
@@ -322,6 +324,52 @@
                             "status": "current"
                         }
                     }
+                ],
+                "Test Sitting [eligible loaded talkable managed desktop NPC; compatible sex]": [
+                    {
+                        "target": "Sitting",
+                        "actions": [
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Explicit normal sitting pose; deterministic selectedSittingVariant"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true,
+                            "variants": [
+                                "Cross-legged",
+                                "Ledge",
+                                "Take a Seat 1 (cross-legged)",
+                                "Take a Seat 2 (cross-legged)",
+                                "Take a Seat 3 (ledge)",
+                                "Take a Seat 3 (cross-legged)",
+                                "Take a Seat 4 (cross-legged)",
+                                "Take a Seat 5 (cross-legged)",
+                                "Take a Seat 6 (ledge)",
+                                "Take a Seat 7 (cross-legged)"
+                            ]
+                        }
+                    }
+                ],
+                "Test SittingWounded [eligible loaded talkable managed desktop NPC; compatible sex]": [
+                    {
+                        "target": "SittingWounded",
+                        "actions": [
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Force diagnostic zero-injury baseline for this pose; preserve engine health. Use Test Yielding first to exercise real defeat injury."
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true,
+                            "variants": [
+                                "Beggar",
+                                "Wounded 1",
+                                "Wounded 2",
+                                "Wounded 3",
+                                "Female Laydown",
+                                "Female Laydown Mirrored"
+                            ]
+                        }
+                    }
                 ]
             },
             "meta": {
@@ -339,7 +387,7 @@
                         "childSitKneel"
                     ],
                     "childCompatibility": "desktop-adult-female-and-male-forsworn; broader actors and VR unverified",
-                    "persistenceVersion": 3,
+                    "persistenceVersion": 4,
                     "phaseOverrides": "scripts/kneeling-animations.json"
                 },
                 "dialogueCommands": {
@@ -367,12 +415,12 @@
         "KneelingBound": {},
         "Sitting": {
             "meta": {
-                "status": "planned"
+                "status": "implemented"
             }
         },
         "SittingWounded": {
             "meta": {
-                "status": "planned"
+                "status": "implemented"
             }
         },
         "Combat": {}

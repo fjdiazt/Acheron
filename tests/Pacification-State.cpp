@@ -1,5 +1,6 @@
 #include "Acheron/PacificationState.h"
 #include "Acheron/TestState.h"
+#include "Acheron/PoseTransition.h"
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -19,6 +20,37 @@ static void Remaining(const std::optional<State>& state, Phase phase, float seco
 
 int main()
 {
+    Require(InjuryHealth(-99.949997f, -99.949997f) == 0 && InjuryHealth(-74.949997f, -99.949997f) == 25, "Defeat floor became injury health");
+    Require(!SittingPoseAllowed(14, true, false) && SittingPoseAllowed(14, true, true), "Female pose leaked to male actor");
+    State wounded{ Phase::SittingWounded, 37, 123 };
+    Facts treatment{};
+    treatment.injuryHealth = 0;
+    Require(Decide(wounded, { EventKind::Healed }, treatment)->phase == Phase::SittingWounded, "Unsuccessful treatment changed pose");
+    treatment.injuryHealth = 10;
+    const auto healed = Decide(wounded, { EventKind::Healed }, treatment);
+    Require(healed && healed->phase == Phase::Sitting && healed->commandHoldRemaining == 123 && healed->remaining == 37, "Healing reset hold/budget");
+    const auto healingPolicy = PosePolicy(Phase::SittingWounded, Phase::Sitting);
+    Require(!healingPolicy.sourceExit && !healingPolicy.destinationEnter, "Healing must swap held idles directly");
+    treatment.injuryHealth = 0;
+    Require(Decide({Phase::Wandering, 37}, {EventKind::Sit}, treatment)->phase == Phase::SittingWounded, "Zero injury health must sit wounded");
+    treatment.injuryHealth = 1;
+    Require(Decide({Phase::Kneeling, 37, 123}, {EventKind::Sit}, treatment)->phase == Phase::Sitting, "Healthy kneeling must sit normally");
+    Require(Decide(wounded, {EventKind::Sit}, treatment)->commandHoldRemaining == 123, "Repeated Sit reset hold");
+    for (auto phase : { Phase::Sitting, Phase::SittingWounded }) {
+        Facts facts{};
+        facts.realDelta = 2;
+        auto expired = Decide({phase,37,1}, {}, facts);
+        Require(expired && expired->phase == Phase::Wandering && expired->remaining == 37 && expired->commandHoldRemaining == 0, "Sitting expiry lost peaceful budget");
+        facts.alive = false;
+        Require(!Decide({phase,37,100}, {EventKind::Healed}, facts), "Treatment overrode death");
+    }
+    const auto bindPolicy = PosePolicy(Phase::Kneeling, Phase::KneelingBound);
+    Require(!bindPolicy.sourceExit && !bindPolicy.destinationEnter, "Bind must skip both transition clips");
+    Require(PosePolicy(Phase::Kneeling, Phase::Wandering).sourceExit, "Resume lost its default exit");
+    for (bool exit : { false, true }) for (bool enter : { false, true }) {
+        const auto steps = PoseSteps(Phase::Kneeling, Phase::KneelingBound, { exit, enter });
+        Require(steps.sourceExit == exit && steps.destinationEnter == enter && steps.destinationHold, "Phase choices are not independent");
+    }
     for (const auto phase : { Phase::AvoidingCombat, Phase::Wandering, Phase::Kneeling, Phase::KneelingBound }) {
         const State previous{ phase, 37, 12, KneelingVariant::Blessing };
         for (const auto command : { TestState::KneelingRegular, TestState::KneelingBlessing, TestState::KneelingChild, TestState::KneelingBound }) {

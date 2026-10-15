@@ -16,7 +16,7 @@ def walk(start, end):
             walk(start + 24, start + size)
             start += size
             continue
-        if not 0x835 <= form & 0xFFFFFF <= 0x84F:
+        if not 0x835 <= form & 0xFFFFFF <= 0x87F:
             start += 24 + size
             continue
         body = data[start + 24:start + 24 + size]
@@ -39,6 +39,7 @@ def walk(start, end):
 walk(0, len(data))
 expected = [0x838 + 2 * i for i in range(9)]
 expected.insert(7, 0x84E)
+expected.extend(0x860 + 2 * i for i in range(16))
 for form in (0x836, 0x837):
     tag, fields = records[form]
     links = [struct.unpack("<I", value)[0] & 0xFFFFFF for key, value in fields if key == b"TCLT"]
@@ -51,4 +52,4 @@ for form in expected:
     tag, fields = records[form + 1]
     assert tag == b"INFO" and dict(fields)[b"ENAM"][0] & 1, "Test action must end dialogue"
     assert sum(key == b"DNAM" for key, _ in fields) == 1, "Test action lost response"
-print("PASS: compiled Test roots, ten native topic links, responses and action INFOs")
+print("PASS: compiled Test roots, 26 native topic links, responses and action INFOs")

@@ -176,12 +176,12 @@
         "Wandering": {},
         "Sitting": {
             "meta": {
-                "status": "planned"
+                "status": "implemented"
             }
         },
         "SittingWounded": {
             "meta": {
-                "status": "planned"
+                "status": "implemented"
             }
         }
     },

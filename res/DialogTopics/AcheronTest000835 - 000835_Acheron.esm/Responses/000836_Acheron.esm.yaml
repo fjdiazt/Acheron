@@ -1,7 +1,7 @@
 FormKey: 000836:Acheron.esm
 Flags:
   Flags: []
-PreviousDialog: Null
+PreviousDialog: null
 FavorLevel: None
 ResponseData: 019B8C:Dawnguard.esm
 LinkTo:
@@ -15,6 +15,22 @@ LinkTo:
 - 00084E:Acheron.esm
 - 000846:Acheron.esm
 - 000848:Acheron.esm
+- 000860:Acheron.esm
+- 000862:Acheron.esm
+- 000864:Acheron.esm
+- 000866:Acheron.esm
+- 000868:Acheron.esm
+- 00086A:Acheron.esm
+- 00086C:Acheron.esm
+- 00086E:Acheron.esm
+- 000870:Acheron.esm
+- 000872:Acheron.esm
+- 000874:Acheron.esm
+- 000876:Acheron.esm
+- 000878:Acheron.esm
+- 00087A:Acheron.esm
+- 00087C:Acheron.esm
+- 00087E:Acheron.esm
 Conditions:
 - MutagenObjectType: ConditionFloat
   Data:

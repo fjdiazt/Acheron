@@ -51,15 +51,27 @@ function Set-YieldPlayerAppearance {
     }
     $sex=(Invoke-NpcPapyrus ActorBase GetSex $base).returned
     if($sex -ne 1) {throw 'Native female selection failed'}
-    $count=(Invoke-NpcPapyrus ActorBase GetNumHeadParts $base).returned
-    if($count -lt 1 -or $count -gt 16) {throw 'Invalid Argonian head part count'}
-    $parts=@(for($i=0;$i -lt $count;$i++) {
-        $part=(Invoke-NpcPapyrus ActorBase GetNthHeadPart $base @($i)).returned
-        $valid=(Invoke-NpcPapyrus HeadPart GetValidRaces $part.formId).returned
-        if(-not $valid.formId -or (Invoke-NpcPapyrus FormList HasForm $valid.formId @(@{form=$raceId})).returned -ne $true) {throw "Incompatible Argonian head part: $($part.editorId)"}
-        $part
-    })
-    if('FemaleHeadArgonian' -notin $parts.editorId -or 'FemaleMouthArgonian' -notin $parts.editorId) {throw 'Female Argonian head/mouth missing'}
+    # Native head rebuild is queued; race/sex can finish before compatible head parts arrive.
+    $deadline=(Get-Date).AddSeconds(5)
+    do {
+        try {
+            $count=(Invoke-NpcPapyrus ActorBase GetNumHeadParts $base).returned
+            if($count -lt 1 -or $count -gt 16) {throw 'Invalid Argonian head part count'}
+            $parts=@(for($i=0;$i -lt $count;$i++) {
+                $part=(Invoke-NpcPapyrus ActorBase GetNthHeadPart $base @($i)).returned
+                $valid=(Invoke-NpcPapyrus HeadPart GetValidRaces $part.formId).returned
+                if(-not $valid.formId -or (Invoke-NpcPapyrus FormList HasForm $valid.formId @(@{form=$raceId})).returned -ne $true) {throw "Incompatible Argonian head part: $($part.editorId)"}
+                $part
+            })
+            if('FemaleHeadArgonian' -notin $parts.editorId -or 'FemaleMouthArgonian' -notin $parts.editorId) {throw 'Female Argonian head/mouth missing'}
+            $headError=$null; break
+        } catch {
+            if($_.Exception.Message -notmatch '^(Invalid Argonian head part count|Incompatible Argonian head part:|Female Argonian head/mouth missing)') {throw}
+            $headError=$_
+        }
+        Start-Sleep -Milliseconds 100
+    } while((Get-Date) -lt $deadline)
+    if($headError) {throw $headError}
     Invoke-NpcPapyrus UI InvokeInt '' @($menu,"$panel.onDoneClicked",0) | Out-Null
     $dialog=Invoke-YieldTool menu @{action='describe'}
     if(-not $dialog.messageBoxOpen -or $dialog.buttons[0] -ne 'Ok') {throw 'Unexpected character creation confirmation'}

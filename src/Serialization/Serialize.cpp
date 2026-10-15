@@ -44,7 +44,7 @@ namespace Serialization
         while (a_intfc->GetNextRecordInfo(type, version, length)) {
             if (type == _HunterPride || type == EventManager::HunterPrideSelect) continue; // Discard obsolete custom-menu data.
             if (type == _Defeated) {
-                if (version == 1 || version == _DefeatedVersion) Acheron::Defeat::Load(a_intfc, type, version);
+                if (version >= 1 && version <= _DefeatedVersion) Acheron::Defeat::Load(a_intfc, type, version);
                 else logger::warn("Unsupported defeated cosave version {}", version);
                 continue;
             }

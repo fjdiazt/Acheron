@@ -96,7 +96,8 @@ Only the selected clips below are included, not entire replacement groups.
 
 Native beggar assets were found in the desktop BSA and behavior graph:
 `mt_beggarsit.hkx` (expected entry), `mt_beggaridle.hkx` (expected held idle),
-`mt_beggarstand.hkx` (expected exit). This phase mapping is not live-qualified.
+`mt_beggarstand.hkx` (exit). Native entry/held-loop mapping passed desktop qualification;
+visual geometry remains separate.
 Do not use the entry clip as the held loop merely because its name says "sit".
 
 The wounded pool intentionally includes female lying poses; it is a visual
@@ -107,20 +108,81 @@ File names alone do not establish that Wounded 01-03 are seated poses.
 Requested routing: Sit at health zero chooses `SittingWounded`; positive health
 chooses `Sitting`. The cue must preserve untreated wound/death risk rather than
 silently cure the NPC. Acheron currently clamps defeated actor health to `0.05`
-in `src/Acheron/Defeat.cpp`; injury-health tracking still needs implementation.
+in `src/Acheron/Defeat.cpp`; the defeat record captures its exact damage modifier as the zero-injury baseline.
+The controller tracks repaired damage, not temporary maximum-health buffs.
+Defeated cosave v3 preserves the baseline; only old-save migration estimates the floor.
 Heal is shown only in `SittingWounded` at zero injury health; successful healing
 above zero, from any source, automatically selects `Sitting` and preserves remaining
 hold and peaceful budget. Failed/cancelled healing keeps the wounded pose.
 The transition declares skipped source exit and destination enter through the
 shared animation-phase pipeline policy. Swap held idle directly, without standing
 up or sitting down again; no healing-specific bypass or assumed interpolation.
-Native compatibility and the visual result need testing and user confirmation.
+Native compatibility has desktop regression coverage; visual result needs user confirmation.
 Kneeling -> KneelingBound is included in that same shared phase-policy scope:
 skip kneeling exit and bound enter, directly select bound held idle; Bind still
-restarts the command hold. Existing qualified Bind runs played kneeling exit
-before bound idle and do not qualify the proposed direct handoff.
-Both sitting states, their health routing, Heal and animation-phase policy are
-planned in the [FSM](fsm.md#commanded-sitting), not enabled gameplay.
+restarts the command hold. Direct child Bind run `df6ad484` retained the occupied marker,
+native sitting status and health; no kneeling exit/bound enter clips occurred.
+Sitting states, native Heal/Test topics and shared phase policy are implemented in
+this desktop candidate. Mortality scheduling remains planned. Functional qualification
+is separate from visual pose/swap review and VR verification.
+
+### Sitting asset staging
+
+`scripts/sitting-animations.json` explicitly selects all 16 enter/loop/exit triples.
+Normal variants 0-9; wounded 10-15. Hidden pose ranks 3-18 use scoped OAR priorities
+5005-5020 for enter/exit on persistent kneeling geometry; idle-only interruptible
+submods use priorities5105-5120. Keeping enter/exit non-interruptible prevents a
+lingering exit clip from restarting when the destination rank changes. `AcheronManagedPhase` (0x850, rank=phase)
+controls native dialogue independently of physical packages. Take a Seat 7 retains
+its source female restriction; Laydown/Mirrored are female-only. Same-basename
+Take a Seat files have distinct SHA256 hashes and remain separate choices.
+
+Run `python scripts/Stage-SittingAnimations.py`; sources are the desktop animation
+BSA and read-only active VR pack copies. Only staging is written; source HKX files
+are excluded from Git. The manifest records source paths and hashes. Native cross-legged
+enter/exit are explicit overrides for variants lacking a selected enter/exit. Laydown
+uses the source pack's unisex laydown enter/exit with female held loops. Beggar uses
+its native sit/idle/stand triple. Wounded 01-03 remain visually unqualified as seated
+poses even after graph/loop qualification; filename does not prove posture.
+
+Probe `04bf6cdb` showed why a generic kneeling instant event cannot drive healing:
+it selected the new clip but cleared native sitting state. The adapter now changes
+only scoped selection; OAR interruptible idle submods reevaluate without waiting
+for a full loop (female laydown loops last47.916668 seconds). Enter/exit stay outside
+those submods. Probe `ec11f1d1` showed why marking all three phases interruptible
+was unsafe: changing rank restarted a lingering exit, preventing the next native entry.
+Native potion healing remains exactly 25 points, with one consumed item. Visual
+continuity still requires user review; no seamless blend is claimed.
+
+Desktop asset qualification passed `e560ab49-72d1-4686-8945-dd2d83854497`
+(female, all16 families) and `186f2737-b9ef-4d14-9219-5eb71e59402c`
+(male,13 eligible families). Each native Test choice used an independent disposable
+actor and required its exact scoped idle, repeat loop, native sitting ownership,
+unchanged engine health and eventual hold release. Female-only choices were absent
+for the male actor. These are playback checks, not visual pose approval.
+
+Long one-actor sweep `6c16058d-f80c-472c-8c4c-a1e13c171055` passed nine families
+then stalled entering the tenth. That same family passed alone in `9b94874b`.
+Repeated native marker-entry stress remains unresolved in `skyrim-emh`; the fresh-actor
+asset checks do not establish a fix or prove a geometric cause.
+
+Direct kneeling -> bound regressions passed all three families: regular
+`8d297cb7-12eb-44f0-b69f-ff13e404f63a` through native Test selection, blessing
+`41a9015b-5415-47e8-a4a2-5a15b10eb8dc` and child
+`76dbfbae-d138-415e-8b32-c0e73960d089` through ordinary Bind. All retained the
+occupied marker/native sitting, skipped enter/exit clips, reset hold to1800,
+preserved health/pacification and passed Talk/default-exit/scope controls.
+
+Final core sitting run `7f6938bd-25ff-44b9-b892-b2f09caa8f0e` passed yielding
+and sitting save/load, exact zero-injury routing, failed no-potion Heal, one consumed
+potion/+25 health, direct healed swap, resumed rescued locomotion, default posture
+commands/Bind and external healing. Direct swaps retained marker, sitting and timers.
+Real player-hit defeat regression `fdaa3914-a1b1-4fa1-a8a1-5beacd912090` passed.
+The qualified desktop candidate remains installed;130 file receipts match current
+source in `build/pacification-backups/0c3bd37c-2a80-4727-bcf8-141741b5eb73/manifest.json`.
+Desktop closed; owned saves cleaned and test INI/Prefs/config snapshots restored.
+VR was not modified. Mortality scheduling, visual swaps and the repeated-entry
+stress case remain outside this functional qualification.
 
 ## Playback notes
 

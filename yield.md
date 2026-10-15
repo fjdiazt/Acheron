@@ -211,19 +211,19 @@ them. Exact classification for ambiguous actors remains to be defined.
 ### On your knees.
 
 - Use **On your knees.** to enter our own `Kneeling` FSM state from Yielding,
-  AvoidingCombat, Wandering, planned Sitting or Resting, without healing. From Resting,
+  AvoidingCombat, Wandering, Sitting or SittingWounded, and planned Resting, without healing. From Resting,
   exit the automatic pose first; explicit Kneel supersedes its saved automatic
   choice. This replaces the earlier kneeling
   action's provisional Bind label; Surrender is now separate. Earlier
   handcuff/tie-up wording is superseded.
 - Use a kneeling idle animation with hands unbound; this action does not bind or
-  execute the NPC. Planned entry randomly selects blessing, regular kneeling or
+  execute the NPC. Entry randomly selects blessing, regular kneeling or
   child sit/kneel from the [three-family catalog](docs/animations-bookmarks.md#commanded-kneeling-variants).
   Choose uniformly among verified compatible families; all three eligible means
   1/3 each. Store selected variant; play matching enter -> idle/loop -> exit.
   Preserve selection on ticks, Refresh and save/load; choose again only on a new
-  commanded Kneeling entry. Child-family adult compatibility and all playback
-  mappings/VR behavior remain unverified. Missing/failed variants use native
+  commanded Kneeling entry. Child-family adult compatibility has desktop male/female
+  coverage; VR remains unverified. Missing/failed variants use native
   kneeling fallback without random retries or timer reset. Bound kneeling and
   automatic Resting retain their separate animation policies.
 - While kneeling, remain talkable with the applicable conversation options,
@@ -236,10 +236,9 @@ them. Exact classification for ambiguous actors remains to be defined.
 - Choosing **Bind** while kneeling transitions to our `KneelingBound` state,
   using the native hands-bound kneeling pose. This replaces the earlier prisoner
   command wording for this kneeling transition.
-  Planned shared transition phase policy skips kneeling exit and bound entry,
-  directly selecting bound held idle without standing or re-kneeling. Current
-  code/logs still show exit -> standing -> bound re-entry; updating that path and
-  the tests requiring its old exit is in scope (`skyrim-3y4`). Bind still restarts
+  Shared transition phase policy skips kneeling exit and bound entry,
+  directly selecting bound held idle without standing or re-kneeling. Native
+  marker/package ownership remains intact. Bind still restarts
   the 1800-real-second hold on acceptance, unlike healing's preserved hold.
 - Planned **On your knees.** from StandingBound instead enters KneelingBound:
   play kneeling entry, then bound-kneeling entry/idle. Retain binding and
@@ -266,9 +265,9 @@ them. Exact classification for ambiguous actors remains to be defined.
 
 ### On the ground. / Sitting
 
-- Planned command enters owned, unbound `Sitting` at positive meaningful injury
+- Desktop command enters owned, unbound `Sitting` at positive meaningful injury
   health or `SittingWounded` at zero, from Yielding, AvoidingCombat, Wandering,
-  Resting or Kneeling. Use tracked injury health including healing, not the
+  Kneeling, and planned Resting. Use tracked injury health including healing, not the
   artificial defeated-health clamp `0.05`. Same eligibility, pacification, dialogue and
   1800-real-second hold as commanded Kneeling; peaceful budget stays frozen.
 - Kneeling -> Sitting and Sitting -> Kneeling start the destination hold on command
@@ -282,8 +281,8 @@ them. Exact classification for ambiguous actors remains to be defined.
   play applicable source exit/destination enter by default, or skip either through
   transition data. Healing sets both to skip and directly swaps the held wounded
   idle to normal sitting idle; no stand-up or sit-down transition. Ordinary cleanup,
-  stale-callback and death guards remain. Direct swap/native compatibility and
-  visual quality still need user testing; no seamless interpolation assumed.
+  stale-callback and death guards remain. Native compatibility has desktop regression
+  coverage; visual quality needs user testing. No seamless interpolation assumed.
 - Sit adds no healing and must retain untreated injury context and wound/death
   risk, transferring any pending wound deadline instead of curing through posture.
   Wound scheduling remains open; no new mortality curve or timer is specified.
@@ -295,7 +294,7 @@ them. Exact classification for ambiguous actors remains to be defined.
   restarts the 1800-second hold on acceptance; animation completion does not reset it.
 - Preserve selected sitting state/pose/hold and injury context through save/load; existing death, release,
   renewed-defeat and eligibility cleanup cancels stale pose callbacks. Exact sitting
-  forms/clips, failure handling and runtime playback remain unqualified. See
+  visual continuity and VR remain unqualified. Mortality scheduling remains planned. See
   [commanded Sitting policy](docs/fsm.md#commanded-sitting).
 
 ### On your feet.

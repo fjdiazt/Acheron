@@ -1,0 +1,8 @@
+FormKey: 000878:Acheron.esm
+EditorID: AcheronPose000878
+Name:
+  TargetLanguage: English
+  Value: Sit wounded (Wounded 2)
+Branch: 000834:Acheron.esm
+Quest: 000818:Acheron.esm
+SubtypeName: CUST

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <shared_mutex>
+#include <optional>
 
 namespace Acheron
 {
@@ -29,6 +30,7 @@ namespace Acheron
             float GetSecondsDefeated() const;
 
             float registered_at;              // GameDaysPassed at construction
+            std::optional<float> injuryDamageBaseline; // Exact artificial health floor; later repaired damage is real healing.
             bool allow_recovery{ true };      // if this actor may passively recover
             bool mark_for_recovery{ false };  // Rescue this actor the next time they load in?
             std::uint8_t dialogueFlags{};     // Prior extra-talk presence/value and bleedout dialogue flag.
