@@ -19,7 +19,7 @@ try {
     $hardlink=Join-Path $fixture 'shared.ini'
     New-Item -ItemType HardLink -Path $hardlink -Target $source | Out-Null
     Assert-Rejected $hardlink
-    foreach($path in @('C:\bin\wabbajack\SkyrimVRMods\mods\new.ini','S:\SteamLibrary\steamapps\common\SkyrimVR\Data\new.ini',(Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'My Games\Skyrim VR\SkyrimPrefs.ini'))) {Assert-Rejected $path}
+    foreach($path in @('C:\bin\wabbajack\SkyrimVRMods\mods\new.ini','N:\games\systems\pc\mods\wabbajack\SkyrimVRMods\mods\new.ini','S:\SteamLibrary\steamapps\common\SkyrimVR\Data\new.ini',(Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'My Games\Skyrim VR\SkyrimPrefs.ini'))) {Assert-Rejected $path}
     if((Get-Content -LiteralPath $source -Raw).Trim() -ne 'unchanged') {throw 'Shared source changed'}
     'PASS: regular paths allowed; VR paths, linked files and linked ancestors rejected'
 } finally {

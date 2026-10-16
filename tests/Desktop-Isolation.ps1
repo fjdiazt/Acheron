@@ -1,6 +1,6 @@
 function Assert-DesktopWritePath([string] $Path) {
     $full=[IO.Path]::GetFullPath($Path)
-    foreach($protected in @('C:\bin\wabbajack\SkyrimVRMods','S:\SteamLibrary\steamapps\common\SkyrimVR',(Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'My Games\Skyrim VR'))) {
+    foreach($protected in @('C:\bin\wabbajack\SkyrimVRMods','N:\games\systems\pc\mods\wabbajack\SkyrimVRMods','S:\SteamLibrary\steamapps\common\SkyrimVR',(Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'My Games\Skyrim VR'))) {
         $root=[IO.Path]::GetFullPath($protected).TrimEnd('\')
         if($full.Equals($root,[StringComparison]::OrdinalIgnoreCase) -or $full.StartsWith($root+'\',[StringComparison]::OrdinalIgnoreCase)) {throw "Refusing VR production write: $full"}
     }

@@ -3,7 +3,8 @@
 Speak like a caveman. Keep technical terms exact.
 
 VR Mad God installation is production. Treat these paths as read-only:
-- `C:\bin\wabbajack\SkyrimVRMods`
+- `C:\bin\wabbajack\SkyrimVRMods` (active installation)
+- `N:\games\systems\pc\mods\wabbajack\SkyrimVRMods` (retained NAS copy)
 - `S:\SteamLibrary\steamapps\common\SkyrimVR`
 - Documents `My Games\Skyrim VR`
 
