@@ -16,7 +16,7 @@ def walk(start, end):
             walk(start + 24, start + size)
             start += size
             continue
-        if not 0x835 <= form & 0xFFFFFF <= 0x87F:
+        if not 0x835 <= form & 0xFFFFFF <= 0x88A:
             start += 24 + size
             continue
         body = data[start + 24:start + 24 + size]
@@ -40,6 +40,7 @@ walk(0, len(data))
 expected = [0x838 + 2 * i for i in range(9)]
 expected.insert(7, 0x84E)
 expected.extend(0x860 + 2 * i for i in range(16))
+expected.append(0x882)
 for form in (0x836, 0x837):
     tag, fields = records[form]
     links = [struct.unpack("<I", value)[0] & 0xFFFFFF for key, value in fields if key == b"TCLT"]
@@ -52,4 +53,14 @@ for form in expected:
     tag, fields = records[form + 1]
     assert tag == b"INFO" and dict(fields)[b"ENAM"][0] & 1, "Test action must end dialogue"
     assert sum(key == b"DNAM" for key, _ in fields) == 1, "Test action lost response"
-print("PASS: compiled Test roots, 26 native topic links, responses and action INFOs")
+print("PASS: compiled Test roots, 27 native topic links, responses and action INFOs")
+
+for form in (0x883,0x886,0x887):
+    tag,fields=records[form]
+    conditions=[value for key,value in fields if key==b"CTDA"]
+    assert any(struct.unpack_from("<H",value,8)[0]==719 and struct.unpack_from("<I",value,12)[0]==0x14 for value in conditions), "Flee lost enemy/player condition"
+    assert dict(fields)[b"ENAM"][0]&1, "Flee action must end dialogue"
+assert records[0x88A][0]==b"PACK", "Production FleeFrom package missing"
+assert 0x880 not in records and 0x881 not in records, "Private package fixture leaked into production staging"
+assert struct.unpack("<f",dict(records[0x885][1])[b"PNAM"])[0]==90, "Get out of here priority lost"
+print("PASS: Flee package, native enemy predicates, Goodbye flags and dialogue priority")

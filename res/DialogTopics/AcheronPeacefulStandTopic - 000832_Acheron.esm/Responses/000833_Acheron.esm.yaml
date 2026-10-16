@@ -23,3 +23,9 @@ Conditions:
     Faction: 000850:Acheron.esm
   ComparisonValue: 4
   CompareOperator: NotEqualTo
+- MutagenObjectType: ConditionFloat
+  Data:
+    MutagenObjectType: GetFactionRankConditionData
+    Faction: 000850:Acheron.esm
+  ComparisonValue: 7
+  CompareOperator: LessThan

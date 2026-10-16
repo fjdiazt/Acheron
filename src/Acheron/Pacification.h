@@ -10,6 +10,8 @@ namespace Acheron::Pacification
     void RequestBegin(RE::Actor* actor, int seconds);
     void RequestKneel(RE::Actor* actor, bool bind = false);
     void RequestSit(RE::Actor* actor);
+    bool CanFlee(RE::Actor* actor);
+    void RequestFlee(RE::Actor* actor);
     bool NeedsHealing(RE::Actor* actor);
     void RequestResume(RE::Actor* actor);
     void RequestTestState(RE::Actor* actor, Peaceful::TestState command);
@@ -18,6 +20,7 @@ namespace Acheron::Pacification
     void RequestRelease(RE::Actor* actor);
 #ifdef ACHERON_YIELD_TESTS
     void ProbeCommandHold(RE::Actor* actor, float seconds);
+    void ProbeFleeDuration(RE::Actor* actor, float seconds);
     void ProbeLegacyAggression(RE::Actor* actor);
     void Trace(RE::Actor* actor);
 #endif

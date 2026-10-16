@@ -7,6 +7,8 @@ Function ApplyGodPreset() global native
 bool Function BeginPeacefulState(Actor akActor, int aiDurationSeconds) native global
 ; Queued commands; no health restoration. Resume returns to avoidance/wandering.
 bool Function SitActor(Actor akActor) native global
+; Enemy-only queued flight; preserves health and actor values.
+bool Function FleeActor(Actor akActor) native global
 bool Function NeedsSittingHeal(Actor akActor) native global
 bool Function KneelActor(Actor akActor) native global
 bool Function BindActor(Actor akActor) native global
@@ -24,6 +26,8 @@ bool Function ProbeNativeDialogue(Actor akActor) native global
 Function ProbeLegacyDialogueAggression(Actor akActor) native global
 ; Test build only; shorten an owned command hold without changing its phase.
 Function ProbeCommandHold(Actor akActor, float afSeconds) native global
+; Test build only; shorten an owned flight without resetting its state.
+Function ProbeFleeDuration(Actor akActor, float afSeconds) native global
 { Global API for Acheron }
 
 ; Disable/Enable hit processing

@@ -1,5 +1,5 @@
 $ErrorActionPreference='Stop'
-$ast=[Management.Automation.Language.Parser]::ParseFile((Join-Path $PSScriptRoot 'Native-Flee-Probe.ps1'),[ref]$null,[ref]$null)
+$ast=[Management.Automation.Language.Parser]::ParseFile((Join-Path $PSScriptRoot 'Native-Flee-Snapshot.ps1'),[ref]$null,[ref]$null)
 $function=$ast.Find({param($node) $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Read-FleeProbe'},$true)
 . ([scriptblock]::Create($function.Extent.Text))
 $logPath=Join-Path ([IO.Path]::GetTempPath()) ('flee-snapshot-'+[guid]::NewGuid()+'.log')

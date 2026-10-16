@@ -7,12 +7,13 @@ namespace Acheron::Peaceful
     // Order matches native Test dialogue INFOs; append commands, never reorder IDs.
     enum class TestState : std::uint8_t { Normal, Combat, Yielding, AvoidingCombat, Wandering, KneelingRegular, KneelingBlessing, KneelingBound, Dead, KneelingChild,
         SitCrossLegged, SitLedge, SitSeat1, SitSeat2, SitSeat3Ledge, SitSeat3CrossLegged, SitSeat4, SitSeat5, SitSeat6, SitSeat7,
-        SitWoundedBeggar, SitWounded1, SitWounded2, SitWounded3, SitFemaleLaydown, SitFemaleLaydownMirrored, Count };
+        SitWoundedBeggar, SitWounded1, SitWounded2, SitWounded3, SitFemaleLaydown, SitFemaleLaydownMirrored, Fleeing, Count };
 
     inline std::optional<State> SelectTestState(TestState command, State previous, float duration)
     {
         if (!ValidState(previous) || !ValidDuration(duration)) return std::nullopt;
         switch (command) {
+        case TestState::Fleeing: return Decide(previous, {EventKind::Flee}, {});
         case TestState::AvoidingCombat: previous.phase = Phase::AvoidingCombat; previous.remaining = duration; break;
         case TestState::Wandering: previous.phase = Phase::Wandering; previous.remaining = duration; break;
         case TestState::KneelingRegular: previous.phase = Phase::Kneeling; previous.selectedKneelingVariant = KneelingVariant::Regular; break;
@@ -26,6 +27,7 @@ namespace Acheron::Peaceful
             break;
         }
         previous.commandHoldRemaining = IsCommandHold(previous.phase) ? CommandHoldDurationSeconds : 0;
+        previous.fleeRemaining = 0;
         return previous;
     }
 }

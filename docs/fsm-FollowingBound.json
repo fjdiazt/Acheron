@@ -160,7 +160,7 @@
         "Normal": {},
         "Fleeing": {
             "meta": {
-                "status": "planned"
+                "status": "implemented"
             }
         },
         "StandingBound": {

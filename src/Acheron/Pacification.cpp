@@ -60,14 +60,16 @@ namespace Acheron::Pacification
             facts.alive = !actor->IsDead(); facts.eligible = IsEligible(actor);
             facts.defeated = Defeat::IsDefeated(actor); facts.loaded = Loaded(actor);
             facts.paused = RE::UI::GetSingleton()->GameIsPaused();
+            const auto offset = actor->GetPosition() - RE::PlayerCharacter::GetSingleton()->GetPosition();
+            facts.distanceFromPlayer = std::hypot(offset.x, offset.y);
             const auto manager = RE::MenuTopicManager::GetSingleton();
             facts.dialogue = manager && manager->menuOpen && manager->speaker.get().get() == actor;
             return facts;
         }
-        void AdvanceHold(Record& record)
+        void AdvanceTimers(Record& record)
         {
             const auto now = std::chrono::steady_clock::now();
-            Peaceful::AdvanceCommandHold(record.state, std::chrono::duration<float>(now - record.realObserved).count());
+            Peaceful::AdvanceRealTimers(record.state, std::chrono::duration<float>(now - record.realObserved).count());
             record.realObserved = now;
         }
         RE::NiPointer<RE::TESObjectREFR> PlaceKneelingGoal(RE::Actor* actor, Peaceful::State& state, bool choose = true, bool fallback = true)
@@ -95,6 +97,7 @@ namespace Acheron::Pacification
             switch (phase) {
             case Phase::AvoidingCombat: return GameForms::PeacefulAvoid;
             case Phase::Wandering: return GameForms::PeacefulWander;
+            case Phase::Fleeing: return GameForms::Flee;
             case Phase::Kneeling:
             case Phase::KneelingBound:
             case Phase::Sitting:
@@ -138,6 +141,7 @@ namespace Acheron::Pacification
         }
         bool Encounter(Record& record)
         {
+            if (record.state.phase == Phase::Fleeing) return false;
             const auto anchor = record.anchor.get();
             const auto subject = record.actor.get();
             if (!anchor || !subject) return false;
@@ -241,7 +245,7 @@ namespace Acheron::Pacification
                     if (found == records.end() || found->second.generation != version) return;
                     const auto actor = found->second.actor.get();
                     if (!actor || !IsEligible(actor.get()) || Defeat::IsDefeated(actor.get())) { End(key); return; }
-                    const std::array packages{ GameForms::PeacefulAvoid, GameForms::PeacefulWander, GameForms::PeacefulKneel, GameForms::PeacefulKneelBound };
+                    const std::array packages{ GameForms::PeacefulAvoid, GameForms::PeacefulWander, GameForms::PeacefulKneel, GameForms::PeacefulKneelBound, GameForms::Flee };
                     for (auto i = index; i < packages.size(); ++i) {
                         if (packages[i] == Package(found->second.state.phase)) continue;
                         Script::CallbackPtr callback(new RemovePhaseCallback(key, version, i + 1));
@@ -263,7 +267,7 @@ namespace Acheron::Pacification
                 actor->AddToFaction(GameForms::KneelingPose, static_cast<std::int8_t>(state.selectedKneelingVariant));
             else actor->RemoveFromFaction(GameForms::KneelingPose);
             if (rescued) {
-                if (Peaceful::IsCommandHold(state.phase)) actor->RemoveFromFaction(GameForms::RescuedWounded);
+                if (!Peaceful::UsesWoundedLocomotion(state.phase)) actor->RemoveFromFaction(GameForms::RescuedWounded);
                 else actor->AddToFaction(GameForms::RescuedWounded, 0);
             }
         }
@@ -320,7 +324,7 @@ namespace Acheron::Pacification
             record.observedDamage = damage;
             if (untreated && record.injuryHealth > 0) {
                 record.rescued = true;
-                if (!Peaceful::IsCommandHold(record.state.phase)) actor->AddToFaction(GameForms::RescuedWounded, 0);
+                if (Peaceful::UsesWoundedLocomotion(record.state.phase)) actor->AddToFaction(GameForms::RescuedWounded, 0);
             }
         }
 
@@ -362,7 +366,7 @@ namespace Acheron::Pacification
                 if (!actor) { End(id); continue; }
                 auto facts = LiveFacts(actor.get());
                 if (!Peaceful::CanRemainManaged(facts) || !Peaceful::ValidState(record.state)) { End(id); continue; }
-                AdvanceHold(record);
+                AdvanceTimers(record);
                 if (!facts.loaded || facts.paused) continue;
                 if ((!record.ready || GameForms::PeacefulDialogue->IsStopped()) && Loaded(actor.get()) && !RE::UI::GetSingleton()->GameIsPaused()) {
                     record.applyAge += pending.delta;
@@ -380,9 +384,11 @@ namespace Acheron::Pacification
                     if (Loaded(actor.get()) && !RE::UI::GetSingleton()->GameIsPaused() && actor->AsActorState()->GetSitSleepState() == RE::SIT_SLEEP_STATE::kNormal) {
                         if (record.destination) {
                             auto destination = *record.destination;
-                            destination.commandHoldRemaining = record.state.commandHoldRemaining;
+                            destination.commandHoldRemaining = Peaceful::IsCommandHold(destination.phase) ? record.state.commandHoldRemaining : 0;
                             auto state = destination;
-                            const auto goal = PlaceKneelingGoal(actor.get(), state, false, false);
+                            const auto marker = RE::TESForm::LookupByID<RE::TESBoundObject>(0x3B);
+                            const auto goal = Peaceful::IsCommandHold(destination.phase) ? PlaceKneelingGoal(actor.get(), state, false, false) :
+                                marker ? actor->PlaceObjectAtMe(marker, true) : RE::NiPointer<RE::TESObjectREFR>{};
                             if (!goal) { End(id); continue; }
                             const auto old = record.goal;
                             record.goal = goal->GetHandle();
@@ -472,6 +478,12 @@ namespace Acheron::Pacification
         const auto found = mailbox.find(actor->GetFormID());
         return found != mailbox.end() && found->second.generation != 0;
     }
+    bool CanFlee(RE::Actor* actor)
+    {
+        return !REL::Module::IsVR() && IsEligible(actor) && actor->IsHostileToActor(RE::PlayerCharacter::GetSingleton()) &&
+            (Defeat::IsDefeated(actor) || IsActive(actor)) &&
+            actor->GetFactionRank(GameForms::ManagedPhase, false) != static_cast<std::int8_t>(Phase::KneelingBound);
+    }
     bool NeedsHealing(RE::Actor* actor)
     {
         // Papyrus runs off-thread; read the replicated phase, never the main-thread record map.
@@ -491,17 +503,17 @@ namespace Acheron::Pacification
     {
         if (REL::Module::IsVR() || !IsEligible(actor) || !Loaded(actor) || Defeat::IsDefeated(actor) ||
             (!initial && entry != Phase::Wandering && entry != Phase::Kneeling) || (initial && !Peaceful::ValidState(*initial)) ||
-            !Peaceful::ValidDuration(static_cast<float>(seconds)) || !GameForms::PeacefulAvoid || !GameForms::PeacefulWander || !GameForms::PeacefulKneel || !GameForms::PeacefulKneelBound || !GameForms::PeacefulDialogue) return false;
+            !Peaceful::ValidDuration(static_cast<float>(seconds)) || !GameForms::PeacefulAvoid || !GameForms::PeacefulWander || !GameForms::PeacefulKneel || !GameForms::PeacefulKneelBound || !GameForms::PeacefulDialogue || !GameForms::Flee) return false;
         const auto id = actor->GetFormID();
         if (auto found = records.find(id); found != records.end()) {
             if (entry != Phase::Wandering || initial) return false;
             auto& record = found->second;
             if (rescued) {
                 record.rescued = true;
-                if (!Peaceful::IsCommandHold(record.state.phase)) actor->AddToFaction(GameForms::RescuedWounded, 0);
+                if (Peaceful::UsesWoundedLocomotion(record.state.phase)) actor->AddToFaction(GameForms::RescuedWounded, 0);
             }
             auto facts = LiveFacts(actor);
-            AdvanceHold(record);
+            AdvanceTimers(record);
             facts.nearbyCombat = record.combat;
             if (!facts.paused) record.combat = facts.nearbyCombat = Encounter(record);
             const auto next = Peaceful::Decide(record.state, { Peaceful::EventKind::Refresh, static_cast<float>(seconds) }, facts);
@@ -551,7 +563,7 @@ namespace Acheron::Pacification
         records.emplace(id, record);
         if (rescued) {
             records.at(id).rescued = true;
-            if (!Peaceful::IsCommandHold(record.state.phase)) actor->AddToFaction(GameForms::RescuedWounded, 0);
+            if (Peaceful::UsesWoundedLocomotion(record.state.phase)) actor->AddToFaction(GameForms::RescuedWounded, 0);
         }
         if (!EnsureDialogue()) { End(id); return false; }
         if (!Apply(records.at(id), record.state.phase)) { End(id); return false; }
@@ -564,6 +576,7 @@ namespace Acheron::Pacification
     void RequestTestState(RE::Actor* actor, Peaceful::TestState command)
     {
         if (!actor || command >= Peaceful::TestState::Count) return;
+        if (command == Peaceful::TestState::Fleeing) { RequestFlee(actor); return; }
         const auto handle = actor->GetHandle(); const auto world = epoch.load();
         SKSE::GetTaskInterface()->AddTask([handle, world, command]() {
             using Peaceful::TestState;
@@ -677,6 +690,7 @@ namespace Acheron::Pacification
             if (world != epoch || REL::Module::IsVR()) return;
             const auto subject = handle.get();
             if (!subject || !IsEligible(subject.get()) || !Loaded(subject.get()) || RE::UI::GetSingleton()->GameIsPaused()) return;
+            if (command == Peaceful::EventKind::Flee && !CanFlee(subject.get())) return;
             const auto id = subject->GetFormID();
             auto found = records.find(id);
             if (found != records.end() && (!found->second.ready || found->second.pending || found->second.exitingFor)) return;
@@ -690,7 +704,7 @@ namespace Acheron::Pacification
                 facts.injuryHealth = Peaceful::InjuryHealth(subject->GetActorValueModifier(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kHealth), *victim->injuryDamageBaseline);
             }
             if (found != records.end()) {
-                AdvanceHold(found->second); ObserveInjury(found->second, subject.get());
+                AdvanceTimers(found->second); ObserveInjury(found->second, subject.get());
                 state = found->second.state; facts.injuryHealth = found->second.injuryHealth;
             } else if (!victim || command == Peaceful::EventKind::Bind) return;
             facts.defeated = false; // Ownership transfer only after the destination validates.
@@ -729,7 +743,9 @@ namespace Acheron::Pacification
                 return;
             }
             auto selected = *next;
-            const auto goal = PlaceKneelingGoal(subject.get(), selected, false, false);
+            const auto marker = RE::TESForm::LookupByID<RE::TESBoundObject>(0x3B);
+            const auto goal = Peaceful::IsCommandHold(selected.phase) ? PlaceKneelingGoal(subject.get(), selected, false, false) :
+                marker ? subject->PlaceObjectAtMe(marker, true) : RE::NiPointer<RE::TESObjectREFR>{};
             if (!goal) { End(id); return; }
             const auto old = record.goal; record.goal = goal->GetHandle();
             subject->extraList.SetLinkedRef(goal.get(), GameForms::PeacefulGoal); Destroy(old);
@@ -739,6 +755,7 @@ namespace Acheron::Pacification
     }
     void RequestKneel(RE::Actor* actor, bool bind) { RequestPosture(actor, bind ? Peaceful::EventKind::Bind : Peaceful::EventKind::Kneel); }
     void RequestSit(RE::Actor* actor) { RequestPosture(actor, Peaceful::EventKind::Sit); }
+    void RequestFlee(RE::Actor* actor) { RequestPosture(actor, Peaceful::EventKind::Flee); }
     void RequestResume(RE::Actor* actor)
     {
         if (!actor) return;
@@ -763,7 +780,7 @@ namespace Acheron::Pacification
             logger::info("[PeacefulPoseExitComplete] actor={:08X} event={} hold={}", subject->GetFormID(),
                 static_cast<unsigned>(*record.exitingFor), record.state.commandHoldRemaining);
             record.exitingFor.reset();
-            AdvanceHold(record);
+            AdvanceTimers(record);
             found->second.combat = facts.nearbyCombat = Encounter(found->second);
             const auto next = Peaceful::Decide(found->second.state, { event }, facts);
             if (!next) { End(subject->GetFormID()); return; }
@@ -779,11 +796,16 @@ namespace Acheron::Pacification
         const auto record = found->second;
         records.erase(found);
         if (const auto actor = record.actor.get()) {
+            if (record.state.phase == Phase::Fleeing) {
+                const auto offset = actor->GetPosition() - RE::PlayerCharacter::GetSingleton()->GetPosition();
+                logger::info("[FleeEnd] actor={:08X} distance={} remaining={} tickMs={}", id, std::hypot(offset.x, offset.y), record.state.fleeRemaining,
+                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count());
+            }
             actor->RemoveFromFaction(GameForms::KneelingPose);
             actor->RemoveFromFaction(GameForms::ManagedPhase);
             if (record.rescued) actor->RemoveFromFaction(GameForms::RescuedWounded);
             if (Peaceful::IsCommandHold(record.state.phase)) actor->NotifyAnimationGraph("IdleChairExitStart");
-            for (const auto package : { GameForms::PeacefulAvoid, GameForms::PeacefulWander, GameForms::PeacefulKneel, GameForms::PeacefulKneelBound }) {
+            for (const auto package : { GameForms::PeacefulAvoid, GameForms::PeacefulWander, GameForms::PeacefulKneel, GameForms::PeacefulKneelBound, GameForms::Flee }) {
                 Script::CallbackPtr callback(new EvaluateCallback(actor.get()));
                 Script::DispatchStaticCall("ActorUtil", "RemovePackageOverride", callback, actor.get(), static_cast<RE::TESPackage*>(package));
             }
@@ -818,6 +840,19 @@ namespace Acheron::Pacification
         });
     }
 #ifdef ACHERON_YIELD_TESTS
+    void ProbeFleeDuration(RE::Actor* actor, float seconds)
+    {
+        if (!actor || !std::isfinite(seconds) || seconds < 0 || seconds > Peaceful::FleeDurationSeconds) return;
+        const auto handle = actor->GetHandle(); const auto world = epoch.load();
+        SKSE::GetTaskInterface()->AddTask([handle, world, seconds]() {
+            if (world != epoch || REL::Module::IsVR()) return;
+            const auto subject = handle.get(); if (!subject) return;
+            const auto found = records.find(subject->GetFormID());
+            if (found == records.end() || found->second.state.phase != Phase::Fleeing || !found->second.ready) return;
+            found->second.state.fleeRemaining = std::min(found->second.state.fleeRemaining, seconds);
+            found->second.realObserved = std::chrono::steady_clock::now();
+        });
+    }
     void ProbeLegacyAggression(RE::Actor* actor)
     {
         if (!actor) return;
@@ -938,7 +973,7 @@ namespace Acheron::Pacification
             const auto found = records.find(subject->GetFormID()); if (found == records.end()) return;
             const auto& record = found->second;
             const auto anchor = record.anchor.get(), goal = record.goal.get();
-            logger::info("[PeacefulSnapshot] actor={:08X} phase={} remaining={} generation={} anchor={:08X} goal={:08X} ready={} loaded={} commandHoldRemaining={} selectedKneelingVariant={} selectedSittingVariant={} injuryHealth={}", subject->GetFormID(), static_cast<unsigned>(record.state.phase), record.state.remaining, record.generation, anchor ? anchor->GetFormID() : 0, goal ? goal->GetFormID() : 0, record.ready, Loaded(subject.get()), record.state.commandHoldRemaining, static_cast<unsigned>(record.state.selectedKneelingVariant), record.state.selectedSittingVariant, record.injuryHealth);
+            logger::info("[PeacefulSnapshot] actor={:08X} phase={} remaining={} generation={} anchor={:08X} goal={:08X} ready={} loaded={} commandHoldRemaining={} selectedKneelingVariant={} selectedSittingVariant={} injuryHealth={} fleeRemaining={}", subject->GetFormID(), static_cast<unsigned>(record.state.phase), record.state.remaining, record.generation, anchor ? anchor->GetFormID() : 0, goal ? goal->GetFormID() : 0, record.ready, Loaded(subject.get()), record.state.commandHoldRemaining, static_cast<unsigned>(record.state.selectedKneelingVariant), record.state.selectedSittingVariant, record.injuryHealth, record.state.fleeRemaining);
         });
     }
 #endif
@@ -992,12 +1027,14 @@ namespace Acheron::Pacification
             const std::uint8_t talk = static_cast<std::uint8_t>((record.hadTalk ? 1 : 0) | (record.talk ? 2 : 0) | (record.rescued ? 4 : 0));
             const auto commandHoldRemaining = Peaceful::IsCommandHold(record.state.phase) ? std::max(0.0f,
                 record.state.commandHoldRemaining - std::chrono::duration<float>(std::chrono::steady_clock::now() - record.realObserved).count()) : 0.0f;
+            const auto fleeRemaining = state.phase == Phase::Fleeing ? std::max(0.0f, state.fleeRemaining -
+                (record.state.phase == Phase::Fleeing ? std::chrono::duration<float>(std::chrono::steady_clock::now() - record.realObserved).count() : 0.0f)) : 0.0f;
             if (!stream->WriteRecordData(id) || !stream->WriteRecordData(anchorId) || !stream->WriteRecordData(goalId) ||
                 !stream->WriteRecordData(phase) || !stream->WriteRecordData(record.state.remaining) ||
                 !stream->WriteRecordData(record.aggression) || !stream->WriteRecordData(record.aggressionModifierBefore) || !stream->WriteRecordData(talk) ||
                 !stream->WriteRecordData(commandHoldRemaining) || !stream->WriteRecordData(variant) ||
                 !stream->WriteRecordData(state.selectedSittingVariant) || !stream->WriteRecordData(record.injuryHealth) ||
-                !stream->WriteRecordData(record.observedDamage) || !stream->WriteRecordData(record.injuryRegisteredAt)) {
+                !stream->WriteRecordData(record.observedDamage) || !stream->WriteRecordData(record.injuryRegisteredAt) || !stream->WriteRecordData(fleeRemaining)) {
                 logger::error("Unable to save peaceful actor {:08X}", id); return;
             }
         }
@@ -1014,7 +1051,8 @@ namespace Acheron::Pacification
                 (version >= 2 && !stream->ReadRecordData(record.state.commandHoldRemaining)) ||
                 (version >= 3 && !stream->ReadRecordData(variant)) ||
                 (version >= 4 && (!stream->ReadRecordData(record.state.selectedSittingVariant) || !stream->ReadRecordData(record.injuryHealth) ||
-                    !stream->ReadRecordData(record.observedDamage) || !stream->ReadRecordData(record.injuryRegisteredAt)))) {
+                    !stream->ReadRecordData(record.observedDamage) || !stream->ReadRecordData(record.injuryRegisteredAt))) ||
+                (version >= 5 && !stream->ReadRecordData(record.state.fleeRemaining))) {
                 logger::error("Truncated peaceful record"); return;
             }
             record.state.phase = static_cast<Phase>(phase);
@@ -1071,13 +1109,13 @@ namespace Acheron::Pacification
                     actor->GetLinkedRef(GameForms::PeacefulAnchor) != record.anchor.get().get() ||
                     actor->GetLinkedRef(GameForms::PeacefulGoal) != record.goal.get().get()) { invalid.push_back(id); continue; }
                 if (!Defeat::IsPacified(actor.get())) Defeat::Pacify(actor.get());
-                if (record.rescued) actor->AddToFaction(GameForms::RescuedWounded, 0);
+                if (record.rescued && Peaceful::UsesWoundedLocomotion(record.state.phase)) actor->AddToFaction(GameForms::RescuedWounded, 0);
                 record.aggression = Defeat::RestoreLegacyAggression(actor.get(), record.aggression, record.aggressionModifierBefore);
                 actor->AllowPCDialogue(true);
                 Observe(id, record.generation);
                 if (actor->Is3DLoaded()) {
                     record.combat = Encounter(record);
-                    if (!Apply(record, Peaceful::IsCommandHold(record.state.phase) ? record.state.phase :
+                    if (!Apply(record, (Peaceful::IsCommandHold(record.state.phase) || record.state.phase == Phase::Fleeing) ? record.state.phase :
                         (record.combat ? Phase::AvoidingCombat : Phase::Wandering))) invalid.push_back(id);
                 }
             }

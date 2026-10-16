@@ -19,13 +19,13 @@ function Read-PeacefulDialogue([string] $ActorId) {
 function Read-PeacefulState([string] $ActorId) {
     $start=(Get-Content $logPath -Raw).Length
     Invoke-NpcPapyrus Acheron ProbePeacefulState '' @(@{form=$ActorId}) | Out-Null
-    $pattern='\[PeacefulSnapshot\] actor='+($ActorId -replace '^0x','')+' phase=(?<phase>\d+) remaining=(?<remaining>[0-9.eE+-]+) generation=(?<generation>\d+) anchor=(?<anchor>[0-9A-F]+) goal=(?<goal>[0-9A-F]+) ready=(?<ready>true|false) loaded=(?<loaded>true|false)(?: commandHoldRemaining=(?<kneeling>[0-9.eE+-]+))?(?: selectedKneelingVariant=(?<variant>\d+))?(?: selectedSittingVariant=(?<sitting>\d+) injuryHealth=(?<injury>[0-9.eE+-]+))?'
+    $pattern='\[PeacefulSnapshot\] actor='+($ActorId -replace '^0x','')+' phase=(?<phase>\d+) remaining=(?<remaining>[0-9.eE+-]+) generation=(?<generation>\d+) anchor=(?<anchor>[0-9A-F]+) goal=(?<goal>[0-9A-F]+) ready=(?<ready>true|false) loaded=(?<loaded>true|false)(?: commandHoldRemaining=(?<kneeling>[0-9.eE+-]+))?(?: selectedKneelingVariant=(?<variant>\d+))?(?: selectedSittingVariant=(?<sitting>\d+) injuryHealth=(?<injury>[0-9.eE+-]+))?(?: fleeRemaining=(?<flee>[0-9.eE+-]+))?'
     $deadline=(Get-Date).AddSeconds(3)
     do {
         $log=Get-Content $logPath -Raw
         $match=if($log.Length -ge $start) {[regex]::Match($log.Substring($start),$pattern)}else{$null}
         if($match -and $match.Success) {
-            return @{phase=[int]$match.Groups['phase'].Value;remaining=[double]$match.Groups['remaining'].Value;generation=[long]$match.Groups['generation'].Value;anchor='0x'+$match.Groups['anchor'].Value;goal='0x'+$match.Groups['goal'].Value;ready=$match.Groups['ready'].Value -eq 'true';loaded=$match.Groups['loaded'].Value -eq 'true';commandHoldRemaining=if($match.Groups['kneeling'].Success){[double]$match.Groups['kneeling'].Value}else{$null};selectedSittingVariant=if($match.Groups['sitting'].Success){[int]$match.Groups['sitting'].Value}else{$null};injuryHealth=if($match.Groups['injury'].Success){[double]$match.Groups['injury'].Value}else{$null};selectedKneelingVariant=if($match.Groups['variant'].Success){[int]$match.Groups['variant'].Value}else{$null}}
+            return @{fleeRemaining=if($match.Groups['flee'].Success){[double]$match.Groups['flee'].Value}else{$null};phase=[int]$match.Groups['phase'].Value;remaining=[double]$match.Groups['remaining'].Value;generation=[long]$match.Groups['generation'].Value;anchor='0x'+$match.Groups['anchor'].Value;goal='0x'+$match.Groups['goal'].Value;ready=$match.Groups['ready'].Value -eq 'true';loaded=$match.Groups['loaded'].Value -eq 'true';commandHoldRemaining=if($match.Groups['kneeling'].Success){[double]$match.Groups['kneeling'].Value}else{$null};selectedSittingVariant=if($match.Groups['sitting'].Success){[int]$match.Groups['sitting'].Value}else{$null};injuryHealth=if($match.Groups['injury'].Success){[double]$match.Groups['injury'].Value}else{$null};selectedKneelingVariant=if($match.Groups['variant'].Success){[int]$match.Groups['variant'].Value}else{$null}}
         }
         Start-Sleep -Milliseconds 25
     } while((Get-Date) -lt $deadline)
@@ -121,6 +121,16 @@ function Assert-PeacefulReleased([string] $ActorId, [double] $Aggression, [bool]
     if((Invoke-NpcPapyrus Actor GetActorValue $ActorId @('Aggression')).returned -ne $Aggression) {throw 'Original aggression not restored'}
     if((Invoke-NpcPapyrus Acheron IsDefeated '' @(@{form=$ActorId})).returned -ne $Defeated -or
        (Invoke-NpcPapyrus Acheron IsPacified '' @(@{form=$ActorId})).returned -ne $Defeated) {throw 'Exit damaged defeat/pacification ownership'}
-    $package=(Invoke-NpcPapyrus Actor GetCurrentPackage $ActorId).returned.formId
-    if($package -match '(813|814|81A|81E)$') {throw 'Owned package remains'}
+    if((Invoke-NpcPapyrus Actor IsDead $ActorId).returned) {
+        # Corpses cache their last native package; prove actual override removal instead.
+        $deadline=(Get-Date).AddSeconds(3)
+        do {
+            $count=(Invoke-NpcPapyrus ActorUtil CountPackageOverride '' @(@{form=$ActorId})).returned
+            if($count -eq 0) {break};Start-Sleep -Milliseconds 25
+        }while((Get-Date) -lt $deadline)
+        if($count -ne 0) {throw 'Dead fixture retained package overrides'}
+    } else {
+        $package=(Invoke-NpcPapyrus Actor GetCurrentPackage $ActorId).returned.formId
+        if($package -match '(813|814|81A|81E|88A)$') {throw 'Owned package remains'}
+    }
 }

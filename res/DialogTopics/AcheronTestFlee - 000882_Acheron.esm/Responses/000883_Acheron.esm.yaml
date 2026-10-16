@@ -1,0 +1,22 @@
+FormKey: 000883:Acheron.esm
+Flags:
+  Flags:
+  - Goodbye
+PreviousDialog: null
+FavorLevel: None
+ResponseData: 019B8C:Dawnguard.esm
+Conditions:
+- MutagenObjectType: ConditionFloat
+  Data:
+    MutagenObjectType: IsHostileToActorConditionData
+    TargetNpc: 000014:Skyrim.esm
+  ComparisonValue: 1
+- MutagenObjectType: ConditionFloat
+  Data:
+    MutagenObjectType: GetFactionRankConditionData
+    Faction: 000850:Acheron.esm
+  ComparisonValue: 4
+  CompareOperator: NotEqualTo
+- MutagenObjectType: ConditionFloat
+  Data:
+    MutagenObjectType: GetDeadConditionData

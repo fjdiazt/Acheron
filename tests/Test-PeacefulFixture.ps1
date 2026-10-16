@@ -2,7 +2,7 @@ $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot 'Peaceful-Dialogue-Evidence.ps1')
 $tokens=$null;$errors=$null
 $ast=[Management.Automation.Language.Parser]::ParseFile((Join-Path $PSScriptRoot 'Pacification-Fixture.ps1'),[ref]$tokens,[ref]$errors)
-foreach($name in @('Close-PeacefulDialogue','Select-PeacefulDialogueChoice')) {
+foreach($name in @('Close-PeacefulDialogue','Select-PeacefulDialogueChoice','Assert-PeacefulReleased')) {
     $function=$ast.Find({param($node) $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $name},$true)
     Invoke-Expression $function.Extent.Text
 }
@@ -19,6 +19,20 @@ function Read-PeacefulDialogue([string] $ActorId) {
     return $value
 }
 function Invoke-NpcPapyrus($Script,$Function,$SelfId,$Arguments) {
+    if($fixture.mode -eq 'release') {
+        switch($Function) {
+            'IsPeacefulState' {return @{returned=$false}}
+            'GetFormFromFile' {return @{returned=@{formId='0xFE003811'}}}
+            'GetLinkedRef' {return @{returned=@{formId=$null}}}
+            'GetActorValue' {return @{returned=2}}
+            'IsDefeated' {return @{returned=$false}}
+            'IsPacified' {return @{returned=$false}}
+            'IsDead' {return @{returned=$fixture.dead}}
+            'CountPackageOverride' {return @{returned=$fixture.overrides}}
+            'GetCurrentPackage' {return @{returned=@{formId=$fixture.package}}}
+            default {throw 'Unexpected release query'}
+        }
+    }
     if($Script -eq 'UI' -and $Function -eq 'IsMenuOpen') {
         $fixture.uiReads++
         return @{returned=($fixture.uiReads -lt 2)}
@@ -49,3 +63,14 @@ try {
     if($fixture.moves -ne 1 -or $fixture.cursorReads -ne 2 -or $fixture.confirmed -ne 1 -or $result -notmatch 'info=FE00384F') {throw 'Native cursor readiness regression'}
 } finally {Remove-Item -LiteralPath $logPath}
 'PASS: closing UI waited, post-cursor readiness waited, correct native INFO confirmed once'
+foreach($case in @(
+    @{dead=$true;overrides=0;package='0xFE00388A';failure=$null},
+    @{dead=$true;overrides=1;package='0xFE00388A';failure='Dead fixture retained package overrides'},
+    @{dead=$false;overrides=0;package='0xFE00388A';failure='Owned package remains'},
+    @{dead=$false;overrides=0;package='0x0003EAB9';failure=$null}
+)) {
+    $fixture=$case.Clone();$fixture.mode='release';$failure=$null
+    try {Assert-PeacefulReleased $actor 2} catch {$failure=$_.Exception.Message}
+    if($failure -ne $case.failure) {throw 'Cached corpse package/active override distinction regressed'}
+}
+'PASS: dead cached package accepted only with zero actual overrides; live owned package rejected'

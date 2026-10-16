@@ -11,7 +11,7 @@
                             "Remove temporary flee AI/pacification; restore underlying Skyrim/quest AI"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented"
                         }
                     }
                 ],
@@ -22,7 +22,7 @@
                             "Remove temporary flee AI/pacification and any remaining owned overrides"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented"
                         }
                     }
                 ],
@@ -33,25 +33,261 @@
                             "Remove temporary flee AI/pacification; restore underlying Skyrim/quest AI"
                         ],
                         "meta": {
-                            "status": "planned"
+                            "status": "implemented"
+                        }
+                    }
+                ],
+                "Observe [renewed defeat]": [
+                    {
+                        "target": "Yielding",
+                        "actions": [
+                            "Remove Flee owner/package without clearing the new defeat pacification"
+                        ],
+                        "meta": {
+                            "status": "implemented"
+                        }
+                    }
+                ],
+                "Release": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Remove owned flight package, markers, dialogue scope and pacification"
+                        ],
+                        "meta": {
+                            "status": "implemented"
+                        }
+                    }
+                ],
+                "Kneel [loaded, unpaused, flight not expired]": [
+                    {
+                        "target": "Kneeling",
+                        "actions": [
+                            "Cancel flight budget; enter commanded pose using existing transition pipeline without healing"
+                        ],
+                        "meta": {
+                            "status": "implemented"
+                        }
+                    }
+                ],
+                "Sit [loaded, unpaused, injury health > 0]": [
+                    {
+                        "target": "Sitting",
+                        "actions": [
+                            "Cancel flight budget; enter commanded pose using existing transition pipeline without healing"
+                        ],
+                        "meta": {
+                            "status": "implemented"
+                        }
+                    }
+                ],
+                "Sit [loaded, unpaused, injury health = 0]": [
+                    {
+                        "target": "SittingWounded",
+                        "actions": [
+                            "Cancel flight budget; enter commanded pose using existing transition pipeline without healing"
+                        ],
+                        "meta": {
+                            "status": "implemented"
+                        }
+                    }
+                ],
+                "Test Normal [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "Normal",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Restore ordinary AI; remove owned timers, packages and pacification"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test Combat [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "Combat",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Release ownership/defeat then native StartCombat(player)"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test Yielding [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "Yielding",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "End peaceful ownership then existing DefeatActor"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test AvoidingCombat [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "AvoidingCombat",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Enter owned avoidance; refresh configured peaceful budget; next Observe follows nearby combat"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test Wandering [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "Wandering",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Enter owned wandering; refresh configured peaceful budget; next Observe follows nearby combat"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test Kneeling [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "Kneeling",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Choose explicit regular/blessing/childSitKneel clip family on persistent regular furniture; preserve peaceful budget; restart 1800-real-second command hold"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test KneelingBound [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "KneelingBound",
+                        "actions": [
+                            "Apply shared source/destination phase policy; ordinary exit and enter outside Kneeling -> KneelingBound",
+                            "Enter native bound kneel; preserve peaceful budget; restart 1800-real-second command hold"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true,
+                            "animationPolicyStatus": "implemented"
+                        }
+                    }
+                ],
+                "Test Dead [eligible loaded talkable managed desktop NPC]": [
+                    {
+                        "target": "Dead",
+                        "actions": [
+                            "Exit current held native pose before changing destination",
+                            "Release ownership/defeat then native Kill(player); engine essential rules still apply"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true
+                        }
+                    }
+                ],
+                "Test Sitting [eligible loaded talkable managed desktop NPC; compatible sex]": [
+                    {
+                        "target": "Sitting",
+                        "actions": [
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Explicit normal sitting pose; deterministic selectedSittingVariant"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true,
+                            "variants": [
+                                "Cross-legged",
+                                "Ledge",
+                                "Take a Seat 1 (cross-legged)",
+                                "Take a Seat 2 (cross-legged)",
+                                "Take a Seat 3 (ledge)",
+                                "Take a Seat 3 (cross-legged)",
+                                "Take a Seat 4 (cross-legged)",
+                                "Take a Seat 5 (cross-legged)",
+                                "Take a Seat 6 (ledge)",
+                                "Take a Seat 7 (cross-legged)"
+                            ]
+                        }
+                    }
+                ],
+                "Test SittingWounded [eligible loaded talkable managed desktop NPC; compatible sex]": [
+                    {
+                        "target": "SittingWounded",
+                        "actions": [
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Force diagnostic zero-injury baseline for this pose; preserve engine health. Use Test Yielding first to exercise real defeat injury."
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "debug": true,
+                            "variants": [
+                                "Beggar",
+                                "Wounded 1",
+                                "Wounded 2",
+                                "Wounded 3",
+                                "Female Laydown",
+                                "Female Laydown Mirrored"
+                            ]
+                        }
+                    }
+                ],
+                "Test Fleeing [eligible hostile unbound desktop NPC]": [
+                    {
+                        "target": "Fleeing",
+                        "actions": [
+                            "Use the same validated Flee command; repeated command does not restart flight"
+                        ],
+                        "meta": {
+                            "status": "implemented"
                         }
                     }
                 ]
             },
             "meta": {
-                "status": "planned",
+                "status": "implemented",
                 "durationSeconds": 30,
                 "safeDistanceFromPlayer": 4096,
-                "timer": "Separate real-time flight budget; independent of peaceful wandering and commanded hold",
-                "entry": "Get out of here. for enemy/aggressive targets only; Test Fleeing entry",
+                "timer": "Separate steady-clock flight budget. Combat does not pause it; menu/unloaded elapsed time is accounted on next observation. Preserve remaining budget across save/load; time with game closed does not count.",
+                "entry": "Get out of here. native dialogue and Test Fleeing for hostile eligible Yielding or unbound managed NPCs; bound release and automatic outcomes remain planned",
                 "preserve": "Actual health, Aggression and Confidence; no potion or healing",
-                "qualification": "Direct InitiateFlee starts flight for pacified Forsworn twice in qualified-path desktop fixture with all plugins active; native flag alone is insufficient. Actual gameplay entry/lifecycle and package-based approach remain unqualified. Implementation not deployed. See docs/native-flee-investigation.md"
+                "qualification": "Desktop SE passed native entry, timer, movement, distance boundary, save/load, death, renewed defeat, eligibility loss, pause and unload/reload. See native-flee-investigation.md; VR and arbitrary-position routing unqualified.",
+                "phase": 7,
+                "nativePackage": "00088A:Acheron.esm; vanilla FleeFrom 0197F1",
+                "safeDistanceMetric": "Horizontal distance from player"
             }
         },
         "Normal": {},
         "Dead": {
             "type": "final"
-        }
+        },
+        "Yielding": {},
+        "Kneeling": {},
+        "Sitting": {
+            "meta": {
+                "status": "implemented"
+            }
+        },
+        "SittingWounded": {
+            "meta": {
+                "status": "implemented"
+            }
+        },
+        "Combat": {},
+        "AvoidingCombat": {},
+        "Wandering": {},
+        "KneelingBound": {}
     },
     "meta": {
         "generatedFrom": "fsm.json",

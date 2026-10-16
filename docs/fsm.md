@@ -35,18 +35,18 @@ Examples: [Yielding](fsm-Yielding.json), [Kneeling](fsm-Kneeling.json),
 [KneelingBound](fsm-KneelingBound.json).
 
 Combat, Yielding, Normal and Dead describe engine/defeat behavior. The implemented
-owned peaceful phases are AvoidingCombat, Wandering, Kneeling, KneelingBound, Sitting and SittingWounded;
+owned phases are AvoidingCombat, Wandering, Kneeling, KneelingBound, Sitting, SittingWounded and Fleeing;
 their adapter is desktop-only. StandingBound, FollowingBound and Resting are planned
-owned phases. Planned Fleeing follows release or an automatic yield outcome and
-retains temporary flight effects without prisoner
-ownership. Normal means no peaceful-controller ownership; ordinary Skyrim AI resumes
+owned phases. Explicit hostile-NPC flight uses Fleeing without prisoner ownership.
+Planned bound release and automatic yield outcomes will reuse this state. Normal means no peaceful-controller ownership; ordinary Skyrim AI resumes
 as part of cleanup, without needing another event.
 
 ## Native Talk adapter
 
 Desktop player activation of a living, loaded humanoid enters native Talk when
 the actor is pacified and either Yielding or owned by our peaceful controller.
-This includes AvoidingCombat, Wandering, Kneeling, KneelingBound, Sitting and SittingWounded. Active scenes,
+This includes AvoidingCombat, Wandering, Kneeling, KneelingBound, Sitting, SittingWounded
+and Fleeing. Active scenes,
 activation blocks, NPC combat, missing dialogue permission and an already-open dialogue reject the
 scoped entry; ordinary activation handles everything outside scope and any native
 entry rejection. VR activation is unchanged.
@@ -493,7 +493,7 @@ Current Kneel ignores held phases; code needs explicit bound posture handling.
 | StandingBound / FollowingBound | Hold Timer Expires | Fleeing | Automatically unbind and flee |
 | Fleeing | Flee ends | Normal | Remove temporary flee AI/effects; ordinary Skyrim AI resumes |
 
-These commands and Fleeing are **planned**. FollowingBound means persistent bound
+The bound release commands are **planned**; standalone Fleeing is implemented below. FollowingBound means persistent bound
 following behavior, not follower recruitment. Use temporary follow AI targeting
 the player; do not change follower factions, follower count or recruitment state.
 StandingBound uses a stationary standing pose; FollowingBound needs movement that
@@ -521,14 +521,34 @@ remain separately documented in JSON. Death cancels following, waiting and fligh
 The automatic yield-expiry flee outcome below uses the same finite Fleeing state,
 without creating binding or a prisoner hold.
 
-Initial entry: **Get out of here.** for enemy/aggressive targets only, plus a
-Fleeing choice under Test. Civilian flight, automatic yield outcomes and bound
-release integration remain outside this implementation round. Native FleeFrom
-and FleeTo remain unqualified; earlier probes missed a blocking Survival dialog.
-Direct InitiateFlee works for pacified Forsworn in the qualified-path desktop
-fixture with all plugins active; actual gameplay entry/lifecycle remains unqualified.
-No Fleeing gameplay implementation is
-deployed. See [native flee investigation](native-flee-investigation.md).
+Implemented desktop entry: **Get out of here.** for hostile eligible NPCs in
+Yielding, AvoidingCombat, Wandering, Kneeling, Sitting or SittingWounded; **Test /
+Fleeing** uses the same boundary. Native IsHostileToActor(player) gates both
+conditions and command admission. Players, followers, summoned actors, civilians,
+active scenes and bound release are excluded. Automatic outcomes and Let go remain
+planned. Native dialogue uses Goodbye; Rescue sorts before Get out of here.
+
+The existing owner uses FleeFrom package `00088A:Acheron.esm` (vanilla template
+`0197F1`). Ending defeat adds no health; held entry completes the shared source
+exit before requesting flight. The independent `fleeRemaining` budget starts at
+30 real seconds. Neither nearby combat nor an explicit repeated Flee restarts it.
+At 4096 horizontal units from the player OR zero budget, cleanup releases the
+package, markers, dialogue scope and pacification to underlying AI. Ordinary
+hostility may resume. Explicit Kneel/Sit can interrupt a live flight; bind/resume
+commands are not exposed as if Fleeing were a held pose.
+
+Steady-clock elapsed time includes menus/unloaded time when observation resumes;
+physical cleanup is deferred while no actor update runs. Cosave version 5 appends
+the remaining flight budget and reads versions 1-4 without changing their old
+states. Offline time does not count. Death, new defeat, eligibility loss and
+Release use the shared owner cleanup and stale-callback guards. Post-rescue
+wounded locomotion override remains limited to AvoidingCombat/Wandering.
+
+Desktop qualification passed: native entry matrix, short/default expiry, real
+movement, distance boundary, save/load, death, renewed defeat, eligibility loss,
+pause and unload/reload cleanup. Package feasibility and implementation evidence
+live in [native flee investigation](native-flee-investigation.md). VR remains
+unverified.
 
 ## Bound NPC damage
 

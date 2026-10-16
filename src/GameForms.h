@@ -34,6 +34,8 @@ namespace Acheron
         static inline RE::BGSKeyword* PeacefulGoal;
         static inline RE::TESPackage* PeacefulAvoid;
         static inline RE::TESPackage* PeacefulWander;
+        static inline RE::TESPackage* Flee;
+        static inline std::array<RE::FormID, 2> FleeDialogueInfoIDs{};
         static inline RE::TESPackage* PeacefulKneel;
         static inline RE::TESPackage* PeacefulKneelBound;
         static inline RE::TESFurniture* PeacefulBoundMarker;
@@ -42,7 +44,7 @@ namespace Acheron
         static inline RE::FormID BindDialogueInfoID;
         static inline RE::FormID StandDialogueInfoID;
         static inline std::array<RE::FormID, 2> TestRootInfoIDs{};
-        static constexpr std::array<RE::FormID, 26> TestDialogueOffsets{ 0x839, 0x83B, 0x83D, 0x83F, 0x841, 0x843, 0x845, 0x847, 0x849, 0x84F, 0x861, 0x863, 0x865, 0x867, 0x869, 0x86b, 0x86d, 0x86f, 0x871, 0x873, 0x875, 0x877, 0x879, 0x87b, 0x87d, 0x87f };
+        static constexpr std::array<RE::FormID, 27> TestDialogueOffsets{ 0x839, 0x83B, 0x83D, 0x83F, 0x841, 0x843, 0x845, 0x847, 0x849, 0x84F, 0x861, 0x863, 0x865, 0x867, 0x869, 0x86b, 0x86d, 0x86f, 0x871, 0x873, 0x875, 0x877, 0x879, 0x87b, 0x87d, 0x87f, 0x883 };
         static inline std::array<RE::FormID, TestDialogueOffsets.size()> TestDialogueInfoIDs{};
         static inline std::array<RE::FormID, 4> DefeatedDialogueInfoIDs{};
         static inline RE::TESQuest* MainQuest;
@@ -90,6 +92,9 @@ namespace Acheron
                 LOOKUPFORM(PeacefulGoal, 0x812);
                 LOOKUPFORM(PeacefulAvoid, 0x813);
                 LOOKUPFORM(PeacefulWander, 0x814);
+                LOOKUPFORM(Flee, 0x88A);
+                FleeDialogueInfoIDs = {RE::TESDataHandler::GetSingleton()->LookupFormID(0x886, "Acheron.esm"), RE::TESDataHandler::GetSingleton()->LookupFormID(0x887, "Acheron.esm")};
+                if (!FleeDialogueInfoIDs[0] || !FleeDialogueInfoIDs[1]) return false;
                 LOOKUPFORM(PeacefulDialogue, 0x818);
                 YieldKneelDialogueInfoID = RE::TESDataHandler::GetSingleton()->LookupFormID(0x830, "Acheron.esm");
                 if (!YieldKneelDialogueInfoID) return false;

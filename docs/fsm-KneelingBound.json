@@ -353,7 +353,7 @@
         "Wandering": {},
         "Fleeing": {
             "meta": {
-                "status": "planned"
+                "status": "implemented"
             }
         },
         "StandingBound": {

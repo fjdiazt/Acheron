@@ -37,6 +37,7 @@ namespace Papyrus
     {
         bool BeginPeacefulState(RE::StaticFunctionTag*, RE::Actor*, int);
         bool SitActor(RE::StaticFunctionTag*, RE::Actor*);
+        bool FleeActor(RE::StaticFunctionTag*, RE::Actor*);
         bool NeedsSittingHeal(RE::StaticFunctionTag*, RE::Actor*);
         bool KneelActor(RE::StaticFunctionTag*, RE::Actor*);
         bool BindActor(RE::StaticFunctionTag*, RE::Actor*);
@@ -46,6 +47,7 @@ namespace Papyrus
 #ifdef ACHERON_YIELD_TESTS
         bool ProbeNativeFlee(RE::StaticFunctionTag*, RE::Actor*, int);
         void ProbeCommandHold(RE::StaticFunctionTag*, RE::Actor*, float);
+        void ProbeFleeDuration(RE::StaticFunctionTag*, RE::Actor*, float);
         void ProbePeacefulState(RE::StaticFunctionTag*, RE::Actor*);
         bool ProbeNativeDialogue(RE::StaticFunctionTag*, RE::Actor*);
         void ProbeLegacyDialogueAggression(RE::StaticFunctionTag*, RE::Actor*);
@@ -65,6 +67,7 @@ namespace Papyrus
         {
             REGISTERFUNC(BeginPeacefulState, "Acheron");
             REGISTERFUNC(SitActor, "Acheron");
+            REGISTERFUNC(FleeActor, "Acheron");
             REGISTERFUNC(NeedsSittingHeal, "Acheron");
             REGISTERFUNC(KneelActor, "Acheron");
             REGISTERFUNC(BindActor, "Acheron");
@@ -74,6 +77,7 @@ namespace Papyrus
 #ifdef ACHERON_YIELD_TESTS
             REGISTERFUNC(ProbeNativeFlee, "Acheron");
             REGISTERFUNC(ProbeCommandHold, "Acheron");
+            REGISTERFUNC(ProbeFleeDuration, "Acheron");
             REGISTERFUNC(ProbePeacefulState, "Acheron");
             REGISTERFUNC(ProbeNativeDialogue, "Acheron");
             REGISTERFUNC(ProbeLegacyDialogueAggression, "Acheron");

@@ -15,6 +15,11 @@ namespace Papyrus
 {
     void Utility::ApplyGodPreset(RE::StaticFunctionTag*) { Acheron::GodMode::Apply(); }
     bool Defeat::NeedsSittingHeal(RE::StaticFunctionTag*, RE::Actor* actor) { return Acheron::Pacification::NeedsHealing(actor); }
+    bool Defeat::FleeActor(RE::StaticFunctionTag*, RE::Actor* actor)
+    {
+        if (!Acheron::Pacification::CanFlee(actor)) return false;
+        Acheron::Pacification::RequestFlee(actor); return true;
+    }
     bool Defeat::SitActor(RE::StaticFunctionTag*, RE::Actor* actor)
     {
         if (REL::Module::IsVR() || !Acheron::Pacification::IsEligible(actor) ||
@@ -53,15 +58,14 @@ namespace Papyrus
     {
         const auto eligible = [](RE::Actor* subject) {
             return !REL::Module::IsVR() && subject && !subject->IsPlayerRef() && !subject->IsDead() &&
-                subject->Is3DLoaded() && (subject->GetFormID() & 0xFF000000) == 0xFF000000 &&
-                !Acheron::Pacification::IsActive(subject);
+                subject->Is3DLoaded() && (subject->GetFormID() & 0xFF000000) == 0xFF000000;
         };
-        if (!eligible(actor) || action < 0 || action > 3 || (action != 2 && Acheron::Defeat::IsDefeated(actor))) return false;
+        if (!eligible(actor) || action < 0 || action > 3 || (action != 2 && (Acheron::Defeat::IsDefeated(actor) || Acheron::Pacification::IsActive(actor)))) return false;
         const auto handle = actor->GetHandle();
         SKSE::GetTaskInterface()->AddTask([handle, action, eligible]() {
             const auto subject = handle.get();
             const auto player = RE::PlayerCharacter::GetSingleton();
-            if (!eligible(subject.get()) || !player || (action != 2 && Acheron::Defeat::IsDefeated(subject.get()))) return;
+            if (!eligible(subject.get()) || !player || (action != 2 && (Acheron::Defeat::IsDefeated(subject.get()) || Acheron::Pacification::IsActive(subject.get())))) return;
             if (action == 1 || action == 3) subject->InitiateFlee(player, true, true, false, nullptr, nullptr, action == 3 ? 4096.0f : 0.0f, 50.0f);
             else if (action == 0) subject->StopAlarmOnActor();
             const auto process = subject->GetActorRuntimeData().currentProcess;
@@ -80,6 +84,8 @@ namespace Papyrus
                 {"position", {position.x, position.y, position.z}},
                 {"health", values->GetActorValue(RE::ActorValue::kHealth)},
                 {"defeated", Acheron::Defeat::IsDefeated(subject.get())},
+                {"managed", Acheron::Pacification::IsActive(subject.get())},
+                {"phase", subject->GetFactionRank(Acheron::GameForms::ManagedPhase, false)},
                 {"bleedingOut", subject->IsBleedingOut()},
                 {"bleedoutLocked", subject->GetActorRuntimeData().boolFlags.any(RE::Actor::BOOL_FLAGS::kNoBleedoutRecovery)},
                 {"defeatPackage", package && package == Acheron::GameForms::BlankPackage},
@@ -95,6 +101,7 @@ namespace Papyrus
         return true;
     }
     void Defeat::ProbeCommandHold(RE::StaticFunctionTag*, RE::Actor* actor, float seconds) { Acheron::Pacification::ProbeCommandHold(actor, seconds); }
+    void Defeat::ProbeFleeDuration(RE::StaticFunctionTag*, RE::Actor* actor, float seconds) { Acheron::Pacification::ProbeFleeDuration(actor, seconds); }
     void Defeat::ProbePeacefulState(RE::StaticFunctionTag*, RE::Actor* actor) { Acheron::Pacification::Trace(actor); }
     bool Defeat::ProbeNativeDialogue(RE::StaticFunctionTag*, RE::Actor* actor)
     {

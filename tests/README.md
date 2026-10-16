@@ -1,5 +1,27 @@
 # Desktop test harness
 
+Managed Fleeing uses the ordinary production staging ESM and DLL:
+
+```powershell
+pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test flee-entry
+pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test flee-lifetime
+pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test flee-lifecycle
+```
+
+`flee-entry` joins `peaceful-suite`: native Get out of here. from Yielding,
+AvoidingCombat, Wandering, Kneeling, Sitting and SittingWounded; native Test Fleeing;
+unchanged health/Aggression/Confidence, pacification, held-pose exit, marker scope,
+repeated-command budget, player/follower/civilian/bound exclusions and shortened
+2-second flight expiry. This does not run the separate NPC recovery cases.
+`flee-lifetime` stays explicit: real 30-second cap, actual exterior movement and
+4096-horizontal-unit boundary. The boundary stimulus moves the player after real
+flight; it does not prove full-distance NPC navigation. `flee-lifecycle` covers
+save/load, death, new defeat, eligibility loss, paused expiry and unload/reload.
+Tests close Skyrim and restore INIs; deployment restores by default. Successful
+`-KeepInstalled` retains only the matching desktop candidate. Temporary test saves
+are archived under the run directory and removed from the user's save directory.
+Evidence and routing limits: [flee investigation](../docs/native-flee-investigation.md).
+
 `Invoke-PacificationTests.ps1 -Test native-flee-probe` probes direct native
 `Actor::InitiateFlee` on native friendly guard controls, outside routine suites.
 `native-flee-enemy-probe` uses the actual pacified female Forsworn with sword only.
@@ -18,7 +40,8 @@ Uses ordinary staging ESM; no Travel fixture, path warm-up or player relocation.
 Requires full hooks/plugins; isolation switches and KeepInstalled are rejected.
 Verifies defeat ownership/immobilization before exit and release before flight.
 Fails on missing movement; package selection alone cannot pass. Latest desktop
-result stalls after successful no-heal exit; gameplay Fleeing remains unimplemented.
+result stalls after successful no-heal exit. Gameplay Fleeing instead uses the
+qualified package-driven route documented above.
 
 Package alternatives use the same actual Yielding entry and actor invariants:
 
@@ -883,7 +906,7 @@ loss. Original INI bytes are archived and restored, with an external-edit check.
 Summary includes `startupIniRestored`; no VR config is written.
 
 Build-time record gate: `python tests/Test-TestDialogueRecords.py`. This checks the
-compiled ESM root response/conditions and 26 native links, catching malformed YAML
+compiled ESM root response/conditions and 27 native links, catching malformed YAML
 that Spriggit accepts while discarding INFO fields.
 
 Qualified desktop run: `9862c8ae-b917-44b1-b3fe-1ab477a7f455` (all command indices

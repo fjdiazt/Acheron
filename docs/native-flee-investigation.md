@@ -2,19 +2,69 @@
 
 Tracking: `skyrim-6a1`. Desktop SE 1.6.1170; DevBench 1.27.0.
 
-Approved behavior remains planned: enemy-only **Get out of here.** and Test
+Implemented behavior: enemy-only **Get out of here.** and Test
 Fleeing entry; Acheron pacification during flight; unchanged health, Aggression
 and Confidence; no healing. Finish at 4096 units from player or 30 real seconds,
 then remove owned overrides. No prisoner hold or wandering budget consumed.
 
-**Current desktop result:** package-driven FleeFrom and FleeTo move the actual
+**Current desktop result:** the existing FSM owner now runs production FleeFrom
+`00088A:Acheron.esm`, with native dialogue and Test entry, separate 30-real-second
+budget, 4096-horizontal-unit boundary and shared cleanup. Entry, lifetime and
+lifecycle qualification passed; evidence below. Bound release and automatic yield
+outcomes remain planned. Arbitrary-position routing and VR remain unqualified.
+
+**Feasibility result:** package-driven FleeFrom and FleeTo move the actual
 yielded Forsworn after no-heal exit, with all hooks/plugins active and no Travel
 warm-up or player relocation. Both passed twice; final repetitions explicitly
 prove horizontal movement. Prefer FleeFrom for integration because it needs no
 escape-marker selection. Earlier direct-call flight required a prepared route;
-its actual-Yielding probe stalled. No conflicting mod established. Fleeing FSM,
-arbitrary-position reliability, 4096-distance completion, the planned 30-second
-timer and VR remain unqualified/unimplemented.
+its actual-Yielding probe stalled. No conflicting mod established. These probes
+alone did not qualify the later FSM implementation.
+
+## Gameplay implementation qualification
+
+Production package 88A reuses the qualified vanilla Find/Flee template; private
+880/881 fixtures are absent from ordinary compiled staging. No escape-marker
+selection or Travel warm-up. Health, Aggression and Confidence remain unchanged,
+with Acheron pacification throughout flight. Held poses use the shared exit
+pipeline; rescued wounded-locomotion scope does not extend into Fleeing.
+
+| Run | Case | Result |
+| --- | --- | --- |
+| `aa75bccf-91c2-4fcf-917a-60c85f8ace73` | `flee-entry` | PASS: native entry from Yielding, Wandering, AvoidingCombat, Kneeling and SittingWounded; Test entry, player/follower/civilian/bound exclusions, short deadline and cleanup. |
+| `569080d3-9b01-4acc-8905-7d383424dc5e` | Final `flee-entry -KeepInstalled` | PASS: adds positive-health Sitting, Test Wandering to Test Fleeing, rescued-marker removal and repeated-command budget checks; matching desktop candidate retained. |
+| `d598298d-d520-441b-878a-dbb2e7162fbb` | `flee-lifetime` | PASS: default expiry observed at 30.72 seconds; real horizontal flight about 201 to 1589 units; distance boundary ends at 4170.85 units with 21.09 seconds remaining. |
+| `ac06030c-cd96-4c61-8d10-c09f8ef30047` | `flee-lifecycle` | PASS: save/load preserves remaining budget; death, follower eligibility loss, renewed defeat, pause deadline and unload/reload cleanup. |
+
+The distance-boundary test moves the player 4200 units from the actor **after**
+independently proving real flight. It proves the 4096 predicate and cleanup, not
+that the NPC navigates a complete 4096-unit route. Native pathing remains dependent
+on navmesh and spawn context; an actor at a different exterior spawn position
+stalled in `a7effd8d-3330-44bb-b429-2a1d45f30069`, although its default timer passed.
+The passing lifetime fixture uses the same 150,0 spawn offset as the qualified
+package probe; no production movement workaround was added.
+
+Earlier lifecycle `ab087dd4-f96e-452e-a018-3ce4b0b07296` failed a test assumption:
+corpses retain a cached native current-package pointer after actual overrides
+are removed. Dead fixtures now require ActorUtil override count zero; living
+fixtures still reject an owned current package. Host counterexamples cover both.
+Run `1a26f0ac-8c0d-4368-880d-6f6d421ea12e` failed during the deliberately paused
+console fixture; the runner now waits for Console to close before checking the
+unpaused snapshot. Both original failed summaries remain unchanged.
+
+Cosave version 5 appends the independent flight budget and retains reads of
+versions 1-4. Steady-clock time includes pause/unloaded intervals when observation
+resumes; physical cleanup waits for actor updates. Time with Skyrim closed does
+not count. Normal underlying hostility can return after flight ends. No healing,
+potions, civilian flight, automatic outcome resolver or bound-release integration.
+
+Native dialogue log confirms Yielding rows 0 Rescue, 1 Get out of here., followed
+by the existing actions. Final candidate backup:
+`build/pacification-backups/a18552b8-696b-489f-b695-ad784578b014/manifest.json`.
+Game closed, both INIs restored, owned actors/saves removed; VR untouched.
+Build, pure FSM tests, compiled dialogue/package gate, PowerShell host tests and
+generated FSM view checks pass. `peaceful-suite` now includes `flee-entry`; the
+30-second lifetime and lifecycle qualification remain explicit cases.
 
 **Qualification correction:** run `0066be5d-c79f-4258-ab02-1b48e5a906f8`
 captured the native **Enable Survival Mode?** Yes/No dialog pausing the exterior
@@ -246,20 +296,22 @@ DLL-isolation switches. Six restoring deployments audited: all 130 original targ
 hashes match, game closed, both INIs restored, ordinary staging rebuilt from res,
 VR untouched. No screenshots or recovery 2s/3s runs.
 
-Recommendation: integrate FleeFrom into the existing owner next. Keep the approved
-4096-unit or 30-real-second lifetime, enemy-only dialogue/Test entry, no healing/stat
-changes and finite cleanup. Held-pose exit, persistence/death/unload handling,
-actual distance completion and timer semantics still need implementation and tests;
-these probes establish movement feasibility only. No gameplay deployment yet.
+At the feasibility gate, the recommendation was FleeFrom integration with the
+approved 4096-unit or 30-real-second lifetime and no healing/stat changes.
+Held-pose exit, persistence/death/unload handling and lifetime tests were still
+required. Those probes established movement feasibility only; the implementation
+qualification above supersedes that gate and preserves the investigation history.
 
-## Preserved work and isolation
+## Earlier archived work and isolation
 
-Incomplete pure-state implementation and harness registration archived in
+Before movement qualification, incomplete pure-state implementation and harness registration were archived in
 `build/flee-investigation/incomplete-integration.patch`; diagnostic script and
 package YAML beside it. Removed from production source/records pending movement
 qualification. Pure-state tests passed before archival; no runtime controller,
-dialogue, serialization or actual Fleeing integration completed.
+dialogue, serialization or actual Fleeing integration existed at that stage.
 
 Probe deployments restored original desktop files by hash; game and test INIs
-restored. No permanent candidate deployment, saves or screenshots. VR untouched.
+restored. Those probes left no permanent candidate deployment, saves or screenshots.
+VR untouched. Gameplay qualification uses the ordinary candidate wrapper; explicit
+`-KeepInstalled` retains a qualified desktop candidate for manual testing.
 Do not run prohibited `npc-recovery-2s` / `npc-recovery-3s` regressions.

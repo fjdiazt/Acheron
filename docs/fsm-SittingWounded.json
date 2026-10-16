@@ -318,6 +318,33 @@
                             ]
                         }
                     }
+                ],
+                "Get out of here. [eligible hostile NPC, loaded, unpaused, no pending transition]": [
+                    {
+                        "target": "Fleeing",
+                        "actions": [
+                            "Preserve health, Aggression and Confidence; end defeat without healing or finish the source held-pose exit",
+                            "Transfer existing owner to native FleeFrom; keep pacification and start independent 30-real-second flight budget"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "animationPhases": {
+                                "sourceExit": "play",
+                                "destinationEnter": "skip"
+                            }
+                        }
+                    }
+                ],
+                "Test Fleeing [eligible hostile unbound desktop NPC]": [
+                    {
+                        "target": "Fleeing",
+                        "actions": [
+                            "Use the same validated Flee command; repeated command does not restart flight"
+                        ],
+                        "meta": {
+                            "status": "implemented"
+                        }
+                    }
                 ]
             },
             "meta": {
@@ -329,7 +356,7 @@
                 },
                 "woundRisk": "Meaningful injury health and original defeat registered_at retained across posture/save/load; no mortality scheduler or pending death deadline exists yet",
                 "healingPoseSwap": "Direct held-idle swap to Sitting, no outgoing exit or incoming enter; pending visual qualification",
-                "persistenceVersion": 4,
+                "persistenceVersion": 5,
                 "phase": 6,
                 "poseSelection": "selectedSittingVariant; explicit enter/loop/exit in scripts/sitting-animations.json; persistent held geometry, enter/exit priorities5005-5020, idle-only interruptible priorities5105-5120",
                 "qualification": "Desktop candidate; functional/clip qualification recorded in animations catalog; visual swaps and VR require review"
@@ -355,6 +382,11 @@
         "Kneeling": {},
         "KneelingBound": {},
         "Sitting": {
+            "meta": {
+                "status": "implemented"
+            }
+        },
+        "Fleeing": {
             "meta": {
                 "status": "implemented"
             }

@@ -12,6 +12,8 @@ namespace Acheron
         if (REL::Module::IsVR() || !event || !event->speakerRef) return EventResult::kContinue;
         static_assert(GameForms::TestDialogueInfoIDs.size() == static_cast<std::size_t>(Peaceful::TestState::Count));
         if (event->type.underlying() == 0) {
+            if (std::ranges::find(GameForms::FleeDialogueInfoIDs, event->topicInfoFormID) != GameForms::FleeDialogueInfoIDs.end())
+                Pacification::RequestFlee(event->speakerRef->As<RE::Actor>());
             for (std::size_t i = 0; i < GameForms::TestDialogueInfoIDs.size(); ++i) {
                 if (event->topicInfoFormID == GameForms::TestDialogueInfoIDs[i])
                     Pacification::RequestTestState(event->speakerRef->As<RE::Actor>(), static_cast<Peaceful::TestState>(i));
@@ -70,6 +72,7 @@ namespace Acheron
             (GameForms::YieldKneelDialogueInfoID && event->topicInfoFormID == GameForms::YieldKneelDialogueInfoID) ||
             (GameForms::BindDialogueInfoID && event->topicInfoFormID == GameForms::BindDialogueInfoID) ||
             (GameForms::StandDialogueInfoID && event->topicInfoFormID == GameForms::StandDialogueInfoID) ||
+            std::ranges::find(GameForms::FleeDialogueInfoIDs, event->topicInfoFormID) != GameForms::FleeDialogueInfoIDs.end() ||
             std::ranges::find(GameForms::SitDialogueInfoIDs, event->topicInfoFormID) != GameForms::SitDialogueInfoIDs.end() ||
             event->topicInfoFormID == GameForms::HealSittingDialogueInfoID ||
             std::ranges::find(GameForms::TestRootInfoIDs, event->topicInfoFormID) != GameForms::TestRootInfoIDs.end() ||

@@ -374,6 +374,33 @@
                             ]
                         }
                     }
+                ],
+                "Get out of here. [eligible hostile NPC, loaded, unpaused, no pending transition]": [
+                    {
+                        "target": "Fleeing",
+                        "actions": [
+                            "Preserve health, Aggression and Confidence; end defeat without healing or finish the source held-pose exit",
+                            "Transfer existing owner to native FleeFrom; keep pacification and start independent 30-real-second flight budget"
+                        ],
+                        "meta": {
+                            "status": "implemented",
+                            "animationPhases": {
+                                "sourceExit": "play",
+                                "destinationEnter": "skip"
+                            }
+                        }
+                    }
+                ],
+                "Test Fleeing [eligible hostile unbound desktop NPC]": [
+                    {
+                        "target": "Fleeing",
+                        "actions": [
+                            "Use the same validated Flee command; repeated command does not restart flight"
+                        ],
+                        "meta": {
+                            "status": "implemented"
+                        }
+                    }
                 ]
             },
             "meta": {
@@ -394,7 +421,7 @@
         },
         "Fleeing": {
             "meta": {
-                "status": "planned"
+                "status": "implemented"
             }
         },
         "Resting": {

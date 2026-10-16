@@ -7,13 +7,16 @@
 
 namespace Acheron::Peaceful
 {
-    enum class Phase : std::uint8_t { AvoidingCombat = 1, Wandering = 2, Kneeling = 3, KneelingBound = 4, Sitting = 5, SittingWounded = 6 };
-    enum class EventKind { Observe, Refresh, Kneel, Bind, Resume, Release, Test, Sit, Healed };
+    enum class Phase : std::uint8_t { AvoidingCombat = 1, Wandering = 2, Kneeling = 3, KneelingBound = 4, Sitting = 5, SittingWounded = 6, Fleeing = 7 };
+    enum class EventKind { Observe, Refresh, Kneel, Bind, Resume, Release, Test, Sit, Healed, Flee };
     enum class KneelingVariant : std::uint8_t { Regular, Blessing, ChildSitKneel };
     inline constexpr float CommandHoldDurationSeconds = 1800.0f;
+    inline constexpr float FleeDurationSeconds = 30.0f;
+    inline constexpr float FleeDistance = 4096.0f;
     inline float InjuryHealth(float currentDamage, float damageBaseline) { return std::max(0.0f, currentDamage - damageBaseline); }
     inline bool IsSitting(Phase phase) { return phase == Phase::Sitting || phase == Phase::SittingWounded; }
     inline bool IsCommandHold(Phase phase) { return phase == Phase::Kneeling || phase == Phase::KneelingBound || IsSitting(phase); }
+    inline bool UsesWoundedLocomotion(Phase phase) { return phase == Phase::AvoidingCombat || phase == Phase::Wandering; }
 
     struct State
     {
@@ -22,6 +25,7 @@ namespace Acheron::Peaceful
         float commandHoldRemaining{};
         KneelingVariant selectedKneelingVariant{ KneelingVariant::Regular };
         std::uint8_t selectedSittingVariant{};
+        float fleeRemaining{};
     };
 
     struct Event
@@ -42,14 +46,16 @@ namespace Acheron::Peaceful
         float delta{};
         float realDelta{};
         float injuryHealth{ 1.0f };
+        float distanceFromPlayer{};
     };
 
     inline bool ValidDuration(float seconds) { return std::isfinite(seconds) && seconds >= 1.0f && seconds <= 600.0f; }
     inline bool ValidState(State state)
     {
-        return (state.phase == Phase::AvoidingCombat || state.phase == Phase::Wandering || IsCommandHold(state.phase)) &&
+        return (state.phase == Phase::AvoidingCombat || state.phase == Phase::Wandering || state.phase == Phase::Fleeing || IsCommandHold(state.phase)) &&
                std::isfinite(state.remaining) && state.remaining >= 0.0f && state.remaining <= 600.0f &&
                std::isfinite(state.commandHoldRemaining) && state.commandHoldRemaining >= 0.0f && state.commandHoldRemaining <= CommandHoldDurationSeconds &&
+               std::isfinite(state.fleeRemaining) && state.fleeRemaining >= 0.0f && state.fleeRemaining <= FleeDurationSeconds &&
                (state.selectedKneelingVariant == KneelingVariant::Regular || state.selectedKneelingVariant == KneelingVariant::Blessing ||
                 state.selectedKneelingVariant == KneelingVariant::ChildSitKneel) && state.selectedSittingVariant < 16;
     }
@@ -60,6 +66,13 @@ namespace Acheron::Peaceful
             state.commandHoldRemaining = std::max(0.0f, state.commandHoldRemaining - seconds);
     }
 
+    inline void AdvanceRealTimers(State& state, float seconds)
+    {
+        AdvanceCommandHold(state, seconds);
+        if (state.phase == Phase::Fleeing && std::isfinite(seconds) && seconds >= 0)
+            state.fleeRemaining = std::max(0.0f, state.fleeRemaining - seconds);
+    }
+
     inline std::optional<State> Decide(State state, Event event, const Facts& facts)
     {
         if (!ValidState(state) || !CanRemainManaged(facts) || event.kind == EventKind::Release) return std::nullopt;
@@ -67,8 +80,18 @@ namespace Acheron::Peaceful
             if (!ValidDuration(event.duration)) return state;
             state.remaining = event.duration;
         }
-        if (event.kind == EventKind::Observe) AdvanceCommandHold(state, facts.realDelta);
+        if (event.kind == EventKind::Observe) AdvanceRealTimers(state, facts.realDelta);
+        if (state.phase == Phase::Fleeing) {
+            if (state.fleeRemaining == 0 || (std::isfinite(facts.distanceFromPlayer) && facts.distanceFromPlayer >= FleeDistance)) return std::nullopt;
+            if (event.kind != EventKind::Kneel && event.kind != EventKind::Sit) return state;
+        }
         if (!facts.loaded || facts.paused) return state;
+        if (state.phase == Phase::Fleeing) state.fleeRemaining = 0;
+        if (event.kind == EventKind::Flee) {
+            if (state.phase == Phase::KneelingBound) return state;
+            state.phase = Phase::Fleeing; state.fleeRemaining = FleeDurationSeconds; state.commandHoldRemaining = 0;
+            return state;
+        }
         const auto previous = state.phase;
         if (event.kind == EventKind::Bind) {
             if (state.phase == Phase::Kneeling || IsSitting(state.phase)) {

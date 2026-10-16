@@ -174,7 +174,7 @@
         "Normal": {},
         "Fleeing": {
             "meta": {
-                "status": "planned"
+                "status": "implemented"
             }
         },
         "FollowingBound": {

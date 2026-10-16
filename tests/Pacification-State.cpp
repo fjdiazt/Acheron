@@ -20,6 +20,26 @@ static void Remaining(const std::optional<State>& state, Phase phase, float seco
 
 int main()
 {
+    for (auto phase : {Phase::Wandering, Phase::AvoidingCombat, Phase::Kneeling, Phase::SittingWounded}) {
+        auto flight=Decide({phase,37,123}, {EventKind::Flee}, {});
+        Require(flight && flight->phase==Phase::Fleeing && flight->remaining==37 && flight->commandHoldRemaining==0 && flight->fleeRemaining==30, "Flee entry must own a separate budget");
+        Facts escape{};escape.realDelta=2;escape.delta=9;escape.nearbyCombat=true;
+        flight=Decide(*flight, {}, escape);
+        Require(flight && flight->fleeRemaining==28 && flight->remaining==37, "Flee timer must advance in real time through combat");
+        Require(Decide(*flight,{EventKind::Flee},{})->fleeRemaining==28, "Repeated flee restarted budget");
+        escape.realDelta=28;Require(!Decide(*flight,{},escape), "Flee time cap ignored");
+        escape.realDelta=0;escape.distanceFromPlayer=4096;Require(!Decide(*flight,{},escape), "Flee distance cap ignored");
+        escape.distanceFromPlayer=4095;Require(Decide(*flight,{},escape).has_value(), "Flee ended before boundary");
+        escape.alive=false;Require(!Decide(*flight,{},escape), "Flee retained a dead owner");
+    }
+    Require(SelectTestState(TestState::Fleeing,{Phase::Wandering,37},60)->phase==Phase::Fleeing,"Test Fleeing missing");
+    const auto flying=Decide({Phase::Wandering,37},{EventKind::Flee},{});
+    Require(Decide(*flying,{EventKind::Kneel},{})->phase==Phase::Kneeling,"Flee cannot be interrupted by Kneel");
+    Require(Decide({Phase::KneelingBound,37,123},{EventKind::Flee},{})->phase==Phase::KneelingBound,"Flee silently released binding");
+    Facts away{};away.paused=true;away.loaded=false;away.realDelta=30;
+    Require(!Decide(*flying,{},away),"Pause/unload reset real flight deadline");
+    State corrupt=*flying;corrupt.fleeRemaining=std::numeric_limits<float>::quiet_NaN();
+    Require(!ValidState(corrupt),"Invalid persisted flee budget accepted");
     Require(InjuryHealth(-99.949997f, -99.949997f) == 0 && InjuryHealth(-74.949997f, -99.949997f) == 25, "Defeat floor became injury health");
     Require(!SittingPoseAllowed(14, true, false) && SittingPoseAllowed(14, true, true), "Female pose leaked to male actor");
     State wounded{ Phase::SittingWounded, 37, 123 };

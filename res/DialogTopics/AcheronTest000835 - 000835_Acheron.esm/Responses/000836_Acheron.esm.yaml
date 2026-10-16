@@ -31,6 +31,7 @@ LinkTo:
 - 00087A:Acheron.esm
 - 00087C:Acheron.esm
 - 00087E:Acheron.esm
+- 000882:Acheron.esm
 Conditions:
 - MutagenObjectType: ConditionFloat
   Data:
