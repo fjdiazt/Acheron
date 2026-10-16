@@ -92,7 +92,7 @@
   {
     "name": "Beggar",
     "rank": 13,
-    "enter": "mt_beggarsit.hkx",
+    "enter": "idleblessingkneel_enter.hkx",
     "loop": "mt_beggaridle.hkx",
     "exit": "mt_beggarstand.hkx",
     "femaleOnly": false,
@@ -128,7 +128,7 @@
   {
     "name": "Female Laydown",
     "rank": 17,
-    "enter": "mod:Improved Idle Laydown Animations/meshes/actors/character/animations/OpenAnimationReplacer/SDB IILD/unisex laydown/idlelaydown_enter.hkx",
+    "enter": "idleblessingkneel_enter.hkx",
     "loop": "mod:Improved Idle Laydown Animations/meshes/actors/character/animations/OpenAnimationReplacer/SDB IILD/female laydown/idlelaydown.hkx",
     "exit": "mod:Improved Idle Laydown Animations/meshes/actors/character/animations/OpenAnimationReplacer/SDB IILD/unisex laydown/idlelaydown_exit.hkx",
     "femaleOnly": true,
@@ -137,7 +137,7 @@
   {
     "name": "Female Laydown Mirrored",
     "rank": 18,
-    "enter": "mod:Improved Idle Laydown Animations/meshes/actors/character/animations/OpenAnimationReplacer/SDB IILD/unisex laydown/idlelaydown_enter.hkx",
+    "enter": "idleblessingkneel_enter.hkx",
     "loop": "mod:Improved Idle Laydown Animations/meshes/actors/character/animations/OpenAnimationReplacer/SDB IILD/female laydown mirror/idlelaydown.hkx",
     "exit": "mod:Improved Idle Laydown Animations/meshes/actors/character/animations/OpenAnimationReplacer/SDB IILD/unisex laydown/idlelaydown_exit.hkx",
     "femaleOnly": true,

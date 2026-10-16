@@ -140,9 +140,22 @@ Take a Seat files have distinct SHA256 hashes and remain separate choices.
 Run `python scripts/Stage-SittingAnimations.py`; sources are the desktop animation
 BSA and read-only active VR pack copies. Only staging is written; source HKX files
 are excluded from Git. The manifest records source paths and hashes. Native cross-legged
-enter/exit are explicit overrides for variants lacking a selected enter/exit. Laydown
-uses the source pack's unisex laydown enter/exit with female held loops. Beggar uses
-its native sit/idle/stand triple. Wounded 01-03 remain visually unqualified as seated
+enter/exit are explicit overrides for variants lacking a selected enter/exit. Beggar
+and both female Laydown variants now enter with native `idleblessingkneel_enter.hkx`.
+Beggar retains `mt_beggaridle.hkx` / `mt_beggarstand.hkx`; Laydown retains its selected
+female loop and source-pack unisex exit. User rejected the relaxed hands-behind-head
+laydown transitions; only entry has been replaced so far. Bedroll alternatives were
+rejected as long and side-lying. Retain `mt_getupfromback.hkx` / `mt_getupfromfront.hkx`
+as candidate exits for flat back/front poses; neither is configured yet.
+Updated entry qualification passed `65a1d519-d9d4-418a-be6f-708da2972c97`:
+all16 female Test poses reached their scoped enter/held idle, repeated their loop,
+preserved health/native sitting and released on hold expiry. The new entry assertion
+was replayed against all16 captured clips. Beggar and both laydown entries matched
+the native blessing-enter bytes; only those three installed assets changed.
+Candidate retained with130 source/deployment hashes verified in receipt
+`build/pacification-backups/b7003b13-9c88-42b1-ad73-eb6559cbcac4/manifest.json`.
+Visual entry-to-loop fit and replacement laydown exits still need review; no male/VR rerun.
+Wounded 01-03 remain visually unqualified as seated
 poses even after graph/loop qualification; filename does not prove posture.
 
 Probe `04bf6cdb` showed why a generic kneeling instant event cannot drive healing:

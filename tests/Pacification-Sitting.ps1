@@ -68,6 +68,7 @@ try {
             $state=Wait-PeacefulPhase $actor $(if($i -ge 10){6}else{5}) 20
             if($state.selectedSittingVariant -ne $i) {throw 'Explicit Test sitting family changed'}
             $clips=Assert-SittingClip $state $start
+            if($clips -notmatch ('AnimationLogEntry:.*_CustomConditions[\\/]'+(5005+$i)+'[\\/]idlekneelenter\.hkx')) {throw 'Selected sitting enter replacement missing'}
             $deadline=(Get-Date).AddSeconds([math]::Max(15,$catalog[$i].loopSeconds+3))
             do {
                 $loopLog=(Get-Content $animationLog -Raw).Substring($start)

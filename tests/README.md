@@ -874,7 +874,7 @@ an actual consumed healing potion and an external native healing spell.
 It asserts unchanged occupied marker/native sitting, no enter/exit clips on Heal,
 preserved remaining hold/peaceful budget, and a fresh unbound menu without Heal.
 Default posture changes and sitting Bind retain their requested exit/entry sequence.
-Pose cases select each native Test entry and require its actual scoped OAR loop;
+Pose cases select each native Test entry and require its actual scoped OAR enter and loop;
 male case excludes female-only families. Every variant has its own Test choice.
 Each asset case uses a fresh actor; repeated marker-entry stress is separate.
 Pose selection preserves engine health; real injury routing is tested separately
