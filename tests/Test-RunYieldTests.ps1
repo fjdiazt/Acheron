@@ -120,3 +120,22 @@ foreach ($bad in @('Other: 7', "iNPCRescueTimer: 90`niNPCRescueTimer: 60", 'iNPC
     Assert $rejected 'scenario allowed startup with targeted game still running'
 }
 Write-Output 'PASS: settings boundaries, process ownership, suite result gate and mocked targeted shutdown'
+
+$ast=[System.Management.Automation.Language.Parser]::ParseFile($runner,[ref]$null,[ref]$null)
+$calls=$ast.FindAll({param($n) $n -is [System.Management.Automation.Language.CommandAst] -and $n.GetCommandName() -in @('Set-YieldPlayerAppearance','Set-YieldPlayerEquipment')},$true)
+Assert ($calls.Count -eq 2) 'unexpected global player customization calls'
+$guard=$calls[0].Parent
+while($guard -and $guard -isnot [System.Management.Automation.Language.IfStatementAst]) {$guard=$guard.Parent}
+Assert ($guard -is [System.Management.Automation.Language.IfStatementAst] -and $guard.Clauses[0].Item1.Extent.Text -eq '$setupOnly') 'appearance not guarded by manual scenario mode'
+Assert ($calls[1].Extent.StartOffset -gt $guard.Extent.StartOffset -and $calls[1].Extent.EndOffset -lt $guard.Extent.EndOffset) 'gear cleanup escaped manual scenario guard'
+& {
+    $summary=@{};$customizationCalls=[Collections.Generic.List[string]]::new()
+    function Set-YieldPlayerAppearance {$customizationCalls.Add('appearance');return @{}}
+    function Set-YieldPlayerEquipment {$customizationCalls.Add('equipment');return @{}}
+    $block=[scriptblock]::Create($guard.Extent.Text)
+    $setupOnly=$false;. $block
+    Assert ($customizationCalls.Count -eq 0 -and -not $summary.ContainsKey('player')) 'automated bootstrap customized player'
+    $setupOnly=$true;. $block
+    Assert (($customizationCalls -join ',') -eq 'appearance,equipment') 'manual scenario lost player customization'
+}
+'PASS: automated bootstrap skips player customization; manual scenarios retain it'

@@ -534,13 +534,24 @@ Added on 2026-10-11 at the user's request; **not run in Skyrim**. Parser and
 host self-checks use synthetic evidence only. The historical eight-case PASS
 below does not qualify these two new cases or the expanded ten-case suite.
 
-Every fresh test player uses vanilla female Argonian preset 0. Shared bootstrap
+Automated tests leave the fresh world's player race, sex, preset and appearance
+unchanged. Character creation and full equipment cleanup run only for manual
+`setup-enemy` / `setup-enemy-follower` scenarios invoked by root `scripts/`.
+Automated melee cases use the fresh world's existing weapon; they leave
+gear/inventory alone. Case-specific combat facts remain
+local to the test. Host guard: `tests/Test-RunYieldTests.ps1`.
+Desktop run `85d6a999-a50f-4359-99fa-1da26b57439c` passed real player melee defeat
+with the untouched male Nord, no character menu or player gear mutations, and
+verified cleanup/shutdown/INI restoration. Appearance evidence below describes
+the retained manual setup and historical runs.
+
+Manual scenario players use vanilla female Argonian preset 0. Their bootstrap
 opens native character creation, selects Argonian through `ChangeRace`, female
 through `ChangeSex`, then applies `ChangeHeadPreset`. Direct `Actor.SetRace` and
 `player.sexchange` left the original Nord head/mouth and incompatible face data.
 Bootstrap verifies female race/sex, the female Argonian head and mouth, and each
 head part's valid-race list before confirming the name and closing the menu.
-`summary.player` records race, sex, preset and head parts. This runs only in the
+`summary.player` records race, sex, preset and head parts for manual scenarios. This runs only in the
 fresh disposable world, before equipment and case-specific stats. No RaceMenu
 dependency or changes to existing saves. Requires the vanilla character menu.
 Camera/FOV are applied after character creation closes. Player melee fixtures
@@ -552,13 +563,14 @@ without human hair. Defeat regression `eb2e75aa-f0ae-48de-8242-4203b834e7c6`
 passed real player lethal-hit interception, live defeat state and cleanup with
 this preset, including graceful exit and preferences restoration. Full suite
 and VR were not run.
-Shared bootstrap also removes armor/clothing and spare weapons/ammo, then equips
+Manual scenario bootstrap also removes armor/clothing and spare weapons/ammo, then equips
 one iron sword (`00012EB7`) and iron shield (`00012EB6`). Live equipment reads must
 confirm sword in the right hand, no left-hand weapon, and the shield equipped.
-Removed gear counts must be zero; other inventory is preserved. All test cases
-and manual scenarios use this setup, recorded under `summary.player.equipment`.
-Melee cases retain sword/shield; lethal-hit fixtures use player `AttackDamageMult`
-instead of unarmed damage. Normal/nonfatal hits retain normal sword damage.
+Removed gear counts must be zero; other inventory is preserved. Manual scenarios
+record this setup under `summary.player.equipment`; automated tests skip it.
+Manual scenarios retain sword/shield. Automated melee fixtures use the default
+weapon and player `AttackDamageMult` where lethal damage is required; ordinary
+hits retain that weapon's normal damage.
 Host verification: `pwsh -NoProfile -File tests/Test-PlayerEquipment.ps1`.
 The equipment change and sword-based combat cases have not been rerun in-game.
 Run `ef93c755-92ec-41b0-ae03-3b80f93260c2` passed live race/sex checks and

@@ -248,14 +248,16 @@ try {
     . (Join-Path $PSScriptRoot 'Npc-Papyrus.ps1')
     $summary.backgroundActive = (Invoke-NpcPapyrus Utility GetINIBool '' @('bAlwaysActive:General')).returned
     if ($summary.backgroundActive -ne $true) { throw 'Skyrim background execution not enabled' }
-    $summary.player = Set-YieldPlayerAppearance
-    # Character creation owns the camera; establish the case view after it closes.
+    if($setupOnly) {
+        $summary.player = Set-YieldPlayerAppearance
+        $summary.player.equipment = Set-YieldPlayerEquipment
+    }
+    # Manual character creation owns the camera; establish the case view afterward.
     Invoke-YieldTool console @{ action='exec'; command='fov 120' } | Out-Null
     $pov = if($setupOnly) {'first'} else {'third'}
     $summary.camera = Invoke-YieldTool camera @{ action='setPov'; pov=$pov }
     if ($summary.camera.pov -ne $pov) { throw "Camera did not enter $pov person" }
     $summary.fovRequested = 120
-    $summary.player.equipment = Set-YieldPlayerEquipment
     $policyLog = Get-Content -LiteralPath (Join-Path (Split-Path -Parent $PrefsPath) 'SKSE\Acheron.log') -Raw
     if ($policyLog -notmatch '\[YieldPolicy\] npcDefeat=false followerDefeat=true hunterPrideFollower=true lethalNPC=100 processing=true consequence=false') { throw 'Native combat policy mismatch' }
     $summary.policyVerified = $true

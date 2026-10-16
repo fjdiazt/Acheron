@@ -454,9 +454,11 @@ remain local to each scenario. Earlier run evidence above used bandits/wolves;
 it does not qualify the changed suite. Host checks pass; runtime requalification
 remains pending. The 2s/3s recovery cases remain unrun.
 
-All cases/manual scenarios also share a female Argonian player with one iron sword
+Manual scenarios use a female Argonian player with one iron sword
 (`00012EB7`), one iron shield (`00012EB6`), and no other armor/clothing or spare
 weapons. Bootstrap verifies equipment; gold, potions and other non-equipment items
-remain available. Melee fixtures keep the sword and use `AttackDamageMult` only
+remain available. Automated tests skip race/sex/preset changes and full gear
+cleanup. Real melee fixtures draw the fresh world's existing weapon, preserve
+other gear, and use `AttackDamageMult` only
 where a high-damage finishing hit is needed. Host equipment checks pass; sword
 combat and the updated player setup await in-game qualification.
