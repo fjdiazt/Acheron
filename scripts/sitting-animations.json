@@ -130,7 +130,7 @@
     "rank": 17,
     "enter": "idleblessingkneel_enter.hkx",
     "loop": "mod:Improved Idle Laydown Animations/meshes/actors/character/animations/OpenAnimationReplacer/SDB IILD/female laydown/idlelaydown.hkx",
-    "exit": "mod:Improved Idle Laydown Animations/meshes/actors/character/animations/OpenAnimationReplacer/SDB IILD/unisex laydown/idlelaydown_exit.hkx",
+    "exit": "idlekneelexit.hkx",
     "femaleOnly": true,
     "loopSeconds": 47.916668
   },
@@ -139,7 +139,7 @@
     "rank": 18,
     "enter": "idleblessingkneel_enter.hkx",
     "loop": "mod:Improved Idle Laydown Animations/meshes/actors/character/animations/OpenAnimationReplacer/SDB IILD/female laydown mirror/idlelaydown.hkx",
-    "exit": "mod:Improved Idle Laydown Animations/meshes/actors/character/animations/OpenAnimationReplacer/SDB IILD/unisex laydown/idlelaydown_exit.hkx",
+    "exit": "idlekneelexit.hkx",
     "femaleOnly": true,
     "loopSeconds": 47.916668
   }

@@ -143,8 +143,8 @@ are excluded from Git. The manifest records source paths and hashes. Native cros
 enter/exit are explicit overrides for variants lacking a selected enter/exit. Beggar
 and both female Laydown variants now enter with native `idleblessingkneel_enter.hkx`.
 Beggar retains `mt_beggaridle.hkx` / `mt_beggarstand.hkx`; Laydown retains its selected
-female loop and source-pack unisex exit. User rejected the relaxed hands-behind-head
-laydown transitions; only entry has been replaced so far. Bedroll alternatives were
+female loop and now exits with native `idlekneelexit.hkx`. User rejected the relaxed
+hands-behind-head laydown transitions; both entry and exit are now overridden. Bedroll alternatives were
 rejected as long and side-lying. Retain `mt_getupfromback.hkx` / `mt_getupfromfront.hkx`
 as candidate exits for flat back/front poses; neither is configured yet.
 Updated entry qualification passed `65a1d519-d9d4-418a-be6f-708da2972c97`:
@@ -154,7 +154,11 @@ was replayed against all16 captured clips. Beggar and both laydown entries match
 the native blessing-enter bytes; only those three installed assets changed.
 Candidate retained with130 source/deployment hashes verified in receipt
 `build/pacification-backups/b7003b13-9c88-42b1-ad73-eb6559cbcac4/manifest.json`.
-Visual entry-to-loop fit and replacement laydown exits still need review; no male/VR rerun.
+Visual entry-to-loop fit still needs review; no male/VR rerun. Subsequent laydown
+exit override to `idlekneelexit.hkx` is asset/hash-verified only, without a new runtime pass.
+Both former laydown-exit uses are replaced; no active pipeline references remain.
+Exit deployment backup: `build/pacification-backups/07169fd9-bdb0-44a6-9565-ad7a997dca89/manifest.json`;
+both copied exits and all130 current source/deployment files match their staged bytes.
 Wounded 01-03 remain visually unqualified as seated
 poses even after graph/loop qualification; filename does not prove posture.
 
