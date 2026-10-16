@@ -67,18 +67,24 @@ namespace Papyrus
             const auto process = subject->GetActorRuntimeData().currentProcess;
             const auto package = subject->GetCurrentPackage();
             const auto values = subject->AsActorValueOwner();
+            const auto position = subject->GetPosition();
+            const auto origin = player->GetPosition();
             const nlohmann::json sample{
                 {"actor", std::format("0x{:08X}", subject->GetFormID())}, {"action", action},
                 {"fleeing", process && process->middleHigh && process->middleHigh->isFleeing},
                 {"package", package ? std::format("0x{:08X}", package->GetFormID()) : ""},
                 {"packageType", package ? static_cast<int>(package->packData.packType.underlying()) : -1},
                 {"hooksEnabled", !Acheron::Hooks::probeHooksDisabled},
-                {"distance", subject->GetPosition().GetDistance(player->GetPosition())},
+                {"distance", position.GetDistance(origin)},
+                {"planarDistance", std::hypot(position.x - origin.x, position.y - origin.y)},
+                {"position", {position.x, position.y, position.z}},
                 {"health", values->GetActorValue(RE::ActorValue::kHealth)},
                 {"defeated", Acheron::Defeat::IsDefeated(subject.get())},
                 {"bleedingOut", subject->IsBleedingOut()},
                 {"bleedoutLocked", subject->GetActorRuntimeData().boolFlags.any(RE::Actor::BOOL_FLAGS::kNoBleedoutRecovery)},
                 {"defeatPackage", package && package == Acheron::GameForms::BlankPackage},
+                {"procedure", process ? process->currentPackage.currentProcedureIndex : -1},
+                {"knockState", static_cast<unsigned>(subject->GetKnockState())},
                 {"aggression", values->GetActorValue(RE::ActorValue::kAggression)},
                 {"confidence", values->GetActorValue(RE::ActorValue::kConfidence)},
                 {"pacified", Acheron::Defeat::IsPacified(subject.get())}, {"combat", subject->IsInCombat()},

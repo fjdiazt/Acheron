@@ -11,6 +11,7 @@ function Resolve-YieldStartupPrompts {
         }
         Invoke-YieldTool menu @{action='accept';index=1} | Out-Null
         $summary.survivalPromptDeclined=$true
+        $summary.survivalPromptDeclines=[int]$summary.survivalPromptDeclines+1
         Start-Sleep -Milliseconds 25
     } while((Get-Date) -lt $deadline)
     throw 'Survival prompt did not close'

@@ -24,5 +24,6 @@ foreach($mode in @('none','survival','unknown','wrongButtons')) {
     if($rejected -ne ($mode -in @('unknown','wrongButtons'))) {throw "Wrong prompt acceptance: $mode"}
     if($accepts -ne $(if($mode -eq 'survival'){1}else{0})) {throw 'Wrong number of prompt mutations'}
     if(($summary.survivalPromptDeclined -eq $true) -ne ($mode -eq 'survival')) {throw 'Wrong survival evidence'}
+    if([int]$summary.survivalPromptDeclines -ne $accepts) {throw 'Wrong prompt decline counter'}
 }
 'PASS: exact Survival prompt declined; unknown prompts and reversed buttons rejected'

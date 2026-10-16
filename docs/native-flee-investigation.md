@@ -7,11 +7,14 @@ Fleeing entry; Acheron pacification during flight; unchanged health, Aggression
 and Confidence; no healing. Finish at 4096 units from player or 30 real seconds,
 then remove owned overrides. No prisoner hold or wandering budget consumed.
 
-**Current desktop result:** direct native fleeing starts successfully for the
-pacified Forsworn with all installed SKSE plugins active, twice, using the
-qualified-path fixture below. No conflicting mod established. This does not
-implement the Fleeing FSM, prove arbitrary-position reliability, or qualify
-4096-distance completion / the planned 30-second timer. VR remains untested.
+**Current desktop result:** package-driven FleeFrom and FleeTo move the actual
+yielded Forsworn after no-heal exit, with all hooks/plugins active and no Travel
+warm-up or player relocation. Both passed twice; final repetitions explicitly
+prove horizontal movement. Prefer FleeFrom for integration because it needs no
+escape-marker selection. Earlier direct-call flight required a prepared route;
+its actual-Yielding probe stalled. No conflicting mod established. Fleeing FSM,
+arbitrary-position reliability, 4096-distance completion, the planned 30-second
+timer and VR remain unqualified/unimplemented.
 
 **Qualification correction:** run `0066be5d-c79f-4258-ab02-1b48e5a906f8`
 captured the native **Enable Survival Mode?** Yes/No dialog pausing the exterior
@@ -39,7 +42,7 @@ Earlier rescue investigation (`skyrim-dre`) also observed FleeTo stationary
 without pacification. Existing rescue movement instead uses qualified native
 Sandbox packages; that does not prove distant flight.
 
-No reliable sustained native fleeing established. Evidence does not isolate
+At that earlier stage, no reliable sustained native fleeing was established. Evidence did not isolate
 Acheron as cause or establish native fleeing as impossible. Exterior spawn
 collision, reachable navmesh goals and Find/Flee procedure progress still need
 separate controls. Before production integration, qualify movement over a known
@@ -69,7 +72,8 @@ was deleted. No sustained flight qualified in this fixture. Native flag meaning,
 path reachability and interaction with Acheron detection remain unisolated.
 
 Test-only `ProbeNativeFlee` actions: 0 stop, 1 published example, 2 snapshot,
-3 `fleeFromDist=4096`. Desktop dynamic NPCs only, no defeated/managed actors.
+3 `fleeFromDist=4096`. Desktop dynamic NPCs only. Read-only action2 accepts
+defeated actors; mutations reject them, and all actions reject managed actors.
 The harness declines only the exact Survival prompt with matching Yes/No buttons;
 unknown prompts fail. `Test-YieldStartupPrompts.ps1` verifies this boundary.
 
@@ -187,6 +191,66 @@ distinguish unfinished bleedout animation exit from native route/context failure
 trace exit/procedure evidence and compare an unyielded actor at the same stable
 position before selecting an implementation. Do not add Travel warm-up, teleport
 the player, heal the NPC or change actor values as a workaround.
+
+## Package alternatives from actual Yielding (2026-10-16)
+
+Clean retest addresses the Survival-popup confound in the original package runs.
+Same female Forsworn, actual DefeatActor ownership followed by existing no-heal
+RescueActor(false), full installed hook/plugin stack, no Travel warm-up or player
+relocation. Actual health about 0.05, Aggression 2, Confidence 4 and pacification
+remain unchanged throughout each valid run. Native snapshots include package,
+procedure, knock state, position and horizontal distance; none requires the native
+life state or knock flag to mean Acheron's logical Yielding state.
+
+FleeFrom 880 derives from vanilla FleeFrom 0197F1: Find player into object list,
+then Flee with distance 4096. FleeTo 881 derives from vanilla FleeTo 0C7039 and
+uses a linked XMarker 900 units south of the player on the corridor traversed by
+the earlier independent Travel control. This is a short movement qualification,
+not proof that an arbitrary escape marker is reachable or that 4096 is reached.
+Spriggit round-trip readback confirms both compiled templates and inputs.
+
+| Run | Route | Result |
+| --- | --- | --- |
+| `a3c03b3b-826f-4858-a5b0-2879c281166c` | FleeFrom | PASS; distance 229 to 2098 units; exact package 880 selected, invariants and stop pass. |
+| `651cbd4a-8137-46ac-9c9b-51b0e0463bd4` | FleeTo | PASS; distance 208 to 795; goal distance falls to 250; invariants and stop pass. |
+| `f6759323-ec06-4c00-977f-e048e10d535d` | FleeFrom repeat | FAIL remains recorded: movement 204 to 1505, but one snapshot paused by exact Survival popup opening after guard. No actor-value change; stop passes. |
+| `d479ae80-eea6-475e-841e-c03a99949790` | FleeFrom; horizontal metric | PASS; horizontal distance 226 to 1793 units; all invariants, stationary player, stop and cleanup pass. |
+| `e986a871-1a66-4f68-a807-c2f1c0b9190a` | FleeTo; horizontal metric | PASS; horizontal distance 190 to 788; goal distance falls to 293; all invariants, stationary player, stop and cleanup pass. |
+
+Run `8ad9a8e5-6bb9-49f6-b3c5-0b06531d0188` stopped before spawning: DevBench
+returns blank EditorIDs for packages. Fixture presence check now uses package type
+and local form ID; compiled readback and deployment hashes establish record identity.
+
+Qualification now requires more than 350 units of horizontal distance gain while
+the explicit fixture package is active. These template-based packages have generic
+type 18; native-created package 10/22 classification alone is insufficient. Host
+counterexamples reject wrong package, unrelated-package movement, vertical-only
+movement, missing horizontal baseline and actor-invariant failures.
+
+Late modal handling records the paused snapshot, validates/dismisses the exact
+Survival prompt and requests one fresh read-only snapshot. It never repeats a
+flight mutation or silently accepts unknown/unexplained/persistent pauses. The
+extra decline counter distinguishes a newly handled prompt from an earlier one.
+Mocked boundary tests cover these races; final live repetitions pass with the
+updated helper. Original failed summaries remain unchanged.
+
+```powershell
+pwsh -NoProfile -File tests/Build-NativeFleeFixture.ps1 -FleePackages
+pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test native-flee-from-probe
+pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test native-flee-to-probe
+```
+
+Both fixture records are private test inputs; builder removes temporary source
+copies even on compile failure. All package probes reject KeepInstalled and hook/
+DLL-isolation switches. Six restoring deployments audited: all 130 original target
+hashes match, game closed, both INIs restored, ordinary staging rebuilt from res,
+VR untouched. No screenshots or recovery 2s/3s runs.
+
+Recommendation: integrate FleeFrom into the existing owner next. Keep the approved
+4096-unit or 30-real-second lifetime, enemy-only dialogue/Test entry, no healing/stat
+changes and finite cleanup. Held-pose exit, persistence/death/unload handling,
+actual distance completion and timer semantics still need implementation and tests;
+these probes establish movement feasibility only. No gameplay deployment yet.
 
 ## Preserved work and isolation
 

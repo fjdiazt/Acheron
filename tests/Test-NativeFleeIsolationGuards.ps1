@@ -4,6 +4,9 @@ $cases=@(
     @{Test='native-flee-enemy-probe';KeepInstalled=$true},
     @{Test='native-flee-yield-probe';KeepInstalled=$true},
     @{Test='native-flee-yield-probe';DisableAcheronHooks=$true},
+    @{Test='native-flee-from-probe';KeepInstalled=$true},
+    @{Test='native-flee-to-probe';KeepInstalled=$true},
+    @{Test='native-flee-to-probe';MinimalFleePlugins=$true},
     @{Test='peaceful-state';DisableAcheronHooks=$true},
     @{Test='peaceful-state';ExcludeFleePlugins=@('OpenAnimationReplacer.dll')},
     @{Test='native-flee-probe';ExcludeFleePlugins=@('unrelated.dll')}

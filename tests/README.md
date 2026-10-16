@@ -20,6 +20,23 @@ Verifies defeat ownership/immobilization before exit and release before flight.
 Fails on missing movement; package selection alone cannot pass. Latest desktop
 result stalls after successful no-heal exit; gameplay Fleeing remains unimplemented.
 
+Package alternatives use the same actual Yielding entry and actor invariants:
+
+```powershell
+pwsh -NoProfile -File tests/Build-NativeFleeFixture.ps1 -FleePackages
+pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test native-flee-from-probe
+pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test native-flee-to-probe
+```
+
+Private FleeFrom 880 uses the vanilla Find/Flee template with player threat and
+4096-unit distance input. FleeTo 881 uses vanilla Flee with a linked marker on the
+previously traversed 900-unit southern corridor. Neither warms up through Travel
+or moves the player. Qualification requires more than 350 horizontal units away
+while the exact fixture package is active; generic package type 18 is expected.
+Late exact Survival modals are recorded, dismissed and resampled once without
+repeating a flight mutation; unknown or unexplained/persistent pauses still fail.
+All cases restore installed files; rebuild ordinary `res` afterward to reset staging.
+
 `Invoke-PacificationTests.ps1 -Test greeting-probe` records repeated native spoken
 greetings while kneeling at disposable relationship controls -3/0. It checks
 native choices/actions and actor invariants; PASS does not mean the lines are

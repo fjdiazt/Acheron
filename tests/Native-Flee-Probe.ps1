@@ -1,11 +1,12 @@
-param([string] $RunId, [string] $RunDirectory, [switch] $EnemyControl, [switch] $YieldControl)
+param([string] $RunId, [string] $RunDirectory, [switch] $EnemyControl, [switch] $YieldControl,
+    [ValidateSet('From','To')] [string] $PackageMode)
 $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot 'Npc-Papyrus.ps1')
 . (Join-Path $PSScriptRoot 'Yield-StartupPrompts.ps1')
 . (Join-Path $PSScriptRoot 'Native-Flee-Evidence.ps1')
-$player='0x00000014'; $actor=$null; $goal=$null; $travel=$null; $summary.actorCleaned=$false
+$player='0x00000014'; $actor=$null; $goal=$null; $travel=$null; $fleePackage=$null; $summary.actorCleaned=$false
 $logPath=Join-Path (Split-Path -Parent $PrefsPath) 'SKSE\Acheron.log'
-function Read-FleeProbe([string] $ActorId, [int] $Action=2) {
+function Read-FleeProbe([string] $ActorId, [int] $Action=2, [switch] $AfterPrompt) {
     if($Action -ne 0) {Resolve-YieldStartupPrompts}
     $start=(Get-Content $logPath -Raw).Length
     if(-not (Invoke-NpcPapyrus Acheron ProbeNativeFlee '' @(@{form=$ActorId},$Action)).returned) {throw 'Native flee diagnostic rejected actor/action'}
@@ -15,7 +16,17 @@ function Read-FleeProbe([string] $ActorId, [int] $Action=2) {
         if($log.Length -ge $start) {
             foreach($match in [regex]::Matches($log.Substring($start),'\[NativeFleeProbe\] (?<json>\{[^\r\n]*\})')) {
                 $sample=$match.Groups['json'].Value|ConvertFrom-Json
-                if($sample.actor -eq $ActorId -and $sample.action -eq $Action) {return $sample}
+                if($sample.actor -eq $ActorId -and $sample.action -eq $Action) {
+                    if($sample.paused -and $Action -ne 0) {
+                        $declines=[int]$summary.survivalPromptDeclines
+                        Resolve-YieldStartupPrompts
+                        if($AfterPrompt -or [int]$summary.survivalPromptDeclines -le $declines) {throw 'Native flee snapshot paused without a newly handled Survival prompt'}
+                        $summary.promptPausedSnapshots+=,$sample
+                        # Resnapshot only; never repeat a flight mutation after dismissing a late modal.
+                        return Read-FleeProbe $ActorId 2 -AfterPrompt
+                    }
+                    return $sample
+                }
             }
         }
         Start-Sleep -Milliseconds 25
@@ -35,6 +46,15 @@ try {
     $playerStart=(Invoke-YieldTool inspect @{kind='refs';formId=$player}).refs[0].position
     $summary.probe=if($YieldControl){'Actual Yielding entry; no Travel warm-up or player relocation'}else{'Acheron hook isolation with native Travel path control'}
     $summary.nativeCall='InitiateFlee(player,true,true,false,nullptr,nullptr,4096.0f,50.0f)'
+    if($PackageMode) {
+        if(-not $YieldControl -or -not $EnemyControl) {throw 'Package flight requires actual enemy Yielding entry'}
+        $summary.nativeCall="ActorUtil package Flee$PackageMode"
+        $key=if($PackageMode -eq 'From'){0x880}else{0x881}
+        $form=(Invoke-NpcPapyrus Game GetFormFromFile '' @($key,'Acheron.esm')).returned
+        # Package EditorIDs are unavailable here; compiled readback and deployment hashes establish fixture identity.
+        if($form.formType -ne '79' -or $form.formId -notmatch ('{0:X3}$' -f $key)) {throw 'Compile FleeFrom/FleeTo fixtures before package probe'}
+        $fleePackage=$form.formId
+    }
     $summary.hooksExpected=$env:ACHERON_NATIVE_FLEE_NO_HOOKS -ne '1'
     if(-not $YieldControl) {
         $travel=(Invoke-NpcPapyrus Game GetFormFromFile '' @(0x880,'Acheron.esm')).returned.formId
@@ -68,6 +88,7 @@ try {
         if($initial.hooksEnabled -ne $summary.hooksExpected -or $initial.combat -or $initial.pacified -ne $pacify) {throw 'Isolation control was not peaceful or hook mode mismatched'}
         $startRef=(Invoke-YieldTool inspect @{kind='refs';formId=$actor}).refs[0]
         $control=@{pacifiedRequested=$pacify;initial=$initial;actor=$startRef;pathSamples=@();samples=@()}
+        if($YieldControl) {$control.requirePlanar=$true}
         $summary.controls+=,$control
         if($YieldControl) {
             $control.yielding=$down
@@ -110,19 +131,39 @@ try {
         }
         $control.fleeInitial=Read-FleeProbe $actor
         Invoke-NpcPapyrus Actor EnableAI $actor @($true) | Out-Null
-        $control.start=Read-FleeProbe $actor 3
+        if($fleePackage) {
+            if($PackageMode -eq 'To') {
+                $goal=(Invoke-NpcPapyrus ObjectReference PlaceAtMe $player @(@{form='0x0000003B'},1,$true,$false)).returned.formId
+                if($goal -notmatch '^0xFF[0-9A-Fa-f]{6}$') {throw 'Escape marker ownership missing'}
+                # Same short outdoor corridor previously traversed by the independent Travel control.
+                Invoke-NpcPapyrus ObjectReference MoveTo $goal @(@{form=$player},0.0,-900.0,0.0,$false) | Out-Null
+                Invoke-NpcPapyrus Acheron ProbePeacefulLinks '' @(@{form=$actor},@{form=$goal},@{form=$goal}) | Out-Null
+                $keyword=(Invoke-NpcPapyrus Game GetFormFromFile '' @(0x812,'Acheron.esm')).returned.formId
+                if((Invoke-NpcPapyrus ObjectReference GetLinkedRef $actor @(@{form=$keyword})).returned.formId -ne $goal) {throw 'Escape goal link not applied'}
+                $control.goal=(Invoke-YieldTool inspect @{kind='refs';formId=$goal}).refs[0]
+            }
+            $control.expectedPackage=$fleePackage
+            Invoke-NpcPapyrus ActorUtil AddPackageOverride '' @(@{form=$actor},@{form=$fleePackage},100,1) | Out-Null
+            Invoke-NpcPapyrus Actor EvaluatePackage $actor | Out-Null
+            $control.start=Read-FleeProbe $actor
+        } else {$control.start=Read-FleeProbe $actor 3}
         $deadline=(Get-Date).AddSeconds(8)
         do {
             $sample=Read-FleeProbe $actor
             $control.samples+=,$sample
+            if($goal) {$control.pathSamples+=@{native=$sample;goalDistance=(Invoke-NpcPapyrus ObjectReference GetDistance $actor @(@{form=$goal})).returned}}
             Start-Sleep -Milliseconds 150
         } while((Get-Date) -lt $deadline)
         $outcome=Get-NativeFleeOutcome $control $summary.hooksExpected
         foreach($key in $outcome.Keys) {$control[$key]=$outcome[$key]}
+        if($fleePackage) {
+            Invoke-NpcPapyrus ActorUtil RemovePackageOverride '' @(@{form=$actor},@{form=$fleePackage}) | Out-Null
+            Invoke-NpcPapyrus Actor EvaluatePackage $actor | Out-Null
+        }
         $control.stop=Read-FleeProbe $actor 0
         $deadline=(Get-Date).AddSeconds(3)
-        do {$sample=Read-FleeProbe $actor; if(-not $sample.fleeing -and $sample.packageType -notin @(10,22)) {break}; Start-Sleep -Milliseconds 100} while((Get-Date) -lt $deadline)
-        $control.stopped=-not $sample.fleeing -and $sample.packageType -notin @(10,22)
+        do {$sample=Read-FleeProbe $actor; if(-not $sample.fleeing -and $sample.packageType -notin @(10,22) -and $sample.package -ne $fleePackage) {break}; Start-Sleep -Milliseconds 100} while((Get-Date) -lt $deadline)
+        $control.stopped=-not $sample.fleeing -and $sample.packageType -notin @(10,22) -and $sample.package -ne $fleePackage
         $control.afterStop=$sample
         if(-not $control.invariantsPreserved -or -not $control.stopped) {throw 'Isolation actor invariants or native stop failed'}
         if($YieldControl) {
@@ -145,6 +186,7 @@ try {
 } finally {
     if($actor) {
         if($travel) {Invoke-NpcPapyrus ActorUtil RemovePackageOverride '' @(@{form=$actor},@{form=$travel}) | Out-Null}
+        if($fleePackage) {Invoke-NpcPapyrus ActorUtil RemovePackageOverride '' @(@{form=$actor},@{form=$fleePackage}) | Out-Null}
         if((Invoke-NpcPapyrus Acheron IsDefeated '' @(@{form=$actor})).returned) {Invoke-NpcPapyrus Acheron RescueActor '' @(@{form=$actor},$false) | Out-Null}
         Read-FleeProbe $actor 0 | Out-Null
         Invoke-NpcPapyrus Acheron ReleaseActor '' @(@{form=$actor}) | Out-Null
