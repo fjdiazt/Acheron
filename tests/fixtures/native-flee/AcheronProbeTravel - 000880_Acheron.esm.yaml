@@ -1,0 +1,31 @@
+FormKey: 000880:Acheron.esm
+EditorID: AcheronProbeTravel
+Flags:
+- PreferredSpeed
+- IgnoreCombat
+- WeaponsUnequipped
+- NoCombatAlert
+Type: Package
+PreferredSpeed: Run
+ScheduleMonth: -1
+ScheduleDayOfWeek: Any
+ScheduleHour: -1
+ScheduleMinute: -1
+PackageTemplate: 016FAA:Skyrim.esm
+DataInputVersion: 3
+Data:
+- Key: 0
+  Value:
+    MutagenObjectType: PackageDataLocation
+    Location:
+      Target:
+        MutagenObjectType: LocationKeyword
+        Link: 000812:Acheron.esm
+      Radius: 64
+- Key: 2
+  Value:
+    MutagenObjectType: PackageDataBool
+- Key: 4
+  Value:
+    MutagenObjectType: PackageDataBool
+XnamMarker: '0x05'

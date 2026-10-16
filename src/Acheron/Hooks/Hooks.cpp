@@ -9,6 +9,7 @@
 #include "shared/KrisV/Random.h"
 
 #include <xbyak/xbyak.h>
+#include <cstdlib>
 
 using Archetype = RE::EffectArchetypes::ArchetypeID;
 
@@ -16,6 +17,15 @@ namespace Acheron
 {
     void Hooks::Install()
     {
+#ifdef ACHERON_YIELD_TESTS
+        char* isolate = nullptr;
+        std::size_t isolateLength = 0;
+        _dupenv_s(&isolate, &isolateLength, "ACHERON_NATIVE_FLEE_NO_HOOKS");
+        probeHooksDisabled = !REL::Module::IsVR() && isolate && std::string_view(isolate) == "1";
+        std::free(isolate);
+        logger::info("[NativeFleeIsolation] hooksEnabled={}", !probeHooksDisabled);
+        if (probeHooksDisabled) return;
+#endif
 #define VAR_OFFSET(SE, AE) REL::VariantOffset(SE, AE, SE)
 
         REL::Relocation<std::uintptr_t> phd{ REL::RelocationID(37633, 38586), VAR_OFFSET(0x76, 0x7e) };

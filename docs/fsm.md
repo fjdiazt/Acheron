@@ -525,7 +525,9 @@ Initial entry: **Get out of here.** for enemy/aggressive targets only, plus a
 Fleeing choice under Test. Civilian flight, automatic yield outcomes and bound
 release integration remain outside this implementation round. Native FleeFrom
 and FleeTo remain unqualified; earlier probes missed a blocking Survival dialog.
-Direct InitiateFlee probes also have not qualified movement. No Fleeing gameplay implementation is
+Direct InitiateFlee works for pacified Forsworn in the qualified-path desktop
+fixture with all plugins active; actual gameplay entry/lifecycle remains unqualified.
+No Fleeing gameplay implementation is
 deployed. See [native flee investigation](native-flee-investigation.md).
 
 ## Bound NPC damage

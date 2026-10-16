@@ -1,0 +1,17 @@
+function Get-NativeFleeOutcome($Control, [bool] $HooksExpected) {
+    $initial=$Control.initial
+    $samples=@($Control.samples)
+    if(-not $samples.Count) {throw 'Native flee observations missing'}
+    $moved=($samples.distance|Measure-Object -Maximum).Maximum -gt $Control.fleeInitial.distance+350
+    $native=@($samples|Where-Object {$_.packageType -in @(10,22)}).Count -gt 0
+    $preserved=@($samples|Where-Object {
+        $_.health -ne $initial.health -or $_.aggression -ne $initial.aggression -or
+        $_.confidence -ne $initial.confidence -or $_.pacified -ne $Control.pacifiedRequested -or
+        $_.paused -or $_.combat -or $_.hooksEnabled -ne $HooksExpected
+    }).Count -eq 0
+    return @{
+        moved=$moved;nativePackageObserved=$native
+        nativeFleeFlagObserved=(@($samples|Where-Object fleeing).Count -gt 0 -or $Control.start.fleeing)
+        invariantsPreserved=$preserved;fleeQualified=$moved -and $native -and $preserved
+    }
+}

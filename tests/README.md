@@ -1,12 +1,16 @@
 # Desktop test harness
 
 `Invoke-PacificationTests.ps1 -Test native-flee-probe` probes direct native
-`Actor::InitiateFlee` on a disposable pacified Forsworn, outside routine suites.
-Requires test diagnostics. Current case uses `fleeFromDist=4096`, records native
-flee/combat/pause flags, distance and unchanged health/Aggression/Confidence,
-then stops/deletes the actor. Exact Survival Mode startup prompt is declined;
-unknown message boxes fail. Installed files restore by default. Current negative
-results and earlier controls: [flee investigation](../docs/native-flee-investigation.md).
+`Actor::InitiateFlee` on native friendly guard controls, outside routine suites.
+`native-flee-enemy-probe` uses the actual pacified female Forsworn with sword only.
+Requires test diagnostics and `Build-NativeFleeFixture.ps1` before first use.
+Native Travel qualifies a route; flight begins at arrival, reversing that route.
+Uses `fleeFromDist=4096`, native package10/22 and actual movement; `isFleeing=false`
+alone does not reject flight. Records health/stats/combat/pause and stop evidence.
+Exact Survival prompt is declined; unknown dialogs fail. Protocol PASS reports
+safe observations, while each `fleeQualified` field reports flight behavior.
+Hook/DLL isolation switches always restore files; KeepInstalled is rejected.
+Desktop results and limits: [flee investigation](../docs/native-flee-investigation.md).
 
 `Invoke-PacificationTests.ps1 -Test greeting-probe` records repeated native spoken
 greetings while kneeling at disposable relationship controls -3/0. It checks

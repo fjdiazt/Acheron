@@ -1,8 +1,9 @@
-param([string] $RunId, [string] $RunDirectory)
+param([string] $RunId, [string] $RunDirectory, [switch] $EnemyControl)
 $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot 'Npc-Papyrus.ps1')
 . (Join-Path $PSScriptRoot 'Yield-StartupPrompts.ps1')
-$player='0x00000014'; $actor=$null; $summary.actorCleaned=$false
+. (Join-Path $PSScriptRoot 'Native-Flee-Evidence.ps1')
+$player='0x00000014'; $actor=$null; $goal=$null; $travel=$null; $summary.actorCleaned=$false
 $logPath=Join-Path (Split-Path -Parent $PrefsPath) 'SKSE\Acheron.log'
 function Read-FleeProbe([string] $ActorId, [int] $Action=2) {
     if($Action -ne 0) {Resolve-YieldStartupPrompts}
@@ -31,21 +32,62 @@ try {
     } while($cell -ne 'WhiterunExterior16' -and (Get-Date) -lt $deadline)
     if($cell -ne 'WhiterunExterior16') {throw 'Outdoor test cell did not load'}
     Resolve-YieldStartupPrompts
+    $playerStart=(Invoke-YieldTool inspect @{kind='refs';formId=$player}).refs[0].position
+    $summary.probe='Acheron hook isolation with native Travel path control'
     $summary.nativeCall='InitiateFlee(player,true,true,false,nullptr,nullptr,4096.0f,50.0f)'
+    $summary.hooksExpected=$env:ACHERON_NATIVE_FLEE_NO_HOOKS -ne '1'
+    $travel=(Invoke-NpcPapyrus Game GetFormFromFile '' @(0x880,'Acheron.esm')).returned.formId
+    if(-not $travel) {throw 'Compile native-flee Travel fixture before isolation probe'}
     $summary.controls=@()
-    foreach($pacify in @($true)) {
+    $pacificationControls=if($EnemyControl){@($true)}else{@($false,$true)}
+    foreach($pacify in $pacificationControls) {
+        $base=if($EnemyControl){$yieldEnemyBase}else{'0x000D3154'}
         $before=Invoke-YieldTool inspect @{kind='refs';formType='Actor';limit=100}
-        $spawn=(Invoke-NpcPapyrus ObjectReference PlaceAtMe $player @(@{form=$yieldEnemyBase},1,$true,$true)).returned
+        $spawn=(Invoke-NpcPapyrus ObjectReference PlaceAtMe $player @(@{form=$base},1,$true,$true)).returned
         $after=Invoke-YieldTool inspect @{kind='refs';formType='Actor';limit=100}
-        $actor=Resolve-NpcSpawn $before $after $yieldEnemyBase $spawn.formId
+        $actor=Resolve-NpcSpawn $before $after $base $spawn.formId
         Invoke-NpcPapyrus Actor EnableAI $actor @($false) | Out-Null
         Invoke-NpcPapyrus ObjectReference MoveTo $actor @(@{form=$player},150.0,0.0,0.0,$false) | Out-Null
         Invoke-NpcPapyrus ObjectReference Enable $actor @($false) | Out-Null
-        Set-NpcEnemyEquipment $actor | Out-Null
+        $deadline=(Get-Date).AddSeconds(5)
+        do {$loaded=(Invoke-NpcPapyrus ObjectReference Is3DLoaded $actor).returned} while(-not $loaded -and (Get-Date) -lt $deadline)
+        if(-not $loaded) {throw 'Guard control did not load'}
         if($pacify) {Invoke-NpcPapyrus Acheron PacifyActor '' @(@{form=$actor}) | Out-Null}
         $initial=Read-FleeProbe $actor
-        $control=@{pacifiedRequested=$pacify;initial=$initial;actor=(Invoke-YieldTool inspect @{kind='refs';formId=$actor}).refs[0];samples=@()}
+        if($initial.hooksEnabled -ne $summary.hooksExpected -or $initial.combat -or $initial.pacified -ne $pacify) {throw 'Isolation control was not peaceful or hook mode mismatched'}
+        $startRef=(Invoke-YieldTool inspect @{kind='refs';formId=$actor}).refs[0]
+        $control=@{pacifiedRequested=$pacify;initial=$initial;actor=$startRef;pathSamples=@();samples=@()}
         $summary.controls+=,$control
+        $goal=(Invoke-NpcPapyrus ObjectReference PlaceAtMe $player @(@{form='0x0000003B'},1,$true,$false)).returned.formId
+        Invoke-NpcPapyrus ObjectReference MoveTo $goal @(@{form=$player},0.0,-900.0,0.0,$false) | Out-Null
+        Invoke-NpcPapyrus Acheron ProbePeacefulLinks '' @(@{form=$actor},@{form=$goal},@{form=$goal}) | Out-Null
+        $control.goal=(Invoke-YieldTool inspect @{kind='refs';formId=$goal}).refs[0]
+        Invoke-NpcPapyrus ActorUtil AddPackageOverride '' @(@{form=$actor},@{form=$travel},100,1) | Out-Null
+        Invoke-NpcPapyrus Actor EnableAI $actor @($true) | Out-Null
+        Invoke-NpcPapyrus Actor EvaluatePackage $actor | Out-Null
+        $deadline=(Get-Date).AddSeconds(12)
+        do {
+            $sample=Read-FleeProbe $actor
+            $goalDistance=(Invoke-NpcPapyrus ObjectReference GetDistance $actor @(@{form=$goal})).returned
+            $control.pathSamples+=@{native=$sample;goalDistance=$goalDistance}
+            if($goalDistance -lt 128) {break}
+            Start-Sleep -Milliseconds 100
+        } while((Get-Date) -lt $deadline)
+        $control.pathQualified=$goalDistance -lt 128 -and -not $sample.paused -and @($control.pathSamples|Where-Object {$_.native.combat -or $_.native.health -ne $initial.health}).Count -eq 0
+        if(-not $control.pathQualified) {throw 'Native Travel path control failed; no fleeing conclusion allowed'}
+        Invoke-NpcPapyrus Actor EnableAI $actor @($false) | Out-Null
+        if($EnemyControl) {Set-NpcEnemyEquipment $actor | Out-Null}
+        Invoke-NpcPapyrus ActorUtil RemovePackageOverride '' @(@{form=$actor},@{form=$travel}) | Out-Null
+        Invoke-NpcPapyrus Actor EvaluatePackage $actor | Out-Null
+        # Flee back along the proven path; teleporting the actor back can invalidate its pathing context.
+        $arrived=(Invoke-YieldTool inspect @{kind='refs';formId=$actor}).refs[0].position
+        $dx=$arrived[0]-$startRef.position[0];$dy=$arrived[1]-$startRef.position[1]
+        $length=[math]::Sqrt($dx*$dx+$dy*$dy)
+        if($length -lt 350) {throw 'Travel control did not establish a useful escape route'}
+        Invoke-NpcPapyrus ObjectReference SetPosition $player @([float]($arrived[0]+$dx/$length*200),[float]($arrived[1]+$dy/$length*200),[float]$arrived[2]) | Out-Null
+        $control.fleeActorPosition=$arrived
+        $control.fleePlayer=(Invoke-YieldTool inspect @{kind='refs';formId=$player}).refs[0]
+        $control.fleeInitial=Read-FleeProbe $actor
         Invoke-NpcPapyrus Actor EnableAI $actor @($true) | Out-Null
         $control.start=Read-FleeProbe $actor 3
         $deadline=(Get-Date).AddSeconds(8)
@@ -54,27 +96,32 @@ try {
             $control.samples+=,$sample
             Start-Sleep -Milliseconds 150
         } while((Get-Date) -lt $deadline)
-        $control.moved=(@($control.samples.distance|Measure-Object -Maximum)[0].Maximum -gt $initial.distance+350)
-        $control.nativeFleeObserved=@($control.samples|Where-Object fleeing).Count -gt 0 -or $control.start.fleeing
-        $control.invariantsPreserved=@($control.samples|Where-Object {$_.health -ne $initial.health -or $_.aggression -ne $initial.aggression -or $_.confidence -ne $initial.confidence -or $_.pacified -ne $pacify -or $_.paused}).Count -eq 0
+        $outcome=Get-NativeFleeOutcome $control $summary.hooksExpected
+        foreach($key in $outcome.Keys) {$control[$key]=$outcome[$key]}
         $control.stop=Read-FleeProbe $actor 0
         $deadline=(Get-Date).AddSeconds(3)
-        do {$sample=Read-FleeProbe $actor; if(-not $sample.fleeing) {break}; Start-Sleep -Milliseconds 100} while((Get-Date) -lt $deadline)
-        $control.stopped=-not $sample.fleeing
+        do {$sample=Read-FleeProbe $actor; if(-not $sample.fleeing -and $sample.packageType -notin @(10,22)) {break}; Start-Sleep -Milliseconds 100} while((Get-Date) -lt $deadline)
+        $control.stopped=-not $sample.fleeing -and $sample.packageType -notin @(10,22)
         $control.afterStop=$sample
+        if(-not $control.invariantsPreserved -or -not $control.stopped) {throw 'Isolation actor invariants or native stop failed'}
         Invoke-NpcPapyrus Acheron ReleaseActor '' @(@{form=$actor}) | Out-Null
         Invoke-NpcPapyrus ObjectReference Disable $actor @($false) | Out-Null
         Invoke-NpcPapyrus ObjectReference Delete $actor | Out-Null
         $actor=$null
+        Invoke-NpcPapyrus ObjectReference Disable $goal @($false) | Out-Null
+        Invoke-NpcPapyrus ObjectReference Delete $goal | Out-Null
+        $goal=$null
+        Invoke-NpcPapyrus ObjectReference SetPosition $player @($playerStart[0],$playerStart[1],$playerStart[2]) | Out-Null
     }
-    if(@($summary.controls|Where-Object {-not $_.moved -or -not $_.nativeFleeObserved -or -not $_.invariantsPreserved -or -not $_.stopped}).Count) {throw 'Direct native flee qualification failed; inspect individual controls'}
-    return @{message='PASS: direct native fleeing under pacification and cleanup';screenshot=$null}
+    return @{message='PASS: isolation observations collected; fleeQualified contains behavior result';screenshot=$null}
 } finally {
     if($actor) {
+        if($travel) {Invoke-NpcPapyrus ActorUtil RemovePackageOverride '' @(@{form=$actor},@{form=$travel}) | Out-Null}
         Read-FleeProbe $actor 0 | Out-Null
         Invoke-NpcPapyrus Acheron ReleaseActor '' @(@{form=$actor}) | Out-Null
         Invoke-NpcPapyrus ObjectReference Disable $actor @($false) | Out-Null
         Invoke-NpcPapyrus ObjectReference Delete $actor | Out-Null
     }
+    if($goal) {Invoke-NpcPapyrus ObjectReference Disable $goal @($false)|Out-Null; Invoke-NpcPapyrus ObjectReference Delete $goal|Out-Null}
     $summary.actorCleaned=$true
 }

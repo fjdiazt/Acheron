@@ -1,12 +1,18 @@
 param(
-    [ValidateSet('native-flee-probe','peaceful-suite','god-preset','peaceful-state','peaceful-healing','peaceful-movement','peaceful-lifecycle','peaceful-persistence','peaceful-talk','peaceful-reset','peaceful-kneeling','peaceful-child-kneeling','peaceful-child-kneeling-male','peaceful-regular-kneeling','peaceful-kneeling-hold','peaceful-kneeling-variants','peaceful-sitting','peaceful-sitting-poses','peaceful-sitting-poses-male','peaceful-test-dialogue','peaceful-bind','npc-defeat','player-finish-physical','rescue-locomotion','native-aggression-probe','greeting-probe','silent-greeting-probe','native-dialogue-bypass-probe')]
+    [ValidateSet('native-flee-enemy-probe','native-flee-probe','peaceful-suite','god-preset','peaceful-state','peaceful-healing','peaceful-movement','peaceful-lifecycle','peaceful-persistence','peaceful-talk','peaceful-reset','peaceful-kneeling','peaceful-child-kneeling','peaceful-child-kneeling-male','peaceful-regular-kneeling','peaceful-kneeling-hold','peaceful-kneeling-variants','peaceful-sitting','peaceful-sitting-poses','peaceful-sitting-poses-male','peaceful-test-dialogue','peaceful-bind','npc-defeat','player-finish-physical','rescue-locomotion','native-aggression-probe','greeting-probe','silent-greeting-probe','native-dialogue-bypass-probe')]
     [string] $Test='peaceful-suite',
     [string] $GameRoot='S:\games\The Elder Scrolls V - Skyrim Special Edition',
-    [switch] $KeepInstalled
+    [switch] $KeepInstalled,
+    [switch] $DisableAcheronHooks,
+    [switch] $MinimalFleePlugins,
+    [ValidateSet('AnimationQueueFix.dll','OpenAnimationReplacer.dll','MediaKeysFix.dll')]
+    [string[]] $ExcludeFleePlugins=@()
 )
 $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot 'Desktop-Isolation.ps1')
 Assert-DesktopWritePath $GameRoot
+if($KeepInstalled -and $Test -in @('native-flee-probe','native-flee-enemy-probe')) {throw 'Native flee probes always restore installed files'}
+if(($DisableAcheronHooks -or $MinimalFleePlugins -or $ExcludeFleePlugins.Count) -and ($Test -notin @('native-flee-probe','native-flee-enemy-probe') -or $KeepInstalled)) {throw 'Isolation requires restoring native flee probes only'}
 $repo=Split-Path -Parent $PSScriptRoot
 if(Get-Process SkyrimSE,skse64_loader -ErrorAction SilentlyContinue) {throw 'Skyrim running; refusing candidate deployment'}
 $backup=Join-Path $repo ('build\pacification-backups\'+[guid]::NewGuid())
@@ -14,6 +20,13 @@ $files=@(
     @{target='Data\Acheron.esm';source='build\staging\peaceful\Acheron.esm'},
     @{target='Data\SKSE\Plugins\Acheron.dll';source='build\windows\x64\release\Acheron.dll'}
 )
+if($MinimalFleePlugins -or $ExcludeFleePlugins.Count) {
+    $excluded=if($MinimalFleePlugins){@('AnimationQueueFix.dll','OpenAnimationReplacer.dll','MediaKeysFix.dll')}else{@($ExcludeFleePlugins|Select-Object -Unique)}
+    foreach($name in $excluded) {
+        $relative='Data\SKSE\Plugins\'+$name
+        if(Test-Path -LiteralPath (Join-Path $GameRoot $relative)) {$files+=@{target=$relative;source=$null}}
+    }
+}
 foreach($script in @('Acheron','AcheronHunterPride','AcheronMCM')) {
     $files+=@{target="Data\Scripts\$script.pex";source="build\staging\peaceful\Scripts\$script.pex"}
 }
@@ -40,7 +53,9 @@ foreach($entry in $files) {
 }
 $files|ConvertTo-Json|Set-Content (Join-Path $backup 'manifest.json')
 $installed=@();$passed=$false
+$originalProbeEnvironment=[Environment]::GetEnvironmentVariable('ACHERON_NATIVE_FLEE_NO_HOOKS','Process')
 try {
+    if($Test -in @('native-flee-probe','native-flee-enemy-probe')) {[Environment]::SetEnvironmentVariable('ACHERON_NATIVE_FLEE_NO_HOOKS',$(if($DisableAcheronHooks){'1'}else{'0'}),'Process')}
     foreach($entry in $files) {
         Assert-DesktopWritePath $entry.path
         if($entry.source) {
@@ -61,6 +76,7 @@ try {
     }
     $passed=$true
 } finally {
+    [Environment]::SetEnvironmentVariable('ACHERON_NATIVE_FLEE_NO_HOOKS',$originalProbeEnvironment,'Process')
     if(Get-Process SkyrimSE -ErrorAction SilentlyContinue) {throw "Game still running; restoration deferred. Backup: $backup"}
     if(-not ($KeepInstalled -and $passed)) {
         foreach($entry in $installed) {

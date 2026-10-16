@@ -4,6 +4,7 @@
 #include "Acheron/Defeat.h"
 #include "Acheron/Pacification.h"
 #include "Acheron/GodMode.h"
+#include "Acheron/Hooks/Hooks.h"
 #include "Acheron/PacificationState.h"
 #include "Acheron/Interface/CustomMenu.h"
 #include "Acheron/Resolution.h"
@@ -69,6 +70,8 @@ namespace Papyrus
                 {"actor", std::format("0x{:08X}", subject->GetFormID())}, {"action", action},
                 {"fleeing", process && process->middleHigh && process->middleHigh->isFleeing},
                 {"package", package ? std::format("0x{:08X}", package->GetFormID()) : ""},
+                {"packageType", package ? static_cast<int>(package->packData.packType.underlying()) : -1},
+                {"hooksEnabled", !Acheron::Hooks::probeHooksDisabled},
                 {"distance", subject->GetPosition().GetDistance(player->GetPosition())},
                 {"health", values->GetActorValue(RE::ActorValue::kHealth)},
                 {"aggression", values->GetActorValue(RE::ActorValue::kAggression)},

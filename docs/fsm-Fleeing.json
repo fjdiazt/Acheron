@@ -45,7 +45,7 @@
                 "timer": "Separate real-time flight budget; independent of peaceful wandering and commanded hold",
                 "entry": "Get out of here. for enemy/aggressive targets only; Test Fleeing entry",
                 "preserve": "Actual health, Aggression and Confidence; no potion or healing",
-                "qualification": "Native FleeFrom/FleeTo unqualified; older probes missed blocking Survival prompt. Direct InitiateFlee movement also unqualified. Implementation not deployed. See docs/native-flee-investigation.md"
+                "qualification": "Direct InitiateFlee starts flight for pacified Forsworn twice in qualified-path desktop fixture with all plugins active; native flag alone is insufficient. Actual gameplay entry/lifecycle and package-based approach remain unqualified. Implementation not deployed. See docs/native-flee-investigation.md"
             }
         },
         "Normal": {},

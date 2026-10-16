@@ -8,6 +8,9 @@ namespace Acheron
         static constexpr size_t TrampolineSize = (static_cast<std::size_t>(1) << 7) + 0x40;
 
         static void Install();
+#ifdef ACHERON_YIELD_TESTS
+        static inline bool probeHooksDisabled{};
+#endif
 
       private:
         struct Cache
