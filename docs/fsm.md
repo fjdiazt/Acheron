@@ -511,13 +511,21 @@ does not count. Automatic expiry waits for dialogue to close, as existing holds 
 
 Let go acts immediately. Fleeing is unbound and has no prisoner hold, Stay or
 Follow order. Retain only temporary flee AI/pacification until flight ends; then
-remove those overrides. Flight must finish at a safe-distance condition or finite
-timeout; exact distance/duration remain open. Preserve quest-owned AI when our
+remove those overrides. Approved initial limits: 4096 units from the player OR
+30 real seconds, whichever first. Flight owns a separate timer; it does not
+consume the peaceful wandering or commanded hold budget. Preserve actual health,
+Aggression and Confidence; no potion or healing. Preserve quest-owned AI when our
 overrides end. Internal Release/Resume from planned standing/following binding
 use the same unbind-and-flee destination; current KneelingBound cleanup APIs
 remain separately documented in JSON. Death cancels following, waiting and flight.
 The automatic yield-expiry flee outcome below uses the same finite Fleeing state,
 without creating binding or a prisoner hold.
+
+Initial entry: **Get out of here.** for enemy/aggressive targets only, plus a
+Fleeing choice under Test. Civilian flight, automatic yield outcomes and bound
+release integration remain outside this implementation round. Native FleeFrom
+and FleeTo movement qualification failed; no Fleeing gameplay implementation is
+deployed. See [native flee investigation](native-flee-investigation.md).
 
 ## Bound NPC damage
 
