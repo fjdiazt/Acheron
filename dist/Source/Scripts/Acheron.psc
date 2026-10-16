@@ -15,6 +15,8 @@ bool Function IsPeacefulState(Actor akActor) native global
 ; Selects native healing rescue; legacy fallback remains for VR/followers.
 bool Function SupportsPeacefulRescue(Actor akActor) native global
 ; Test build only; logs the controller's current state without changing it.
+; Desktop disposable-actor diagnostic: 0 stop, 1 source example, 2 snapshot, 3 fleeFromDist4096. Test builds only.
+bool Function ProbeNativeFlee(Actor akActor, int aiAction) native global
 Function ProbePeacefulState(Actor akActor) native global
 ; Test build only; scoped native entry, true means queued. Does not change aggression.
 bool Function ProbeNativeDialogue(Actor akActor) native global

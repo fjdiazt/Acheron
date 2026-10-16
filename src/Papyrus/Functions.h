@@ -44,6 +44,7 @@ namespace Papyrus
         bool IsPeacefulState(RE::StaticFunctionTag*, RE::Actor*);
         bool SupportsPeacefulRescue(RE::StaticFunctionTag*, RE::Actor*);
 #ifdef ACHERON_YIELD_TESTS
+        bool ProbeNativeFlee(RE::StaticFunctionTag*, RE::Actor*, int);
         void ProbeCommandHold(RE::StaticFunctionTag*, RE::Actor*, float);
         void ProbePeacefulState(RE::StaticFunctionTag*, RE::Actor*);
         bool ProbeNativeDialogue(RE::StaticFunctionTag*, RE::Actor*);
@@ -71,6 +72,7 @@ namespace Papyrus
             REGISTERFUNC(IsPeacefulState, "Acheron");
             REGISTERFUNC(SupportsPeacefulRescue, "Acheron");
 #ifdef ACHERON_YIELD_TESTS
+            REGISTERFUNC(ProbeNativeFlee, "Acheron");
             REGISTERFUNC(ProbeCommandHold, "Acheron");
             REGISTERFUNC(ProbePeacefulState, "Acheron");
             REGISTERFUNC(ProbeNativeDialogue, "Acheron");

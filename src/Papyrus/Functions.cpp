@@ -47,6 +47,39 @@ namespace Papyrus
     bool Defeat::IsPeacefulState(RE::StaticFunctionTag*, RE::Actor* actor) { return Acheron::Pacification::IsActive(actor); }
     bool Defeat::SupportsPeacefulRescue(RE::StaticFunctionTag*, RE::Actor* actor) { return !REL::Module::IsVR() && Acheron::Pacification::IsEligible(actor); }
 #ifdef ACHERON_YIELD_TESTS
+    bool Defeat::ProbeNativeFlee(RE::StaticFunctionTag*, RE::Actor* actor, int action)
+    {
+        const auto eligible = [](RE::Actor* subject) {
+            return !REL::Module::IsVR() && subject && !subject->IsPlayerRef() && !subject->IsDead() &&
+                subject->Is3DLoaded() && (subject->GetFormID() & 0xFF000000) == 0xFF000000 &&
+                !Acheron::Defeat::IsDefeated(subject) && !Acheron::Pacification::IsActive(subject);
+        };
+        if (!eligible(actor) || action < 0 || action > 3) return false;
+        const auto handle = actor->GetHandle();
+        SKSE::GetTaskInterface()->AddTask([handle, action, eligible]() {
+            const auto subject = handle.get();
+            const auto player = RE::PlayerCharacter::GetSingleton();
+            if (!eligible(subject.get()) || !player) return;
+            if (action == 1 || action == 3) subject->InitiateFlee(player, true, true, false, nullptr, nullptr, action == 3 ? 4096.0f : 0.0f, 50.0f);
+            else if (action == 0) subject->StopAlarmOnActor();
+            const auto process = subject->GetActorRuntimeData().currentProcess;
+            const auto package = subject->GetCurrentPackage();
+            const auto values = subject->AsActorValueOwner();
+            const nlohmann::json sample{
+                {"actor", std::format("0x{:08X}", subject->GetFormID())}, {"action", action},
+                {"fleeing", process && process->middleHigh && process->middleHigh->isFleeing},
+                {"package", package ? std::format("0x{:08X}", package->GetFormID()) : ""},
+                {"distance", subject->GetPosition().GetDistance(player->GetPosition())},
+                {"health", values->GetActorValue(RE::ActorValue::kHealth)},
+                {"aggression", values->GetActorValue(RE::ActorValue::kAggression)},
+                {"confidence", values->GetActorValue(RE::ActorValue::kConfidence)},
+                {"pacified", Acheron::Defeat::IsPacified(subject.get())}, {"combat", subject->IsInCombat()},
+                {"paused", RE::UI::GetSingleton()->GameIsPaused()}
+            };
+            logger::info("[NativeFleeProbe] {}", sample.dump());
+        });
+        return true;
+    }
     void Defeat::ProbeCommandHold(RE::StaticFunctionTag*, RE::Actor* actor, float seconds) { Acheron::Pacification::ProbeCommandHold(actor, seconds); }
     void Defeat::ProbePeacefulState(RE::StaticFunctionTag*, RE::Actor* actor) { Acheron::Pacification::Trace(actor); }
     bool Defeat::ProbeNativeDialogue(RE::StaticFunctionTag*, RE::Actor* actor)

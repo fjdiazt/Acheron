@@ -7,6 +7,12 @@ Fleeing entry; Acheron pacification during flight; unchanged health, Aggression
 and Confidence; no healing. Finish at 4096 units from player or 30 real seconds,
 then remove owned overrides. No prisoner hold or wandering budget consumed.
 
+**Qualification correction:** run `0066be5d-c79f-4258-ab02-1b48e5a906f8`
+captured the native **Enable Survival Mode?** Yes/No dialog pausing the exterior
+world. Earlier package probes below did not check that prompt. Their stationary
+results cannot establish a Flee package defect or incompatibility with Acheron.
+Reassess them with modal-menu handling before drawing that conclusion.
+
 ## Evidence
 
 Runtime artifacts live under `build/test-results/<runId>/`.
@@ -34,6 +40,38 @@ separate controls. Before production integration, qualify movement over a known
 reachable route and compare identical fresh actors with/without pacification.
 A native Travel-to-escape-goal alternative would need its own qualification;
 do not silently replace the approved native Flee approach or alter actor values.
+
+## Direct InitiateFlee probe
+
+Author example: [Scary Saves source](https://github.com/Toxijuice/ScarySaves/blob/main/src/Mod.cpp).
+Uses `InitiateFlee(player,true,true,false,nullptr,nullptr,0.0f,50.0f)`;
+its stop function calls `StopAlarmOnActor`. This is an implementation example,
+not a guarantee of sustained fleeing for aggressive or pacified enemies.
+
+Run `3c71d889-979e-4dbc-ac3a-760263778a2c` declined the exact Survival prompt
+and ran two fresh female Forsworn controls. Unpacified control entered combat,
+moved toward the player and lost health: unsuitable as a peaceful-flight control.
+Pacified control remained noncombatant with unchanged health/Aggression/Confidence,
+but distance only changed from about 372 to 388. Neither observed `isFleeing=true`.
+
+Run `8899c20f-3063-48e1-b198-4db5cd108995` changed only native
+`fleeFromDist` from 0 to 4096 for a fresh pacified actor. Distance remained about
+215 throughout eight seconds. All snapshots reported `paused=false`, unchanged
+health 50, Aggression 2, Confidence 4, pacification true, combat false. A dynamic
+package was selected; `isFleeing` remained false. Stop call completed and actor
+was deleted. No sustained flight qualified in this fixture. Native flag meaning,
+path reachability and interaction with Acheron detection remain unisolated.
+
+Reproduce current distance probe with
+`pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test native-flee-probe`.
+Test-only `ProbeNativeFlee` actions: 0 stop, 1 published example, 2 snapshot,
+3 `fleeFromDist=4096`. Desktop dynamic NPCs only, no defeated/managed actors.
+The harness declines only the exact Survival prompt with matching Yes/No buttons;
+unknown prompts fail. `Test-YieldStartupPrompts.ps1` verifies this boundary.
+
+Next useful evidence: qualify reachable path/target and package procedure data
+with the now-unpaused world; retry the original package controls under the same
+guard. Do not promote direct native entry or change actor values on these results.
 
 ## Preserved work and isolation
 
