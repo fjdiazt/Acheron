@@ -142,6 +142,52 @@ Production integration remains separate: use the existing FSM owner, preserve
 pacification/stats, and qualify actual yield/held-pose entry, bounded lifetime,
 distance end and cleanup without a test-only Travel warm-up or player relocation.
 
+## Actual Yielding entry qualification (2026-10-16)
+
+Run `15153cd0-2373-405e-a6c5-e4e27e36160f` tests the missing production-like
+entry with all hooks/plugins active and ordinary staging ESM. Disposable female
+Forsworn, sword only, no Travel warm-up and no player relocation. Fixture disables
+health regeneration before defeat; no health, Aggression or Confidence changes
+are allowed after entering Yielding.
+
+Actual Acheron `DefeatActor` acquired defeated ownership, its BlankPackage and
+`kNoBleedoutRecovery`. Existing `RescueActor(false)` then removed all three,
+retaining pacification and health about 0.05, Aggression 2 and Confidence 4.
+Native flight selected package type 22, but distance stayed about 194 units:
+initial 194.66; 34 samples ranged 193.64 to 194.29 over eight seconds. Player
+remained stationary; no combat/pause or actor-value changes. Stop restored
+normal package type 18. **Movement qualification failed.** Prepared-route success
+does not establish reliable flight from actual Yielding.
+
+Two earlier runs (`3a502194-f241-4dfc-8207-333478faa4a0` and
+`ec14f75e-f6b4-414b-a984-07171d36a645`) never attempted flight: their entry guard
+incorrectly required native `ActorState::IsBleedingOut()`. CommonLib implements
+that as native life states EssentialDown/Bleedout; Acheron uses its own defeated
+ownership and plays the bleedout idle, without assigning those life states.
+First run also left fixture AI disabled; second enabled it and still demonstrated
+the life-state mismatch. Corrected guard requires Acheron ownership, lock and
+BlankPackage. Diagnostics allow read-only defeated snapshots; flight/stop actions
+still reject defeated actors and every managed peaceful actor.
+
+Reproduce with ordinary diagnostic DLL and ordinary production-record staging:
+
+```powershell
+pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test native-flee-yield-probe
+```
+
+This case requires the full plugin/hook stack, always restores installed files,
+and fails if flight does not gain 350 units. Native flee evidence also rejects
+lingering defeat ownership, bleedout lock or BlankPackage during observations.
+Counterexamples and isolation-boundary host tests pass. Latest run cleaned its
+actor, closed gracefully, restored both INIs and all 130 original file targets by
+hash; VR untouched.
+
+No gameplay Fleeing integration or FSM behavior change. Next investigation must
+distinguish unfinished bleedout animation exit from native route/context failure:
+trace exit/procedure evidence and compare an unyielded actor at the same stable
+position before selecting an implementation. Do not add Travel warm-up, teleport
+the player, heal the NPC or change actor values as a workaround.
+
 ## Preserved work and isolation
 
 Incomplete pure-state implementation and harness registration archived in

@@ -7,7 +7,7 @@ foreach($type in @(10,22)) {
     $result=Get-NativeFleeOutcome $control $false
     if(-not $result.fleeQualified -or $result.nativeFleeFlagObserved) {throw 'Native flee package/movement rejected because independent flee flag was false'}
 }
-foreach($failure in @('stationary','wrongPackage','health','aggression','confidence','pacified','paused','combat','hooksEnabled')) {
+foreach($failure in @('stationary','wrongPackage','health','aggression','confidence','pacified','paused','combat','hooksEnabled','defeated','bleedoutLocked','defeatPackage')) {
     $sample=$original.Clone();$sample.distance=700;$sample.packageType=22
     switch($failure) {
         'stationary' {$sample.distance=150}
@@ -19,6 +19,9 @@ foreach($failure in @('stationary','wrongPackage','health','aggression','confide
         'paused' {$sample.paused=$true}
         'combat' {$sample.combat=$true}
         'hooksEnabled' {$sample.hooksEnabled=$true}
+        'defeated' {$sample.defeated=$true}
+        'bleedoutLocked' {$sample.bleedoutLocked=$true}
+        'defeatPackage' {$sample.defeatPackage=$true}
     }
     $control.samples=@($sample)
     if((Get-NativeFleeOutcome $control $false).fleeQualified) {throw "Invalid flight accepted: $failure"}

@@ -7,6 +7,7 @@ function Get-NativeFleeOutcome($Control, [bool] $HooksExpected) {
     $preserved=@($samples|Where-Object {
         $_.health -ne $initial.health -or $_.aggression -ne $initial.aggression -or
         $_.confidence -ne $initial.confidence -or $_.pacified -ne $Control.pacifiedRequested -or
+        $_.defeated -or $_.bleedoutLocked -or $_.defeatPackage -or
         $_.paused -or $_.combat -or $_.hooksEnabled -ne $HooksExpected
     }).Count -eq 0
     return @{

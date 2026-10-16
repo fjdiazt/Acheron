@@ -2,6 +2,8 @@ $ErrorActionPreference='Stop'
 $root=Join-Path ([IO.Path]::GetTempPath()) ('flee-boundary-'+[guid]::NewGuid())
 $cases=@(
     @{Test='native-flee-enemy-probe';KeepInstalled=$true},
+    @{Test='native-flee-yield-probe';KeepInstalled=$true},
+    @{Test='native-flee-yield-probe';DisableAcheronHooks=$true},
     @{Test='peaceful-state';DisableAcheronHooks=$true},
     @{Test='peaceful-state';ExcludeFleePlugins=@('OpenAnimationReplacer.dll')},
     @{Test='native-flee-probe';ExcludeFleePlugins=@('unrelated.dll')}

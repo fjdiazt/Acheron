@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('suite','god-preset','npc-defeat','follower-pacification','npc-pacification','follower-defeat','npc-lethal','player-finish-physical','player-finish-magic','essential-protection','npc-recovery-2s','npc-recovery-3s','native-flee-probe','native-flee-enemy-probe','native-peaceful-probe','native-talk-probe','native-aggression-probe','greeting-probe','silent-greeting-probe','native-dialogue-bypass-probe','peaceful-state','peaceful-healing','peaceful-movement','peaceful-lifecycle','peaceful-persistence','peaceful-talk','peaceful-reset','peaceful-kneeling','peaceful-child-kneeling','peaceful-child-kneeling-male','peaceful-regular-kneeling','peaceful-kneeling-hold','peaceful-kneeling-variants','peaceful-sitting','peaceful-sitting-poses','peaceful-sitting-poses-male','peaceful-test-dialogue','peaceful-bind','injured-locomotion','rescue-locomotion','setup-enemy','setup-enemy-follower')]
+    [ValidateSet('suite','god-preset','npc-defeat','follower-pacification','npc-pacification','follower-defeat','npc-lethal','player-finish-physical','player-finish-magic','essential-protection','npc-recovery-2s','npc-recovery-3s','native-flee-probe','native-flee-yield-probe','native-flee-enemy-probe','native-peaceful-probe','native-talk-probe','native-aggression-probe','greeting-probe','silent-greeting-probe','native-dialogue-bypass-probe','peaceful-state','peaceful-healing','peaceful-movement','peaceful-lifecycle','peaceful-persistence','peaceful-talk','peaceful-reset','peaceful-kneeling','peaceful-child-kneeling','peaceful-child-kneeling-male','peaceful-regular-kneeling','peaceful-kneeling-hold','peaceful-kneeling-variants','peaceful-sitting','peaceful-sitting-poses','peaceful-sitting-poses-male','peaceful-test-dialogue','peaceful-bind','injured-locomotion','rescue-locomotion','setup-enemy','setup-enemy-follower')]
     [string] $Test = 'suite',
     [string] $GameRoot = 'S:\games\The Elder Scrolls V - Skyrim Special Edition',
     [string] $PrefsPath = (Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'My Games\Skyrim Special Edition\SkyrimPrefs.ini'),
@@ -276,6 +276,7 @@ try {
         'npc-recovery-3s' { 'Npc-Defeat.ps1' }
         'native-flee-probe' { 'Native-Flee-Probe.ps1' }
         'native-flee-enemy-probe' { 'Native-Flee-Probe.ps1' }
+        'native-flee-yield-probe' { 'Native-Flee-Probe.ps1' }
         'native-peaceful-probe' { 'Native-Peaceful-Probe.ps1' }
         'native-talk-probe' { 'Native-Peaceful-Probe.ps1' }
         'native-aggression-probe' { 'Native-Aggression-Probe.ps1' }
@@ -313,7 +314,8 @@ try {
     if($Test -eq 'peaceful-regular-kneeling') {$caseArguments.Regular=$true}
     if ($Test -eq 'peaceful-bind') { $caseArguments.BindOnly = $true }
     if ($Test -eq 'native-talk-probe') { $caseArguments.DialogueOnly = $true }
-    if ($Test -eq 'native-flee-enemy-probe') { $caseArguments.EnemyControl = $true }
+    if ($Test -in @('native-flee-enemy-probe','native-flee-yield-probe')) { $caseArguments.EnemyControl = $true }
+    if ($Test -eq 'native-flee-yield-probe') { $caseArguments.YieldControl = $true }
     if ($Test -eq 'native-aggression-probe') { $caseArguments.RequireOriginalTalk = $true }
     if ($Test -eq 'silent-greeting-probe') { $caseArguments.Silent = $true }
     if ($Test -eq 'native-dialogue-bypass-probe') { $caseArguments.Bypass = $true }

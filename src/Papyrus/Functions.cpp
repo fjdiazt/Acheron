@@ -8,6 +8,7 @@
 #include "Acheron/PacificationState.h"
 #include "Acheron/Interface/CustomMenu.h"
 #include "Acheron/Resolution.h"
+#include "GameForms.h"
 #include "shared/KrisV/Util/String.h"
 
 namespace Papyrus
@@ -53,14 +54,14 @@ namespace Papyrus
         const auto eligible = [](RE::Actor* subject) {
             return !REL::Module::IsVR() && subject && !subject->IsPlayerRef() && !subject->IsDead() &&
                 subject->Is3DLoaded() && (subject->GetFormID() & 0xFF000000) == 0xFF000000 &&
-                !Acheron::Defeat::IsDefeated(subject) && !Acheron::Pacification::IsActive(subject);
+                !Acheron::Pacification::IsActive(subject);
         };
-        if (!eligible(actor) || action < 0 || action > 3) return false;
+        if (!eligible(actor) || action < 0 || action > 3 || (action != 2 && Acheron::Defeat::IsDefeated(actor))) return false;
         const auto handle = actor->GetHandle();
         SKSE::GetTaskInterface()->AddTask([handle, action, eligible]() {
             const auto subject = handle.get();
             const auto player = RE::PlayerCharacter::GetSingleton();
-            if (!eligible(subject.get()) || !player) return;
+            if (!eligible(subject.get()) || !player || (action != 2 && Acheron::Defeat::IsDefeated(subject.get()))) return;
             if (action == 1 || action == 3) subject->InitiateFlee(player, true, true, false, nullptr, nullptr, action == 3 ? 4096.0f : 0.0f, 50.0f);
             else if (action == 0) subject->StopAlarmOnActor();
             const auto process = subject->GetActorRuntimeData().currentProcess;
@@ -74,6 +75,10 @@ namespace Papyrus
                 {"hooksEnabled", !Acheron::Hooks::probeHooksDisabled},
                 {"distance", subject->GetPosition().GetDistance(player->GetPosition())},
                 {"health", values->GetActorValue(RE::ActorValue::kHealth)},
+                {"defeated", Acheron::Defeat::IsDefeated(subject.get())},
+                {"bleedingOut", subject->IsBleedingOut()},
+                {"bleedoutLocked", subject->GetActorRuntimeData().boolFlags.any(RE::Actor::BOOL_FLAGS::kNoBleedoutRecovery)},
+                {"defeatPackage", package && package == Acheron::GameForms::BlankPackage},
                 {"aggression", values->GetActorValue(RE::ActorValue::kAggression)},
                 {"confidence", values->GetActorValue(RE::ActorValue::kConfidence)},
                 {"pacified", Acheron::Defeat::IsPacified(subject.get())}, {"combat", subject->IsInCombat()},

@@ -12,6 +12,14 @@ safe observations, while each `fleeQualified` field reports flight behavior.
 Hook/DLL isolation switches always restore files; KeepInstalled is rejected.
 Desktop results and limits: [flee investigation](../docs/native-flee-investigation.md).
 
+`Invoke-PacificationTests.ps1 -Test native-flee-yield-probe` tests actual Acheron
+Yielding entry, then existing no-heal `RescueActor(false)` and native flight.
+Uses ordinary staging ESM; no Travel fixture, path warm-up or player relocation.
+Requires full hooks/plugins; isolation switches and KeepInstalled are rejected.
+Verifies defeat ownership/immobilization before exit and release before flight.
+Fails on missing movement; package selection alone cannot pass. Latest desktop
+result stalls after successful no-heal exit; gameplay Fleeing remains unimplemented.
+
 `Invoke-PacificationTests.ps1 -Test greeting-probe` records repeated native spoken
 greetings while kneeling at disposable relationship controls -3/0. It checks
 native choices/actions and actor invariants; PASS does not mean the lines are
