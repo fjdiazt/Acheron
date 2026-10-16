@@ -20,6 +20,24 @@ static void Remaining(const std::optional<State>& state, Phase phase, float seco
 
 int main()
 {
+    Facts tuned{}; tuned.commandHoldDurationSeconds=12; tuned.fleeDurationSeconds=3; tuned.fleeDistance=512;
+    auto customHold=Decide({Phase::Wandering,60},{EventKind::Kneel},tuned);
+    Require(customHold && customHold->commandHoldRemaining==12,"Configured command hold ignored");
+    tuned.commandHoldDurationSeconds=20;
+    Require(Decide(*customHold,{},tuned)->commandHoldRemaining==12,"Editing duration restarted active hold");
+    Require(Decide(*customHold,{EventKind::Bind},tuned)->commandHoldRemaining==20,"Bind did not use new configured hold");
+    Require(SelectTestState(TestState::KneelingRegular,{Phase::Wandering,60},60,tuned)->commandHoldRemaining==20,"Test bypassed configured hold");
+    auto customFlight=Decide({Phase::Wandering,60},{EventKind::Flee},tuned);
+    Require(customFlight && customFlight->fleeRemaining==3,"Configured flight duration ignored");
+    tuned.fleeDurationSeconds=8;tuned.distanceFromPlayer=511;
+    Require(Decide(*customFlight,{},tuned)->fleeRemaining==3,"Editing duration restarted active flight");
+    tuned.distanceFromPlayer=512;Require(!Decide(*customFlight,{},tuned),"Configured flight distance ignored");
+    Facts maximum{}; maximum.commandHoldDurationSeconds=MaxCommandHoldDurationSeconds; maximum.fleeDurationSeconds=MaxFleeDurationSeconds;
+    Require(ValidState(*Decide({Phase::Wandering,60},{EventKind::Kneel},maximum)),"Maximum configured hold cannot persist");
+    Require(ValidState(*Decide({Phase::Wandering,60},{EventKind::Flee},maximum)),"Maximum configured flight cannot persist");
+    maximum.fleeDistance=std::numeric_limits<float>::quiet_NaN();
+    Require(!ValidTuning(maximum) && !SelectTestState(TestState::Fleeing,{Phase::Wandering,60},60,maximum),"Invalid test tuning accepted");
+    Require(!Decide(*customFlight,{EventKind::Release},maximum),"Invalid tuning prevented cleanup");
     for (auto phase : {Phase::Wandering, Phase::AvoidingCombat, Phase::Kneeling, Phase::SittingWounded}) {
         auto flight=Decide({phase,37,123}, {EventKind::Flee}, {});
         Require(flight && flight->phase==Phase::Fleeing && flight->remaining==37 && flight->commandHoldRemaining==0 && flight->fleeRemaining==30, "Flee entry must own a separate budget");

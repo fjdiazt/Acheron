@@ -19,7 +19,8 @@ function Read-PeacefulDialogue([string] $ActorId) {
 function Read-PeacefulState([string] $ActorId) {
     $start=(Get-Content $logPath -Raw).Length
     Invoke-NpcPapyrus Acheron ProbePeacefulState '' @(@{form=$ActorId}) | Out-Null
-    $pattern='\[PeacefulSnapshot\] actor='+($ActorId -replace '^0x','')+' phase=(?<phase>\d+) remaining=(?<remaining>[0-9.eE+-]+) generation=(?<generation>\d+) anchor=(?<anchor>[0-9A-F]+) goal=(?<goal>[0-9A-F]+) ready=(?<ready>true|false) loaded=(?<loaded>true|false)(?: commandHoldRemaining=(?<kneeling>[0-9.eE+-]+))?(?: selectedKneelingVariant=(?<variant>\d+))?(?: selectedSittingVariant=(?<sitting>\d+) injuryHealth=(?<injury>[0-9.eE+-]+))?(?: fleeRemaining=(?<flee>[0-9.eE+-]+))?'
+    # Log reads can end mid-write, including halfway through the timer number.
+    $pattern='\[PeacefulSnapshot\] actor='+($ActorId -replace '^0x','')+' phase=(?<phase>\d+) remaining=(?<remaining>[0-9.eE+-]+) generation=(?<generation>\d+) anchor=(?<anchor>[0-9A-F]+) goal=(?<goal>[0-9A-F]+) ready=(?<ready>true|false) loaded=(?<loaded>true|false)(?: commandHoldRemaining=(?<kneeling>[0-9.eE+-]+))?(?: selectedKneelingVariant=(?<variant>\d+))?(?: selectedSittingVariant=(?<sitting>\d+) injuryHealth=(?<injury>[0-9.eE+-]+))?(?: fleeRemaining=(?<flee>[0-9.eE+-]+))?(?=\r?\n)'
     $deadline=(Get-Date).AddSeconds(3)
     do {
         $log=Get-Content $logPath -Raw

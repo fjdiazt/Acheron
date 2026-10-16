@@ -70,7 +70,7 @@
                         "target": "Kneeling",
                         "actions": [
                             "Exit selected automatic rest pose; set peacefulChoice to wander and clear selectedPose because explicit command supersedes automatic rest",
-                            "Set CommandHoldDurationSeconds to 1800 real seconds; preserve remaining shared peaceful budget"
+                            "Snapshot iCommandHoldDuration (default 1800 real seconds); preserve remaining shared peaceful budget"
                         ],
                         "meta": {
                             "status": "planned"
@@ -130,7 +130,7 @@
                         "actions": [
                             "Exit selected automatic rest pose",
                             "Supersede automatic rest: set peacefulChoice to wander and clear selectedPose",
-                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget",
+                            "Snapshot iCommandHoldDuration (default 1800 real seconds) on command acceptance; preserve frozen peaceful budget",
                             "Preserve meaningful injury health and unresolved wound risk; Sit adds no healing and never rerolls mortality"
                         ],
                         "meta": {
@@ -144,7 +144,7 @@
                         "actions": [
                             "Exit selected automatic rest pose",
                             "Supersede automatic rest: set peacefulChoice to wander and clear selectedPose",
-                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget",
+                            "Snapshot iCommandHoldDuration (default 1800 real seconds) on command acceptance; preserve frozen peaceful budget",
                             "Preserve meaningful injury health and unresolved wound risk; Sit adds no healing and never rerolls mortality"
                         ],
                         "meta": {

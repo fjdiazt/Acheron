@@ -14,6 +14,7 @@ struct Settings
   public:
     static void Initialize();
     static void Save();
+    static int ClampIntSetting(const std::string& key, int value);
 
 #define MCM_SETTING(STR, DEFAULT) static inline decltype(DEFAULT) STR{ DEFAULT };
 #include "mcm.def"

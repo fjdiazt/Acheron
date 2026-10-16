@@ -128,7 +128,7 @@
                         "target": "KneelingBound",
                         "actions": [
                             "Apply ordinary hit damage; retain binding, pacification and held pose",
-                            "Restart CommandHoldDurationSeconds at 1800 real seconds; preserve frozen wander budget; do not roll an outcome"
+                            "Restart hold using iCommandHoldDuration (default 1800 real seconds); preserve frozen wander budget; do not roll an outcome"
                         ],
                         "meta": {
                             "status": "planned"
@@ -164,7 +164,7 @@
                         "target": "StandingBound",
                         "actions": [
                             "Preserve binding, pacification and frozen wander budget; do not heal or recruit",
-                            "Restart CommandHoldDurationSeconds at 1800 real seconds when the posture command is accepted; keep counting during animation; do not reset again on completion",
+                            "Restart hold using iCommandHoldDuration (default 1800 real seconds) when the posture command is accepted; keep counting during animation; do not reset again on completion",
                             "Play kneeling exit/stand-up animation and await completion",
                             "Then play standing-bound entry and idle; settle in StandingBound"
                         ],
@@ -243,7 +243,7 @@
                         "target": "Kneeling",
                         "actions": [
                             "Exit current held native pose before changing destination",
-                            "Choose explicit regular/blessing/childSitKneel clip family on persistent regular furniture; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Choose explicit regular/blessing/childSitKneel clip family on persistent regular furniture; preserve peaceful budget; restart configured command hold (default 1800 real seconds)"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -256,7 +256,7 @@
                         "target": "KneelingBound",
                         "actions": [
                             "Apply shared source/destination phase policy; ordinary exit and enter outside Kneeling -> KneelingBound",
-                            "Enter native bound kneel; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Enter native bound kneel; preserve peaceful budget; restart configured command hold (default 1800 real seconds)"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -293,7 +293,7 @@
                     {
                         "target": "Sitting",
                         "actions": [
-                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold using iCommandHoldDuration (default 1800 real seconds)",
                             "Explicit normal sitting pose; deterministic selectedSittingVariant"
                         ],
                         "meta": {
@@ -318,7 +318,7 @@
                     {
                         "target": "SittingWounded",
                         "actions": [
-                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold using iCommandHoldDuration (default 1800 real seconds)",
                             "Force diagnostic zero-injury baseline for this pose; preserve engine health. Use Test Yielding first to exercise real defeat injury."
                         ],
                         "meta": {
@@ -341,7 +341,8 @@
                     "status": "planned"
                 },
                 "adapterContract": "fsm.md#implemented-flow-contracts; live guards, acceptance-time Bind and ordered pose exits implemented",
-                "nativeDialogue": "Scoped desktop player Talk; original Aggression preserved; no state change until action selection"
+                "nativeDialogue": "Scoped desktop player Talk; original Aggression preserved; no state change until action selection",
+                "commandHoldSetting": "iCommandHoldDuration; default 1800 real seconds; 1-7200; acceptance snapshot, unchanged by edits or pose completion"
             }
         },
         "Dead": {

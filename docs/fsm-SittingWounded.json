@@ -210,7 +210,7 @@
                         "target": "Kneeling",
                         "actions": [
                             "Finish selected sitting family exit before unbound kneeling entry",
-                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget"
+                            "Snapshot iCommandHoldDuration (default 1800 real seconds) on command acceptance; preserve frozen peaceful budget"
                         ],
                         "meta": {
                             "status": "implemented"
@@ -222,7 +222,7 @@
                         "target": "KneelingBound",
                         "actions": [
                             "Exit sitting; enter required kneeling interaction, then native bound-kneeling pose",
-                            "Restart CommandHoldDurationSeconds at 1800 real seconds on command acceptance; preserve frozen peaceful budget",
+                            "Restart hold using iCommandHoldDuration (default 1800 real seconds) on command acceptance; preserve frozen peaceful budget",
                             "Invalidate pending posture callbacks on death, release, expiry or ownership loss; do not reset hold on completion"
                         ],
                         "meta": {
@@ -277,7 +277,7 @@
                     {
                         "target": "Sitting",
                         "actions": [
-                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold using iCommandHoldDuration (default 1800 real seconds)",
                             "Explicit normal sitting pose; deterministic selectedSittingVariant"
                         ],
                         "meta": {
@@ -302,7 +302,7 @@
                     {
                         "target": "SittingWounded",
                         "actions": [
-                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold using iCommandHoldDuration (default 1800 real seconds)",
                             "Force diagnostic zero-injury baseline for this pose; preserve engine health. Use Test Yielding first to exercise real defeat injury."
                         ],
                         "meta": {
@@ -324,7 +324,7 @@
                         "target": "Fleeing",
                         "actions": [
                             "Preserve health, Aggression and Confidence; end defeat without healing or finish the source held-pose exit",
-                            "Transfer existing owner to native FleeFrom; keep pacification and start independent 30-real-second flight budget"
+                            "Transfer existing owner to native FleeFrom; keep pacification and start independent iFleeDuration budget (default 30 real seconds)"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -359,7 +359,8 @@
                 "persistenceVersion": 5,
                 "phase": 6,
                 "poseSelection": "selectedSittingVariant; explicit enter/loop/exit in scripts/sitting-animations.json; persistent held geometry, enter/exit priorities5005-5020, idle-only interruptible priorities5105-5120",
-                "qualification": "Desktop candidate; functional/clip qualification recorded in animations catalog; visual swaps and VR require review"
+                "qualification": "Desktop candidate; functional/clip qualification recorded in animations catalog; visual swaps and VR require review",
+                "commandHoldSetting": "iCommandHoldDuration; default 1800 real seconds; 1-7200; acceptance snapshot, unchanged by edits or pose completion"
             },
             "entry": [
                 "Fresh Sit command: enter a qualified wounded-family pose, then its held idle/loop; female Laydown and Mirrored variants only for female NPCs",

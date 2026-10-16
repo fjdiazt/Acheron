@@ -4,8 +4,14 @@ Tracking: `skyrim-6a1`. Desktop SE 1.6.1170; DevBench 1.27.0.
 
 Implemented behavior: enemy-only **Get out of here.** and Test
 Fleeing entry; Acheron pacification during flight; unchanged health, Aggression
-and Confidence; no healing. Finish at 4096 units from player or 30 real seconds,
+and Confidence; no healing. By default, finish at 4096 units from player or 30 real seconds,
 then remove owned overrides. No prisoner hold or wandering budget consumed.
+
+MCM **Acheron -> Yield** now exposes flight duration (1-300 real seconds) and
+distance (128-4096 horizontal units). New flight snapshots duration; editing it
+preserves active countdowns. Distance edits apply to active flights. The native
+package stays at its qualified 4096-unit range; the controller may end it earlier.
+Configuration regression and independent hold timing: [harness](../tests/README.md).
 
 **Current desktop result:** the existing FSM owner now runs production FleeFrom
 `00088A:Acheron.esm`, with native dialogue and Test entry, separate 30-real-second

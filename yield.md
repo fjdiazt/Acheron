@@ -149,7 +149,7 @@ them. Exact classification for ambiguous actors remains to be defined.
   enough for interaction when combat ends. This is a behavioral reference, not
   a requirement to turn rescued NPCs into followers. Identify the existing
   vanilla AI/package setup that produces it before choosing an implementation.
-- Expose one configurable MCM **Peaceful Wander Duration** (`iPeacefulWanderDuration`),
+- Group **Peaceful Wander Duration** (`iPeacefulWanderDuration`) under MCM **Acheron -> Yield**,
   replacing the provisional Rescue Effect Duration label. Default **60 seconds**,
   range **1–600**, step **1**; zero rejected. Same setting for enemies and civilians,
   separate from yield minimum/maximum timers.
@@ -246,11 +246,11 @@ them. Exact classification for ambiguous actors remains to be defined.
   and preserve frozen wander budget. Do not route through unbound Kneeling.
 - Exact menu position and civilian/enemy eligibility remain open. This NPC action
   is separate from the disabled player surrender feature.
-- **Commanded Hold Duration** is a separate constant,
-  `CommandHoldDurationSeconds = 1800`: 30 real minutes. Combat does not pause or
-  reset it. **Bind restarts it at 1800 real seconds.** Kneeling, KneelingBound and
-  planned StandingBound/FollowingBound share this duration.
-  Expose through MCM later.
+- **Commanded Hold Duration** is configurable under **Acheron -> Yield**: `iCommandHoldDuration`,
+  default 1800 real seconds (30 minutes), range 1-7200. Combat does not pause or reset
+  it. Bind starts a new hold using the current setting. Duration edits preserve
+  active countdowns. Kneeling, KneelingBound and planned StandingBound/FollowingBound
+  share it; numerical holds below describe this default.
 - Freeze the existing peaceful wandering budget while kneeling. Hold expiry or
   explicit resume returns to AvoidingCombat if combat remains nearby, otherwise
   Wandering. Explicit release removes our ownership and restores normal AI.

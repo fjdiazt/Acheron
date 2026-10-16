@@ -75,7 +75,10 @@ ordinary observation ticks.
 Resting; it does not imply healing. Combat ending changes phase, not pacification.
 The shared peaceful budget counts during Wandering or planned Resting and pauses
 during avoidance and command holds.
-Kneeling, Sitting/SittingWounded and bound states use a separate 1800-real-second hold.
+Kneeling, Sitting/SittingWounded and bound states share Commanded Hold Duration
+(`iCommandHoldDuration`, default 1800 real seconds, range 1-7200), under **Acheron -> Yield**.
+Duration edits affect new commands; existing countdowns remain intact. Numerical
+hold/flight durations elsewhere describe defaults; planned states reuse these settings.
 Accepted Bind restarts it immediately. Kneeling -> KneelingBound skips both transition
 clips through shared policy; Sitting -> Bound keeps ordinary exit/entry and consumes
 the same acceptance-time hold throughout choreography.
@@ -139,7 +142,7 @@ Source: [command adapters](../src/Acheron/Pacification.cpp),
 [pure decision rules](../src/Acheron/PacificationState.h). The diagram models the
 behavioral destination and ordering; pending animation work stays transition data,
 not a new lasting FSM state. Diagnostics can shorten an owned hold through
-`ProbeCommandHold`; production duration remains 1800 real seconds. Desktop checks
+`ProbeCommandHold`; production duration uses iCommandHoldDuration (default 1800 real seconds). Desktop checks
 cover paused commands, acceptance-time Bind and dialogue-delayed automatic expiry.
 Desktop regression `6e36fee3-eae6-4d81-b3b6-252cfb6de161` passed with native animation
 logs and package ordering; matching candidate retained on desktop.
@@ -376,7 +379,7 @@ wound-mortality rules or imply maximum health.
 **Bind from either sitting state ends in KneelingBound, not SittingBound.** Exit sitting, enter
 the required kneeling interaction, then apply the native bound-kneeling pose.
 Treat that choreography as transition actions, not an intermediate owned Kneeling
-phase. Retain pacification, restart the bound hold at 1800 seconds on accepted Bind,
+phase. Retain pacification, restart the bound hold from iCommandHoldDuration (default 1800 seconds) on accepted Bind,
 and preserve the peaceful budget. Death/release/expiry/ownership loss invalidates
 pending pose callbacks; completion must not restart the timer or rebind a released
 actor. Qualify ordered playback and failure/timeout handling before implementation.
@@ -464,7 +467,7 @@ scripted exit request: native package/furniture changes can also play exit clips
 
 These posture commands are **planned**. Binding and pacification remain owned
 throughout the sequence; neither command heals or recruits the NPC. Restart the
-hold at **1800 real seconds** when either posture command is accepted; preserve
+hold from **Commanded Hold Duration** (default 1800 real seconds) when either posture command is accepted; preserve
 the frozen wander budget. The new hold keeps counting during animation; completion
 does not reset it again. Existing nonfatal-hit reset remains applicable.
 
@@ -502,7 +505,7 @@ retains visible binding. Animation selection remains pending.
 **Forgotten-NPC safeguard:** Follow and Stay preserve the same remaining
 1800-real-second hold; neither creates a new timer or restarts it. This applies
 while following as well as waiting. Bound posture commands and nonfatal bound
-hits restart the hold at 1800 real seconds. Combat does not pause it. Preserve remaining time across
+hits restart the hold from iCommandHoldDuration (default 1800 real seconds). Combat does not pause it. Preserve remaining time across
 save/load and account for paused elapsed time when processing resumes. Expiry
 tracking must not depend on the NPC being loaded: record release when due even
 while unloaded; defer physical pose cleanup/flee movement until loaded. Re-entry
@@ -511,8 +514,10 @@ does not count. Automatic expiry waits for dialogue to close, as existing holds 
 
 Let go acts immediately. Fleeing is unbound and has no prisoner hold, Stay or
 Follow order. Retain only temporary flee AI/pacification until flight ends; then
-remove those overrides. Approved initial limits: 4096 units from the player OR
-30 real seconds, whichever first. Flight owns a separate timer; it does not
+remove those overrides. Defaults: 4096 horizontal units from the player OR
+30 real seconds, whichever first. MCM Yield exposes `iFleeDistance` (128-4096) and
+`iFleeDuration` (1-300 real seconds). The native package retains its 4096-unit route;
+the controller can stop flight earlier at the configured distance. Flight owns a separate timer; it does not
 consume the peaceful wandering or commanded hold budget. Preserve actual health,
 Aggression and Confidence; no potion or healing. Preserve quest-owned AI when our
 overrides end. Internal Release/Resume from planned standing/following binding
@@ -531,8 +536,9 @@ planned. Native dialogue uses Goodbye; Rescue sorts before Get out of here.
 The existing owner uses FleeFrom package `00088A:Acheron.esm` (vanilla template
 `0197F1`). Ending defeat adds no health; held entry completes the shared source
 exit before requesting flight. The independent `fleeRemaining` budget starts at
-30 real seconds. Neither nearby combat nor an explicit repeated Flee restarts it.
-At 4096 horizontal units from the player OR zero budget, cleanup releases the
+configured iFleeDuration (default 30 real seconds). Neither nearby combat, an
+explicit repeated Flee nor an MCM duration edit restarts it.
+At the current iFleeDistance (default 4096 horizontal units) OR zero budget, cleanup releases the
 package, markers, dialogue scope and pacification to underlying AI. Ordinary
 hostility may resume. Explicit Kneel/Sit can interrupt a live flight; bind/resume
 commands are not exposed as if Fleeing were a held pose.

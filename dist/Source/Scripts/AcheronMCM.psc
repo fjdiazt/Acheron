@@ -35,7 +35,7 @@ EndFunction
 ; --------------------- Menu
 
 int Function GetVersion()
-	return 3
+	return 4
 EndFunction
 
 Event OnVersionUpdate(Int newVersion)
@@ -53,11 +53,12 @@ Event OnGameReload()
 EndEvent
 
 Event OnConfigInit()
-  Pages = new String[4]
+  Pages = new String[5]
   Pages[0] = "$Achr_General"
   Pages[1] = "$Achr_Defeat"
   Pages[2] = "$Achr_Stripping"
   Pages[3] = "$Achr_Events"
+  Pages[4] = "$Achr_Yield"
 
   _typesList = new String[6]
   _typesList[0] = "$Achr_Hostile"
@@ -98,7 +99,6 @@ Event OnPageReset(string page)
     AddColorOptionST("notifycolorchoice", "$Achr_NotifyColorChoice", GetSettingColor("rNotifyColor"), getFlag((bNotifyDefeat || bNotifyDestroy) && bNotifyColored))
 
     SetCursorPosition(1)
-    AddKeyMapOptionST("godkey", "God preset key (desktop)", GetSettingInt("iGodKey"))
     AddKeyMapOptionST("hunterpridemodkey", "$Achr_ModifierKey", GetSettingInt("iHunterPrideKeyMod"))
     AddHeaderOption("$Achr_HunterPride")
     AddKeyMapOptionST("hunterpridekey", "$Achr_HunterPrideKey", GetSettingInt("iHunterPrideKey"))
@@ -130,12 +130,21 @@ Event OnPageReset(string page)
     AddMenuOptionST("FollowerRescue", "$Achr_FollowerRescue", _FollowerRescue[GetSettingInt("iFollowerRescue")])
     AddToggleoptionST("NPCRescueReload", "$Achr_NPCRescueReload", GetSettingBool("bNPCRescueReload"))
     AddSliderOptionST("NPCRescueTimer", "$Achr_NPCRescueTimer", GetSettingInt("iNPCRescueTimer"), "{0}s")
-    AddSliderOptionST("PeacefulWanderDuration", "$Achr_PeacefulWanderDuration", GetSettingInt("iPeacefulWanderDuration"), "{0}s")
 
     AddHeaderOption("$Achr_Stripping")
     AddSliderOptionST("stripchance", "$Achr_StripChance", GetSettingFloat("fStripChance"), "{1}%")
     AddSliderOptionST("stripdstry", "$Achr_StripDstry", GetSettingFloat("fStripDestroy"), "{1}%")
     AddToggleoptionST("stripdrop", "$Achr_StripDrop", GetSettingBool("bStripDrop"))
+
+  ElseIf (page == "$Achr_Yield")
+    AddHeaderOption("$Achr_PostBattle")
+    AddSliderOptionST("PeacefulWanderDuration", "$Achr_PeacefulWanderDuration", GetSettingInt("iPeacefulWanderDuration"), "{0}s")
+    AddSliderOptionST("CommandHoldDuration", "$Achr_CommandHoldDuration", GetSettingInt("iCommandHoldDuration"), "{0}s")
+    AddSliderOptionST("FleeDuration", "$Achr_FleeDuration", GetSettingInt("iFleeDuration"), "{0}s")
+    AddSliderOptionST("FleeDistance", "$Achr_FleeDistance", GetSettingInt("iFleeDistance"), "{0}")
+    SetCursorPosition(1)
+    AddHeaderOption("$Achr_Testing")
+    AddKeyMapOptionST("godkey", "$Achr_GodPresetKey", GetSettingInt("iGodKey"))
 
   ElseIf (page == "$Achr_Stripping")
     SetCursorFillMode(LEFT_TO_RIGHT)
@@ -336,6 +345,21 @@ Event OnSliderOpenST()
     SetSliderDialogDefaultValue(60)
     SetSliderDialogRange(1, 600)
     SetSliderDialogInterval(1)
+  ElseIf (s[0] == "CommandHoldDuration")
+    SetSliderDialogStartValue(GetSettingInt("iCommandHoldDuration"))
+    SetSliderDialogDefaultValue(1800)
+    SetSliderDialogRange(1, 7200)
+    SetSliderDialogInterval(1)
+  ElseIf (s[0] == "FleeDuration")
+    SetSliderDialogStartValue(GetSettingInt("iFleeDuration"))
+    SetSliderDialogDefaultValue(30)
+    SetSliderDialogRange(1, 300)
+    SetSliderDialogInterval(1)
+  ElseIf (s[0] == "FleeDistance")
+    SetSliderDialogStartValue(GetSettingInt("iFleeDistance"))
+    SetSliderDialogDefaultValue(4096)
+    SetSliderDialogRange(128, 4096)
+    SetSliderDialogInterval(128)
 
   ; --------------- Events
   ElseIf(s[0] == "event")
@@ -394,6 +418,15 @@ Event OnSliderAcceptST(float value)
   ElseIf (s[0] == "PeacefulWanderDuration")
     SetSettingInt("iPeacefulWanderDuration", value as int)
     SetSliderOptionValueST(value, "{0}s")
+  ElseIf (s[0] == "CommandHoldDuration")
+    SetSettingInt("iCommandHoldDuration", value as int)
+    SetSliderOptionValueST(value, "{0}s")
+  ElseIf (s[0] == "FleeDuration")
+    SetSettingInt("iFleeDuration", value as int)
+    SetSliderOptionValueST(value, "{0}s")
+  ElseIf (s[0] == "FleeDistance")
+    SetSettingInt("iFleeDistance", value as int)
+    SetSliderOptionValueST(value, "{0}")
   ; --------------- Events
   ElseIf(s[0] == "event")
     int i = s[1] as int
@@ -439,6 +472,10 @@ EndEvent
 
 Event OnHighlightST()
   String[] s = StringUtil.Split(GetState(), "_")
+  If(s[0] == "godkey")
+    SetInfoText("$Achr_GodPresetKeyHighlight")
+    return
+  EndIf
   ; --------------- General
   If(s[0] == "enabled")
     SetInfoText("$Achr_EnabledHighlight")
@@ -511,6 +548,12 @@ Event OnHighlightST()
     SetInfoText("$Achr_NPCRescueTimerHighlight")
   ElseIf(s[0] == "PeacefulWanderDuration")
     SetInfoText("$Achr_PeacefulWanderDurationHighlight")
+  ElseIf(s[0] == "CommandHoldDuration")
+    SetInfoText("$Achr_CommandHoldDurationHighlight")
+  ElseIf(s[0] == "FleeDuration")
+    SetInfoText("$Achr_FleeDurationHighlight")
+  ElseIf(s[0] == "FleeDistance")
+    SetInfoText("$Achr_FleeDistanceHighlight")
   ; --------------- Stripping
   ElseIf(s[0] == "strips")
     int i = s[1] as int

@@ -57,6 +57,9 @@ namespace Acheron::Pacification
         Peaceful::Facts LiveFacts(RE::Actor* actor)
         {
             Peaceful::Facts facts;
+            facts.commandHoldDurationSeconds = static_cast<float>(Settings::iCommandHoldDuration);
+            facts.fleeDurationSeconds = static_cast<float>(Settings::iFleeDuration);
+            facts.fleeDistance = static_cast<float>(Settings::iFleeDistance);
             facts.alive = !actor->IsDead(); facts.eligible = IsEligible(actor);
             facts.defeated = Defeat::IsDefeated(actor); facts.loaded = Loaded(actor);
             facts.paused = RE::UI::GetSingleton()->GameIsPaused();
@@ -537,7 +540,7 @@ namespace Acheron::Pacification
         record.state = { Phase::Wandering, static_cast<float>(seconds) };
         if (initial) record.state = *initial;
         else if (entry == Phase::Kneeling) {
-            const auto next = Peaceful::Decide(record.state, { Peaceful::EventKind::Kneel }, {});
+            const auto next = Peaceful::Decide(record.state, { Peaceful::EventKind::Kneel }, LiveFacts(actor));
             if (!next) return false;
             record.state = *next;
         }
@@ -589,7 +592,7 @@ namespace Acheron::Pacification
             if (found != records.end()) {
                 auto& record = found->second;
                 const auto requested = Peaceful::SelectTestState(command, record.state,
-                    static_cast<float>(std::clamp(Settings::iPeacefulWanderDuration, 1, 600)));
+                    static_cast<float>(std::clamp(Settings::iPeacefulWanderDuration, 1, 600)), LiveFacts(subject.get()));
                 if (requested && Peaceful::IsSitting(requested->phase) && !Peaceful::SittingPoseAllowed(requested->selectedSittingVariant,
                     requested->phase == Phase::SittingWounded, subject->GetActorBase()->GetSex() == RE::SEX::kFemale)) return;
                 if (requested && !Peaceful::PosePolicy(record.state.phase, requested->phase).sourceExit) {
@@ -610,7 +613,7 @@ namespace Acheron::Pacification
             }
             const auto seconds = std::clamp(Settings::iPeacefulWanderDuration, 1, 600);
             const auto previous = found == records.end() ? Peaceful::State{ Phase::Wandering, static_cast<float>(seconds) } : found->second.state;
-            const auto next = Peaceful::SelectTestState(command, previous, static_cast<float>(seconds));
+            const auto next = Peaceful::SelectTestState(command, previous, static_cast<float>(seconds), LiveFacts(subject.get()));
             // Resolve an explicit family before changing defeat/ownership. Never silently substitute a test variant.
             if (command == TestState::KneelingBlessing && !RE::TESForm::LookupByID<RE::TESFurniture>(0xF11F1)) {
                 if (found != records.end()) { found->second.testTarget.reset(); Apply(found->second, found->second.state.phase); }
@@ -842,7 +845,7 @@ namespace Acheron::Pacification
 #ifdef ACHERON_YIELD_TESTS
     void ProbeFleeDuration(RE::Actor* actor, float seconds)
     {
-        if (!actor || !std::isfinite(seconds) || seconds < 0 || seconds > Peaceful::FleeDurationSeconds) return;
+        if (!actor || !std::isfinite(seconds) || seconds < 0 || seconds > Peaceful::MaxFleeDurationSeconds) return;
         const auto handle = actor->GetHandle(); const auto world = epoch.load();
         SKSE::GetTaskInterface()->AddTask([handle, world, seconds]() {
             if (world != epoch || REL::Module::IsVR()) return;
@@ -874,7 +877,7 @@ namespace Acheron::Pacification
     }
     void ProbeCommandHold(RE::Actor* actor, float seconds)
     {
-        if (!actor || !std::isfinite(seconds) || seconds < 0 || seconds > Peaceful::CommandHoldDurationSeconds) return;
+        if (!actor || !std::isfinite(seconds) || seconds < 0 || seconds > Peaceful::MaxCommandHoldDurationSeconds) return;
         const auto handle = actor->GetHandle(); const auto world = epoch.load();
         SKSE::GetTaskInterface()->AddTask([handle, seconds, world]() {
             if (world != epoch || REL::Module::IsVR()) return;

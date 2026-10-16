@@ -66,7 +66,7 @@
                         "target": "StandingBound",
                         "actions": [
                             "Apply ordinary hit damage; retain binding, pacification and held pose",
-                            "Restart CommandHoldDurationSeconds at 1800 real seconds; preserve frozen wander budget; do not roll an outcome"
+                            "Restart hold using iCommandHoldDuration (default 1800 real seconds); preserve frozen wander budget; do not roll an outcome"
                         ],
                         "meta": {
                             "status": "planned"
@@ -150,7 +150,7 @@
                         "target": "KneelingBound",
                         "actions": [
                             "Preserve binding, pacification and frozen wander budget; do not heal or recruit",
-                            "Restart CommandHoldDurationSeconds at 1800 real seconds when the posture command is accepted; keep counting during animation; do not reset again on completion",
+                            "Restart hold using iCommandHoldDuration (default 1800 real seconds) when the posture command is accepted; keep counting during animation; do not reset again on completion",
                             "Play kneeling-entry animation and await completion",
                             "Then play kneeling-bound entry and idle; settle in KneelingBound"
                         ],

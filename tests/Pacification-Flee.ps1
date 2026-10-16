@@ -162,6 +162,7 @@ try {
         $first=Read-PeacefulState $actor
         Invoke-NpcPapyrus Acheron FleeActor '' @(@{form=$actor})|Out-Null
         $repeat=Read-PeacefulState $actor
+        $summary.repeatedFlight=@{before=$first;after=$repeat}
         if($repeat.generation -ne $first.generation -or $repeat.fleeRemaining -gt $first.fleeRemaining) {throw 'Repeated Flee extended flight budget'}
         Invoke-NpcPapyrus Acheron ProbeFleeDuration '' @(@{form=$actor},2.0)|Out-Null
         $summary.shortDeadline=Wait-FleeEnd $actor $case.before

@@ -1,5 +1,46 @@
 # Desktop test harness
 
+`Acheron -> Yield` groups fork-owned MCM controls: **Peaceful Wander Duration**,
+**Commanded Hold Duration**, **Fleeing Duration**, **Fleeing Distance (units)**,
+and **God preset key (desktop)**. Upstream Acheron options keep their existing
+pages. Existing IDs, saved values and defaults are unchanged.
+MCM script version 4 rebuilds the page list through SkyUI's version-update hook.
+Hold duration: 1-7200 real seconds, default 1800. Fleeing duration: 1-300 real
+seconds, default 30. Fleeing distance: 128-4096 horizontal game units, default
+4096; this stays within the existing native flee package's range. New commands
+use current duration settings; editing them never restarts active countdowns.
+Distance changes apply to active flights. YAML and native setters clamp ranges.
+
+```powershell
+pwsh -NoProfile -File tests/Invoke-PacificationTests.ps1 -Test mcm-yield
+```
+
+This explicit UI regression reads SkyUI's actual page/option buffers, verifies
+the Yield page key and original pages, drives the existing native slider/keymap
+handlers, checks bounds and actual configured NPC hold/Bind/flight/distance,
+then restores all five settings. Uses SkyUI's existing manager registration and
+events to avoid DevBench's ambiguous member dispatch on a multi-script quest.
+Checks translated page/control text in the UI data, without screenshot/font checks.
+It uses fresh disposable quests;
+it does not reset a user's saved MCM quest. Saved-game upgrade and VR UI remain
+separate checks. Successful `-KeepInstalled` deploys the matching desktop scripts
+and translation catalogs for manual use.
+
+`python tests/Test-McmTranslations.py` checks all 17 UTF-16 LE catalogs and CRLF
+line endings. SKSE's [translation reader](https://github.com/ianpatt/skse64/blob/master/skse64/Translation.cpp)
+treats a blank LF-only line as EOF; catalog normalization removes that premature
+stop before the fork's labels. New labels use English fallback in every catalog.
+
+2026-10-16 desktop qualification: `mcm-yield` **1ae1e477-a236-4234-b2f3-181a75c59e1e**
+passed translated labels, five controls, original-page separation, native bounds,
+configured hold/Bind restart, three-second flight expiry and live distance changes.
+Default `flee-entry` **87d2c5aa-4e9a-4757-9691-73f756f6d6c3** also passed. Matching
+desktop candidate retained; settings restored, owned NPCs removed and game closed.
+`pwsh -NoProfile -File tests/Test-PeacefulSnapshot.ps1` guards against accepting a
+half-written log line as a completed timer snapshot. Fresh quest setup uses fenced
+native console commands; it avoids creating a generic Quest script through
+DevBench's member-call binding path. Existing-save migration and VR remain untested.
+
 Managed Fleeing uses the ordinary production staging ESM and DLL:
 
 ```powershell

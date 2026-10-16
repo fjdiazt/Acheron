@@ -58,7 +58,7 @@
                         "target": "Kneeling",
                         "actions": [
                             "End defeat and damage immunity without healing; begin pacification",
-                            "Set CommandHoldDurationSeconds to 1800 real seconds; preserve wander budget"
+                            "Snapshot iCommandHoldDuration (default 1800 real seconds); preserve wander budget"
                         ]
                     }
                 ],
@@ -230,7 +230,7 @@
                             "End defeat and damage immunity without healing; begin pacification",
                             "Cancel automatic yield recovery/routing; transfer unresolved wound risk and any wound deadline",
                             "Supersede automatic rest: set peacefulChoice to wander and clear selectedPose",
-                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget",
+                            "Snapshot iCommandHoldDuration (default 1800 real seconds) on command acceptance; preserve frozen peaceful budget",
                             "Preserve meaningful injury health and unresolved wound risk; Sit adds no healing and never rerolls mortality"
                         ],
                         "meta": {
@@ -246,7 +246,7 @@
                             "End defeat and damage immunity without healing; begin pacification",
                             "Cancel automatic yield recovery/routing; transfer unresolved wound risk and any wound deadline",
                             "Supersede automatic rest: set peacefulChoice to wander and clear selectedPose",
-                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget",
+                            "Snapshot iCommandHoldDuration (default 1800 real seconds) on command acceptance; preserve frozen peaceful budget",
                             "Preserve meaningful injury health and unresolved wound risk; Sit adds no healing and never rerolls mortality"
                         ],
                         "meta": {
@@ -325,7 +325,7 @@
                         "target": "Kneeling",
                         "actions": [
                             "Exit current held native pose before changing destination",
-                            "Choose explicit regular/blessing/childSitKneel clip family on persistent regular furniture; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Choose explicit regular/blessing/childSitKneel clip family on persistent regular furniture; preserve peaceful budget; restart configured command hold (default 1800 real seconds)"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -338,7 +338,7 @@
                         "target": "KneelingBound",
                         "actions": [
                             "Apply shared source/destination phase policy; ordinary exit and enter outside Kneeling -> KneelingBound",
-                            "Enter native bound kneel; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Enter native bound kneel; preserve peaceful budget; restart configured command hold (default 1800 real seconds)"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -364,7 +364,7 @@
                     {
                         "target": "Sitting",
                         "actions": [
-                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold using iCommandHoldDuration (default 1800 real seconds)",
                             "Explicit normal sitting pose; deterministic selectedSittingVariant"
                         ],
                         "meta": {
@@ -389,7 +389,7 @@
                     {
                         "target": "SittingWounded",
                         "actions": [
-                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold using iCommandHoldDuration (default 1800 real seconds)",
                             "Force diagnostic zero-injury baseline for this pose; preserve engine health. Use Test Yielding first to exercise real defeat injury."
                         ],
                         "meta": {
@@ -411,7 +411,7 @@
                         "target": "Fleeing",
                         "actions": [
                             "Preserve health, Aggression and Confidence; end defeat without healing or finish the source held-pose exit",
-                            "Transfer existing owner to native FleeFrom; keep pacification and start independent 30-real-second flight budget"
+                            "Transfer existing owner to native FleeFrom; keep pacification and start independent iFleeDuration budget (default 30 real seconds)"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -542,7 +542,7 @@
                     {
                         "target": "Kneeling",
                         "actions": [
-                            "Set CommandHoldDurationSeconds to 1800 real seconds; preserve wander budget"
+                            "Snapshot iCommandHoldDuration (default 1800 real seconds); preserve wander budget"
                         ]
                     }
                 ],
@@ -559,7 +559,7 @@
                         "target": "StandingBound",
                         "actions": [
                             "Enter standing hands-bound pose without healing; retain pacification and dialogue",
-                            "Set CommandHoldDurationSeconds to 1800 real seconds; preserve frozen wander budget"
+                            "Snapshot iCommandHoldDuration (default 1800 real seconds); preserve frozen wander budget"
                         ],
                         "meta": {
                             "status": "planned"
@@ -612,7 +612,7 @@
                         "target": "Sitting",
                         "actions": [
                             "Supersede automatic rest: set peacefulChoice to wander and clear selectedPose",
-                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget",
+                            "Snapshot iCommandHoldDuration (default 1800 real seconds) on command acceptance; preserve frozen peaceful budget",
                             "Preserve meaningful injury health and unresolved wound risk; Sit adds no healing and never rerolls mortality"
                         ],
                         "meta": {
@@ -626,7 +626,7 @@
                         "target": "SittingWounded",
                         "actions": [
                             "Supersede automatic rest: set peacefulChoice to wander and clear selectedPose",
-                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget",
+                            "Snapshot iCommandHoldDuration (default 1800 real seconds) on command acceptance; preserve frozen peaceful budget",
                             "Preserve meaningful injury health and unresolved wound risk; Sit adds no healing and never rerolls mortality"
                         ],
                         "meta": {
@@ -705,7 +705,7 @@
                         "target": "Kneeling",
                         "actions": [
                             "Exit current held native pose before changing destination",
-                            "Choose explicit regular/blessing/childSitKneel clip family on persistent regular furniture; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Choose explicit regular/blessing/childSitKneel clip family on persistent regular furniture; preserve peaceful budget; restart configured command hold (default 1800 real seconds)"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -718,7 +718,7 @@
                         "target": "KneelingBound",
                         "actions": [
                             "Apply shared source/destination phase policy; ordinary exit and enter outside Kneeling -> KneelingBound",
-                            "Enter native bound kneel; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Enter native bound kneel; preserve peaceful budget; restart configured command hold (default 1800 real seconds)"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -755,7 +755,7 @@
                     {
                         "target": "Sitting",
                         "actions": [
-                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold using iCommandHoldDuration (default 1800 real seconds)",
                             "Explicit normal sitting pose; deterministic selectedSittingVariant"
                         ],
                         "meta": {
@@ -780,7 +780,7 @@
                     {
                         "target": "SittingWounded",
                         "actions": [
-                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold using iCommandHoldDuration (default 1800 real seconds)",
                             "Force diagnostic zero-injury baseline for this pose; preserve engine health. Use Test Yielding first to exercise real defeat injury."
                         ],
                         "meta": {
@@ -802,7 +802,7 @@
                         "target": "Fleeing",
                         "actions": [
                             "Preserve health, Aggression and Confidence; end defeat without healing or finish the source held-pose exit",
-                            "Transfer existing owner to native FleeFrom; keep pacification and start independent 30-real-second flight budget"
+                            "Transfer existing owner to native FleeFrom; keep pacification and start independent iFleeDuration budget (default 30 real seconds)"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -885,7 +885,7 @@
                     {
                         "target": "Kneeling",
                         "actions": [
-                            "Set CommandHoldDurationSeconds to 1800 real seconds; preserve wander budget"
+                            "Snapshot iCommandHoldDuration (default 1800 real seconds); preserve wander budget"
                         ]
                     }
                 ],
@@ -910,7 +910,7 @@
                         "target": "StandingBound",
                         "actions": [
                             "Enter standing hands-bound pose without healing; retain pacification and dialogue",
-                            "Set CommandHoldDurationSeconds to 1800 real seconds; preserve frozen wander budget"
+                            "Snapshot iCommandHoldDuration (default 1800 real seconds); preserve frozen wander budget"
                         ],
                         "meta": {
                             "status": "planned"
@@ -922,7 +922,7 @@
                         "target": "Sitting",
                         "actions": [
                             "Supersede automatic rest: set peacefulChoice to wander and clear selectedPose",
-                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget",
+                            "Snapshot iCommandHoldDuration (default 1800 real seconds) on command acceptance; preserve frozen peaceful budget",
                             "Preserve meaningful injury health and unresolved wound risk; Sit adds no healing and never rerolls mortality"
                         ],
                         "meta": {
@@ -936,7 +936,7 @@
                         "target": "SittingWounded",
                         "actions": [
                             "Supersede automatic rest: set peacefulChoice to wander and clear selectedPose",
-                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget",
+                            "Snapshot iCommandHoldDuration (default 1800 real seconds) on command acceptance; preserve frozen peaceful budget",
                             "Preserve meaningful injury health and unresolved wound risk; Sit adds no healing and never rerolls mortality"
                         ],
                         "meta": {
@@ -1015,7 +1015,7 @@
                         "target": "Kneeling",
                         "actions": [
                             "Exit current held native pose before changing destination",
-                            "Choose explicit regular/blessing/childSitKneel clip family on persistent regular furniture; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Choose explicit regular/blessing/childSitKneel clip family on persistent regular furniture; preserve peaceful budget; restart configured command hold (default 1800 real seconds)"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -1028,7 +1028,7 @@
                         "target": "KneelingBound",
                         "actions": [
                             "Apply shared source/destination phase policy; ordinary exit and enter outside Kneeling -> KneelingBound",
-                            "Enter native bound kneel; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Enter native bound kneel; preserve peaceful budget; restart configured command hold (default 1800 real seconds)"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -1065,7 +1065,7 @@
                     {
                         "target": "Sitting",
                         "actions": [
-                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold using iCommandHoldDuration (default 1800 real seconds)",
                             "Explicit normal sitting pose; deterministic selectedSittingVariant"
                         ],
                         "meta": {
@@ -1090,7 +1090,7 @@
                     {
                         "target": "SittingWounded",
                         "actions": [
-                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold using iCommandHoldDuration (default 1800 real seconds)",
                             "Force diagnostic zero-injury baseline for this pose; preserve engine health. Use Test Yielding first to exercise real defeat injury."
                         ],
                         "meta": {
@@ -1112,7 +1112,7 @@
                         "target": "Fleeing",
                         "actions": [
                             "Preserve health, Aggression and Confidence; end defeat without healing or finish the source held-pose exit",
-                            "Transfer existing owner to native FleeFrom; keep pacification and start independent 30-real-second flight budget"
+                            "Transfer existing owner to native FleeFrom; keep pacification and start independent iFleeDuration budget (default 30 real seconds)"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -1265,7 +1265,7 @@
                     {
                         "target": "KneelingBound",
                         "actions": [
-                            "Restart CommandHoldDurationSeconds at 1800 real seconds on command acceptance; preserve wander budget",
+                            "Restart hold using iCommandHoldDuration (default 1800 real seconds) on command acceptance; preserve wander budget",
                             "Apply shared transition animationPhases: retain kneeling posture, skip selected kneeling exit and destination enter; transition directly to the bound held pose",
                             "Retain pacification, dialogue and health; preserve native ownership and stale-callback/lifecycle safeguards; do not reset hold on pose completion"
                         ],
@@ -1319,7 +1319,7 @@
                         "actions": [
                             "Finish selected kneeling family exit before sitting entry",
                             "Supersede automatic rest: set peacefulChoice to wander and clear selectedPose",
-                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget",
+                            "Snapshot iCommandHoldDuration (default 1800 real seconds) on command acceptance; preserve frozen peaceful budget",
                             "Preserve meaningful injury health and unresolved wound risk; Sit adds no healing and never rerolls mortality"
                         ],
                         "meta": {
@@ -1334,7 +1334,7 @@
                         "actions": [
                             "Finish selected kneeling family exit before sitting entry",
                             "Supersede automatic rest: set peacefulChoice to wander and clear selectedPose",
-                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget",
+                            "Snapshot iCommandHoldDuration (default 1800 real seconds) on command acceptance; preserve frozen peaceful budget",
                             "Preserve meaningful injury health and unresolved wound risk; Sit adds no healing and never rerolls mortality"
                         ],
                         "meta": {
@@ -1413,7 +1413,7 @@
                         "target": "Kneeling",
                         "actions": [
                             "Exit current held native pose before changing destination",
-                            "Choose explicit regular/blessing/childSitKneel clip family on persistent regular furniture; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Choose explicit regular/blessing/childSitKneel clip family on persistent regular furniture; preserve peaceful budget; restart configured command hold (default 1800 real seconds)"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -1426,7 +1426,7 @@
                         "target": "KneelingBound",
                         "actions": [
                             "Apply shared phase policy for this source/destination; skip kneeling exit and bound enter, retain kneeling posture",
-                            "Enter native bound kneel; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Enter native bound kneel; preserve peaceful budget; restart configured command hold (default 1800 real seconds)"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -1467,7 +1467,7 @@
                     {
                         "target": "Sitting",
                         "actions": [
-                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold using iCommandHoldDuration (default 1800 real seconds)",
                             "Explicit normal sitting pose; deterministic selectedSittingVariant"
                         ],
                         "meta": {
@@ -1492,7 +1492,7 @@
                     {
                         "target": "SittingWounded",
                         "actions": [
-                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold using iCommandHoldDuration (default 1800 real seconds)",
                             "Force diagnostic zero-injury baseline for this pose; preserve engine health. Use Test Yielding first to exercise real defeat injury."
                         ],
                         "meta": {
@@ -1514,7 +1514,7 @@
                         "target": "Fleeing",
                         "actions": [
                             "Preserve health, Aggression and Confidence; end defeat without healing or finish the source held-pose exit",
-                            "Transfer existing owner to native FleeFrom; keep pacification and start independent 30-real-second flight budget"
+                            "Transfer existing owner to native FleeFrom; keep pacification and start independent iFleeDuration budget (default 30 real seconds)"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -1559,7 +1559,8 @@
                     "On your feet.": "Resume; unbound only; preserve health, pacification and peaceful budget; clear command hold"
                 },
                 "adapterContract": "fsm.md#implemented-flow-contracts; live guards, acceptance-time Bind and ordered pose exits implemented",
-                "nativeDialogue": "Scoped desktop player Talk; original Aggression preserved; no state change until action selection"
+                "nativeDialogue": "Scoped desktop player Talk; original Aggression preserved; no state change until action selection",
+                "commandHoldSetting": "iCommandHoldDuration; default 1800 real seconds; 1-7200; acceptance snapshot, unchanged by edits or pose completion"
             },
             "entry": [
                 "Choose and save selectedKneelingVariant once on new entry; uniform regular/blessing/childSitKneel selection (1/3 each); all use persistent regular kneeling furniture",
@@ -1778,7 +1779,7 @@
                         "target": "Kneeling",
                         "actions": [
                             "Finish selected sitting family exit before unbound kneeling entry",
-                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget"
+                            "Snapshot iCommandHoldDuration (default 1800 real seconds) on command acceptance; preserve frozen peaceful budget"
                         ],
                         "meta": {
                             "status": "implemented"
@@ -1790,7 +1791,7 @@
                         "target": "KneelingBound",
                         "actions": [
                             "Exit sitting; enter required kneeling interaction, then native bound-kneeling pose",
-                            "Restart CommandHoldDurationSeconds at 1800 real seconds on command acceptance; preserve frozen peaceful budget",
+                            "Restart hold using iCommandHoldDuration (default 1800 real seconds) on command acceptance; preserve frozen peaceful budget",
                             "Invalidate pending posture callbacks on death, release, expiry or ownership loss; do not reset hold on completion"
                         ],
                         "meta": {
@@ -1802,7 +1803,7 @@
                     {
                         "target": "Sitting",
                         "actions": [
-                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold using iCommandHoldDuration (default 1800 real seconds)",
                             "Explicit normal sitting pose; deterministic selectedSittingVariant"
                         ],
                         "meta": {
@@ -1827,7 +1828,7 @@
                     {
                         "target": "SittingWounded",
                         "actions": [
-                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold using iCommandHoldDuration (default 1800 real seconds)",
                             "Force diagnostic zero-injury baseline for this pose; preserve engine health. Use Test Yielding first to exercise real defeat injury."
                         ],
                         "meta": {
@@ -1849,7 +1850,7 @@
                         "target": "Fleeing",
                         "actions": [
                             "Preserve health, Aggression and Confidence; end defeat without healing or finish the source held-pose exit",
-                            "Transfer existing owner to native FleeFrom; keep pacification and start independent 30-real-second flight budget"
+                            "Transfer existing owner to native FleeFrom; keep pacification and start independent iFleeDuration budget (default 30 real seconds)"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -1880,7 +1881,8 @@
                 "persistenceVersion": 5,
                 "phase": 5,
                 "poseSelection": "selectedSittingVariant; explicit enter/loop/exit in scripts/sitting-animations.json; persistent held geometry, enter/exit priorities5005-5020, idle-only interruptible priorities5105-5120",
-                "qualification": "Desktop candidate; functional/clip qualification recorded in animations catalog; visual swaps and VR require review"
+                "qualification": "Desktop candidate; functional/clip qualification recorded in animations catalog; visual swaps and VR require review",
+                "commandHoldSetting": "iCommandHoldDuration; default 1800 real seconds; 1-7200; acceptance snapshot, unchanged by edits or pose completion"
             },
             "entry": [
                 "Enter the selected normal sitting family through the shared transition animation-phase policy; retain pacification and dialogue",
@@ -2100,7 +2102,7 @@
                         "target": "Kneeling",
                         "actions": [
                             "Finish selected sitting family exit before unbound kneeling entry",
-                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget"
+                            "Snapshot iCommandHoldDuration (default 1800 real seconds) on command acceptance; preserve frozen peaceful budget"
                         ],
                         "meta": {
                             "status": "implemented"
@@ -2112,7 +2114,7 @@
                         "target": "KneelingBound",
                         "actions": [
                             "Exit sitting; enter required kneeling interaction, then native bound-kneeling pose",
-                            "Restart CommandHoldDurationSeconds at 1800 real seconds on command acceptance; preserve frozen peaceful budget",
+                            "Restart hold using iCommandHoldDuration (default 1800 real seconds) on command acceptance; preserve frozen peaceful budget",
                             "Invalidate pending posture callbacks on death, release, expiry or ownership loss; do not reset hold on completion"
                         ],
                         "meta": {
@@ -2167,7 +2169,7 @@
                     {
                         "target": "Sitting",
                         "actions": [
-                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold using iCommandHoldDuration (default 1800 real seconds)",
                             "Explicit normal sitting pose; deterministic selectedSittingVariant"
                         ],
                         "meta": {
@@ -2192,7 +2194,7 @@
                     {
                         "target": "SittingWounded",
                         "actions": [
-                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold using iCommandHoldDuration (default 1800 real seconds)",
                             "Force diagnostic zero-injury baseline for this pose; preserve engine health. Use Test Yielding first to exercise real defeat injury."
                         ],
                         "meta": {
@@ -2214,7 +2216,7 @@
                         "target": "Fleeing",
                         "actions": [
                             "Preserve health, Aggression and Confidence; end defeat without healing or finish the source held-pose exit",
-                            "Transfer existing owner to native FleeFrom; keep pacification and start independent 30-real-second flight budget"
+                            "Transfer existing owner to native FleeFrom; keep pacification and start independent iFleeDuration budget (default 30 real seconds)"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -2249,7 +2251,8 @@
                 "persistenceVersion": 5,
                 "phase": 6,
                 "poseSelection": "selectedSittingVariant; explicit enter/loop/exit in scripts/sitting-animations.json; persistent held geometry, enter/exit priorities5005-5020, idle-only interruptible priorities5105-5120",
-                "qualification": "Desktop candidate; functional/clip qualification recorded in animations catalog; visual swaps and VR require review"
+                "qualification": "Desktop candidate; functional/clip qualification recorded in animations catalog; visual swaps and VR require review",
+                "commandHoldSetting": "iCommandHoldDuration; default 1800 real seconds; 1-7200; acceptance snapshot, unchanged by edits or pose completion"
             },
             "entry": [
                 "Fresh Sit command: enter a qualified wounded-family pose, then its held idle/loop; female Laydown and Mirrored variants only for female NPCs",
@@ -2398,7 +2401,7 @@
                         "target": "KneelingBound",
                         "actions": [
                             "Apply ordinary hit damage; retain binding, pacification and held pose",
-                            "Restart CommandHoldDurationSeconds at 1800 real seconds; preserve frozen wander budget; do not roll an outcome"
+                            "Restart hold using iCommandHoldDuration (default 1800 real seconds); preserve frozen wander budget; do not roll an outcome"
                         ],
                         "meta": {
                             "status": "planned"
@@ -2434,7 +2437,7 @@
                         "target": "StandingBound",
                         "actions": [
                             "Preserve binding, pacification and frozen wander budget; do not heal or recruit",
-                            "Restart CommandHoldDurationSeconds at 1800 real seconds when the posture command is accepted; keep counting during animation; do not reset again on completion",
+                            "Restart hold using iCommandHoldDuration (default 1800 real seconds) when the posture command is accepted; keep counting during animation; do not reset again on completion",
                             "Play kneeling exit/stand-up animation and await completion",
                             "Then play standing-bound entry and idle; settle in StandingBound"
                         ],
@@ -2513,7 +2516,7 @@
                         "target": "Kneeling",
                         "actions": [
                             "Exit current held native pose before changing destination",
-                            "Choose explicit regular/blessing/childSitKneel clip family on persistent regular furniture; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Choose explicit regular/blessing/childSitKneel clip family on persistent regular furniture; preserve peaceful budget; restart configured command hold (default 1800 real seconds)"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -2526,7 +2529,7 @@
                         "target": "KneelingBound",
                         "actions": [
                             "Apply shared source/destination phase policy; ordinary exit and enter outside Kneeling -> KneelingBound",
-                            "Enter native bound kneel; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Enter native bound kneel; preserve peaceful budget; restart configured command hold (default 1800 real seconds)"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -2563,7 +2566,7 @@
                     {
                         "target": "Sitting",
                         "actions": [
-                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold using iCommandHoldDuration (default 1800 real seconds)",
                             "Explicit normal sitting pose; deterministic selectedSittingVariant"
                         ],
                         "meta": {
@@ -2588,7 +2591,7 @@
                     {
                         "target": "SittingWounded",
                         "actions": [
-                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold using iCommandHoldDuration (default 1800 real seconds)",
                             "Force diagnostic zero-injury baseline for this pose; preserve engine health. Use Test Yielding first to exercise real defeat injury."
                         ],
                         "meta": {
@@ -2611,7 +2614,8 @@
                     "status": "planned"
                 },
                 "adapterContract": "fsm.md#implemented-flow-contracts; live guards, acceptance-time Bind and ordered pose exits implemented",
-                "nativeDialogue": "Scoped desktop player Talk; original Aggression preserved; no state change until action selection"
+                "nativeDialogue": "Scoped desktop player Talk; original Aggression preserved; no state change until action selection",
+                "commandHoldSetting": "iCommandHoldDuration; default 1800 real seconds; 1-7200; acceptance snapshot, unchanged by edits or pose completion"
             }
         },
         "StandingBound": {
@@ -2678,7 +2682,7 @@
                         "target": "StandingBound",
                         "actions": [
                             "Apply ordinary hit damage; retain binding, pacification and held pose",
-                            "Restart CommandHoldDurationSeconds at 1800 real seconds; preserve frozen wander budget; do not roll an outcome"
+                            "Restart hold using iCommandHoldDuration (default 1800 real seconds); preserve frozen wander budget; do not roll an outcome"
                         ],
                         "meta": {
                             "status": "planned"
@@ -2762,7 +2766,7 @@
                         "target": "KneelingBound",
                         "actions": [
                             "Preserve binding, pacification and frozen wander budget; do not heal or recruit",
-                            "Restart CommandHoldDurationSeconds at 1800 real seconds when the posture command is accepted; keep counting during animation; do not reset again on completion",
+                            "Restart hold using iCommandHoldDuration (default 1800 real seconds) when the posture command is accepted; keep counting during animation; do not reset again on completion",
                             "Play kneeling-entry animation and await completion",
                             "Then play kneeling-bound entry and idle; settle in KneelingBound"
                         ],
@@ -2843,7 +2847,7 @@
                         "target": "FollowingBound",
                         "actions": [
                             "Apply ordinary hit damage; retain binding, pacification and bound following behavior",
-                            "Restart CommandHoldDurationSeconds at 1800 real seconds; preserve frozen wander budget; do not roll an outcome"
+                            "Restart hold using iCommandHoldDuration (default 1800 real seconds); preserve frozen wander budget; do not roll an outcome"
                         ],
                         "meta": {
                             "status": "planned"
@@ -3090,7 +3094,7 @@
                         "target": "Kneeling",
                         "actions": [
                             "Exit current held native pose before changing destination",
-                            "Choose explicit regular/blessing/childSitKneel clip family on persistent regular furniture; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Choose explicit regular/blessing/childSitKneel clip family on persistent regular furniture; preserve peaceful budget; restart configured command hold (default 1800 real seconds)"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -3103,7 +3107,7 @@
                         "target": "KneelingBound",
                         "actions": [
                             "Apply shared source/destination phase policy; ordinary exit and enter outside Kneeling -> KneelingBound",
-                            "Enter native bound kneel; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Enter native bound kneel; preserve peaceful budget; restart configured command hold (default 1800 real seconds)"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -3129,7 +3133,7 @@
                     {
                         "target": "Sitting",
                         "actions": [
-                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold using iCommandHoldDuration (default 1800 real seconds)",
                             "Explicit normal sitting pose; deterministic selectedSittingVariant"
                         ],
                         "meta": {
@@ -3154,7 +3158,7 @@
                     {
                         "target": "SittingWounded",
                         "actions": [
-                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold using iCommandHoldDuration (default 1800 real seconds)",
                             "Force diagnostic zero-injury baseline for this pose; preserve engine health. Use Test Yielding first to exercise real defeat injury."
                         ],
                         "meta": {
@@ -3185,15 +3189,17 @@
             },
             "meta": {
                 "status": "implemented",
-                "durationSeconds": 30,
-                "safeDistanceFromPlayer": 4096,
                 "timer": "Separate steady-clock flight budget. Combat does not pause it; menu/unloaded elapsed time is accounted on next observation. Preserve remaining budget across save/load; time with game closed does not count.",
                 "entry": "Get out of here. native dialogue and Test Fleeing for hostile eligible Yielding or unbound managed NPCs; bound release and automatic outcomes remain planned",
                 "preserve": "Actual health, Aggression and Confidence; no potion or healing",
                 "qualification": "Desktop SE passed native entry, timer, movement, distance boundary, save/load, death, renewed defeat, eligibility loss, pause and unload/reload. See native-flee-investigation.md; VR and arbitrary-position routing unqualified.",
                 "phase": 7,
                 "nativePackage": "00088A:Acheron.esm; vanilla FleeFrom 0197F1",
-                "safeDistanceMetric": "Horizontal distance from player"
+                "safeDistanceMetric": "Horizontal distance from player",
+                "defaultDurationSeconds": 30,
+                "defaultSafeDistanceFromPlayer": 4096,
+                "durationSetting": "iFleeDuration; 1-300 real seconds; sampled on new entry, no restart on settings edit",
+                "distanceSetting": "iFleeDistance; 128-4096 horizontal units; applies to active flights; native package remains 4096"
             }
         },
         "Resting": {
@@ -3264,7 +3270,7 @@
                         "target": "Kneeling",
                         "actions": [
                             "Exit selected automatic rest pose; set peacefulChoice to wander and clear selectedPose because explicit command supersedes automatic rest",
-                            "Set CommandHoldDurationSeconds to 1800 real seconds; preserve remaining shared peaceful budget"
+                            "Snapshot iCommandHoldDuration (default 1800 real seconds); preserve remaining shared peaceful budget"
                         ],
                         "meta": {
                             "status": "planned"
@@ -3324,7 +3330,7 @@
                         "actions": [
                             "Exit selected automatic rest pose",
                             "Supersede automatic rest: set peacefulChoice to wander and clear selectedPose",
-                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget",
+                            "Snapshot iCommandHoldDuration (default 1800 real seconds) on command acceptance; preserve frozen peaceful budget",
                             "Preserve meaningful injury health and unresolved wound risk; Sit adds no healing and never rerolls mortality"
                         ],
                         "meta": {
@@ -3338,7 +3344,7 @@
                         "actions": [
                             "Exit selected automatic rest pose",
                             "Supersede automatic rest: set peacefulChoice to wander and clear selectedPose",
-                            "Set CommandHoldDurationSeconds to 1800 real seconds on command acceptance; preserve frozen peaceful budget",
+                            "Snapshot iCommandHoldDuration (default 1800 real seconds) on command acceptance; preserve frozen peaceful budget",
                             "Preserve meaningful injury health and unresolved wound risk; Sit adds no healing and never rerolls mortality"
                         ],
                         "meta": {
@@ -3469,6 +3475,50 @@
             "boundary": "Native IsHostileToActor(player) plus shared desktop eligibility; no civilian, player, follower, commanded actor, active-scene or bound-release entry",
             "qualification": "Desktop SE: flee-entry 569080d3, flee-lifetime d598298d and flee-lifecycle ac06030c PASS; matching desktop candidate retained. VR and arbitrary-position routing unqualified; see native-flee-investigation.md.",
             "excluded": "Automatic yield resolver, Let go bound release, and VR gameplay deployment"
+        },
+        "mcm": {
+            "page": "Acheron -> Yield",
+            "version": 4,
+            "settings": {
+                "iPeacefulWanderDuration": {
+                    "default": 60,
+                    "range": [
+                        1,
+                        600
+                    ],
+                    "units": "loaded peaceful seconds"
+                },
+                "iCommandHoldDuration": {
+                    "default": 1800,
+                    "range": [
+                        1,
+                        7200
+                    ],
+                    "units": "real seconds"
+                },
+                "iFleeDuration": {
+                    "default": 30,
+                    "range": [
+                        1,
+                        300
+                    ],
+                    "units": "real seconds"
+                },
+                "iFleeDistance": {
+                    "default": 4096,
+                    "range": [
+                        128,
+                        4096
+                    ],
+                    "units": "horizontal game units; bounded by existing native flee package"
+                },
+                "iGodKey": {
+                    "default": 34,
+                    "disabled": -1,
+                    "scope": "desktop testing"
+                }
+            },
+            "application": "New Kneel/Bind/Sit and Test hold commands snapshot configured hold duration. New flight snapshots configured flight duration. Existing countdowns are never restarted by setting edits; distance guard applies current setting. Existing IDs/persistence retained; native/YAML values clamped."
         }
     }
 }

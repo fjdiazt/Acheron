@@ -162,7 +162,7 @@
                         "target": "Kneeling",
                         "actions": [
                             "Exit current held native pose before changing destination",
-                            "Choose explicit regular/blessing/childSitKneel clip family on persistent regular furniture; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Choose explicit regular/blessing/childSitKneel clip family on persistent regular furniture; preserve peaceful budget; restart configured command hold (default 1800 real seconds)"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -175,7 +175,7 @@
                         "target": "KneelingBound",
                         "actions": [
                             "Apply shared source/destination phase policy; ordinary exit and enter outside Kneeling -> KneelingBound",
-                            "Enter native bound kneel; preserve peaceful budget; restart 1800-real-second command hold"
+                            "Enter native bound kneel; preserve peaceful budget; restart configured command hold (default 1800 real seconds)"
                         ],
                         "meta": {
                             "status": "implemented",
@@ -201,7 +201,7 @@
                     {
                         "target": "Sitting",
                         "actions": [
-                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold using iCommandHoldDuration (default 1800 real seconds)",
                             "Explicit normal sitting pose; deterministic selectedSittingVariant"
                         ],
                         "meta": {
@@ -226,7 +226,7 @@
                     {
                         "target": "SittingWounded",
                         "actions": [
-                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold at1800 real seconds",
+                            "Select explicit animation family through shared phase policy; preserve peaceful budget; restart command hold using iCommandHoldDuration (default 1800 real seconds)",
                             "Force diagnostic zero-injury baseline for this pose; preserve engine health. Use Test Yielding first to exercise real defeat injury."
                         ],
                         "meta": {
@@ -257,15 +257,17 @@
             },
             "meta": {
                 "status": "implemented",
-                "durationSeconds": 30,
-                "safeDistanceFromPlayer": 4096,
                 "timer": "Separate steady-clock flight budget. Combat does not pause it; menu/unloaded elapsed time is accounted on next observation. Preserve remaining budget across save/load; time with game closed does not count.",
                 "entry": "Get out of here. native dialogue and Test Fleeing for hostile eligible Yielding or unbound managed NPCs; bound release and automatic outcomes remain planned",
                 "preserve": "Actual health, Aggression and Confidence; no potion or healing",
                 "qualification": "Desktop SE passed native entry, timer, movement, distance boundary, save/load, death, renewed defeat, eligibility loss, pause and unload/reload. See native-flee-investigation.md; VR and arbitrary-position routing unqualified.",
                 "phase": 7,
                 "nativePackage": "00088A:Acheron.esm; vanilla FleeFrom 0197F1",
-                "safeDistanceMetric": "Horizontal distance from player"
+                "safeDistanceMetric": "Horizontal distance from player",
+                "defaultDurationSeconds": 30,
+                "defaultSafeDistanceFromPlayer": 4096,
+                "durationSetting": "iFleeDuration; 1-300 real seconds; sampled on new entry, no restart on settings edit",
+                "distanceSetting": "iFleeDistance; 128-4096 horizontal units; applies to active flights; native package remains 4096"
             }
         },
         "Normal": {},
