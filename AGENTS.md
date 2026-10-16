@@ -2,6 +2,14 @@
 
 Speak like a caveman. Keep technical terms exact.
 
+## Repository ownership
+
+Development lives exclusively in [fjdiazt/Acheron](https://github.com/fjdiazt/Acheron).
+All branches, pushes and pull requests target this fork. Never push changes or
+open pull requests against `KrisV-777/Acheron`.
+`origin` points to our fork; `upstream` is fetch-only, with its push URL disabled.
+Keep the GitHub CLI default repository set to `fjdiazt/Acheron`.
+
 VR Mad God installation is production. Treat these paths as read-only:
 - `C:\bin\wabbajack\SkyrimVRMods` (active installation)
 - `N:\games\systems\pc\mods\wabbajack\SkyrimVRMods` (retained NAS copy)
